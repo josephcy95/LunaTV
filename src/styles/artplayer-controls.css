@@ -31,6 +31,43 @@
   .art-volume-panel {
     pointer-events: auto !important;
   }
+
+  /* 修复音量调节时鼠标上移触发进度条的问题 */
+  /* 扩大音量面板的hover区域，向上延伸覆盖间隙 */
+  .art-volume {
+    position: relative !important;
+  }
+
+  .art-volume-panel {
+    position: absolute !important;
+    bottom: 100% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 100 !important;
+    padding: 12px 8px 4px 8px !important;
+    margin-bottom: 0 !important;
+    background: transparent !important;
+  }
+
+  /* 填充音量图标和面板之间的间隙 */
+  .art-volume-panel::before {
+    content: '' !important;
+    position: absolute !important;
+    bottom: -8px !important;
+    left: -8px !important;
+    right: -8px !important;
+    height: 12px !important;
+    background: transparent !important;
+  }
+
+  /* 音量面板内部滑块区域有实际背景 */
+  .art-volume-panel .art-volume-slider,
+  .art-volume-panel .art-volume-inner {
+    background: rgba(0, 0, 0, 0.7) !important;
+    border-radius: 4px !important;
+    backdrop-filter: blur(8px) !important;
+    padding: 4px !important;
+  }
 }
 
 /* ===== Lock Mode Fix ===== */
