@@ -204,7 +204,6 @@ function HomeClient({ initialConfig }: {
   const {
     activeTab,
     upcomingReleases,
-    username,
     showAnnouncement,
   } = state;
 
@@ -391,14 +390,6 @@ function HomeClient({ initialConfig }: {
 
   // 🚀 Web Worker引用
   const workerRef = useRef<Worker | null>(null);
-
-  // 🎯 优化：缓存问候语计算
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return '早上好';
-    if (hour < 18) return '下午好';
-    return '晚上好';
-  }, []); // 空依赖数组，只在组件挂载时计算一次
 
   // 🎯 优化：缓存今日番剧计算
   const todayAnimes = useMemo(() => {
@@ -825,40 +816,7 @@ function HomeClient({ initialConfig }: {
       <TelegramWelcomeModal />
 
       <div className='overflow-visible -mt-6 md:mt-0 pb-32 md:pb-safe-bottom'>
-        {/* 欢迎横幅 - 现代化精简设计 */}
-        <div className='mb-6 relative overflow-hidden rounded-xl bg-linear-to-r from-blue-500/90 via-purple-500/90 to-pink-500/90 backdrop-blur-sm shadow-xl border border-white/20'>
-          <div className='relative p-4 sm:p-5'>
-            {/* 动态渐变背景 */}
-            <div className='absolute inset-0 bg-linear-to-br from-white/5 via-transparent to-black/5'></div>
-
-            <div className='relative z-10 flex items-center justify-between gap-4'>
-              <div className='flex-1 min-w-0'>
-                <h2 className='text-lg sm:text-xl font-bold text-white mb-1 flex items-center gap-2 flex-wrap'>
-                  <span>
-                    {greeting}
-                    {username && '，'}
-                  </span>
-                  {username && (
-                    <span className='text-yellow-300 font-semibold'>
-                      {username}
-                    </span>
-                  )}
-                  <span className='inline-block animate-wave origin-bottom-right'>👋</span>
-                </h2>
-                <p className='text-sm text-white/90'>
-                  发现更多精彩影视内容 ✨
-                </p>
-              </div>
-
-              {/* 装饰图标 - 更小更精致 */}
-              <div className='hidden md:flex items-center justify-center shrink-0 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20'>
-                <Film className='w-6 h-6 text-white' />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 顶部 Tab 切换 - AI 按钮已移至右上角导航栏 */}
+        {/* 顶部 Tab 切换 */}
         <div className='mb-8 flex items-center justify-center'>
           <CapsuleSwitch
             options={[
@@ -881,7 +839,7 @@ function HomeClient({ initialConfig }: {
                 </h2>
                 {reminderItems.length > 0 && (
                   <button
-                    className='flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-500 border border-red-300 dark:border-red-700 hover:border-red-600 dark:hover:border-red-500 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md'
+                    className='flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-500 border border-red-300 dark:border-red-700 hover:border-red-600 dark:hover:border-red-500 rounded-lg transition-colors'
                     onClick={() => {
                       if (requireClearConfirmation) {
                         setShowClearRemindersDialog(true);
@@ -900,21 +858,20 @@ function HomeClient({ initialConfig }: {
               {reminderItems.length > 0 && (
                 <div className='mb-4 flex flex-wrap gap-2'>
                   {[
-                    { key: 'all' as const, label: '全部', icon: '📚' },
-                    { key: 'upcoming' as const, label: '即将上映', icon: '⏰' },
-                    { key: 'today' as const, label: '今日上映', icon: '🎉' },
-                    { key: 'released' as const, label: '已上映', icon: '✅' },
-                  ].map(({ key, label, icon }) => (
+                    { key: 'all' as const, label: '全部' },
+                    { key: 'upcoming' as const, label: '即将上映' },
+                    { key: 'today' as const, label: '今日上映' },
+                    { key: 'released' as const, label: '已上映' },
+                  ].map(({ key, label }) => (
                     <button
                       key={key}
                       onClick={() => setReminderFilter(key)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                         reminderFilter === key
-                          ? 'bg-linear-to-r from-orange-500 to-red-500 text-white shadow-lg scale-105'
+                          ? 'bg-orange-500 text-white'
                           : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                     >
-                      <span className='mr-1'>{icon}</span>
                       {label}
                     </button>
                   ))}
@@ -987,7 +944,7 @@ function HomeClient({ initialConfig }: {
                 {reminderItems.length === 0 && (
                   <div className='col-span-full flex flex-col items-center justify-center py-16 px-4'>
                     <div className='mb-6 relative'>
-                      <div className='absolute inset-0 bg-linear-to-r from-orange-300 to-red-300 dark:from-orange-600 dark:to-red-600 opacity-20 blur-3xl rounded-full animate-pulse'></div>
+                      <div className='absolute inset-0 bg-linear-to-r from-orange-300 to-red-300 dark:from-orange-600 dark:to-red-600 opacity-20 blur-3xl rounded-full'></div>
                       <svg className='w-32 h-32 relative z-10' viewBox='0 0 200 200' fill='none' xmlns='http://www.w3.org/2000/svg'>
                         <path d='M100 50 L100 120 M100 50 L130 80'
                           className='stroke-gray-400 dark:stroke-gray-500'
@@ -1043,7 +1000,7 @@ function HomeClient({ initialConfig }: {
                 </h2>
                 {favoriteItems.length > 0 && (
                   <button
-                    className='flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-500 border border-red-300 dark:border-red-700 hover:border-red-600 dark:hover:border-red-500 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md'
+                    className='flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-500 border border-red-300 dark:border-red-700 hover:border-red-600 dark:hover:border-red-500 rounded-lg transition-colors'
                     onClick={() => {
                       // 根据用户设置决定是否显示确认对话框
                       if (requireClearConfirmation) {
@@ -1104,24 +1061,23 @@ function HomeClient({ initialConfig }: {
               {favoriteItems.length > 0 && (
                 <div className='mb-4 flex flex-wrap gap-2'>
                   {[
-                    { key: 'all' as const, label: '全部', icon: '📚' },
-                    { key: 'movie' as const, label: '电影', icon: '🎬' },
-                    { key: 'tv' as const, label: '剧集', icon: '📺' },
-                    { key: 'anime' as const, label: '动漫', icon: '🎌' },
-                    { key: 'shortdrama' as const, label: '短剧', icon: '🎭' },
-                    { key: 'live' as const, label: '直播', icon: '📡' },
-                    { key: 'variety' as const, label: '综艺', icon: '🎪' },
-                  ].map(({ key, label, icon }) => (
+                    { key: 'all' as const, label: '全部' },
+                    { key: 'movie' as const, label: '电影' },
+                    { key: 'tv' as const, label: '剧集' },
+                    { key: 'anime' as const, label: '动漫' },
+                    { key: 'shortdrama' as const, label: '短剧' },
+                    { key: 'live' as const, label: '直播' },
+                    { key: 'variety' as const, label: '综艺' },
+                  ].map(({ key, label }) => (
                     <button
                       key={key}
                       onClick={() => setFavoriteFilter(key)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                         favoriteFilter === key
-                          ? 'bg-linear-to-r from-blue-500 to-purple-500 text-white shadow-lg scale-105'
+                          ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                     >
-                      <span className='mr-1'>{icon}</span>
                       {label}
                     </button>
                   ))}
@@ -1254,7 +1210,7 @@ function HomeClient({ initialConfig }: {
                   <div className='col-span-full flex flex-col items-center justify-center py-16 px-4'>
                     {/* SVG 插画 - 空收藏夹 */}
                     <div className='mb-6 relative'>
-                      <div className='absolute inset-0 bg-linear-to-r from-pink-300 to-purple-300 dark:from-pink-600 dark:to-purple-600 opacity-20 blur-3xl rounded-full animate-pulse'></div>
+                      <div className='absolute inset-0 bg-linear-to-r from-pink-300 to-purple-300 dark:from-pink-600 dark:to-purple-600 opacity-20 blur-3xl rounded-full'></div>
                       <svg className='w-32 h-32 relative z-10' viewBox='0 0 200 200' fill='none' xmlns='http://www.w3.org/2000/svg'>
                         {/* 心形主体 */}
                         <path d='M100 170C100 170 30 130 30 80C30 50 50 30 70 30C85 30 95 40 100 50C105 40 115 30 130 30C150 30 170 50 170 80C170 130 100 170 100 170Z'

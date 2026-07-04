@@ -73,13 +73,6 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
       gradient: 'from-blue-500 to-cyan-500',
     },
     {
-      icon: Globe,
-      label: '源浏览器',
-      href: '/source-browser',
-      color: 'text-emerald-500',
-      gradient: 'from-emerald-500 to-green-500',
-    },
-    {
       icon: Film,
       label: '电影',
       href: '/douban?type=movie',
@@ -94,13 +87,6 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
       gradient: 'from-blue-600 to-indigo-600',
     },
     {
-      icon: PlaySquare,
-      label: '短剧',
-      href: '/shortdrama',
-      color: 'text-purple-500',
-      gradient: 'from-purple-500 to-violet-500',
-    },
-    {
       icon: Cat,
       label: '动漫',
       href: '/douban?type=anime',
@@ -113,6 +99,20 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
       href: '/douban?type=show',
       color: 'text-orange-500',
       gradient: 'from-orange-500 to-amber-500',
+    },
+    {
+      icon: PlaySquare,
+      label: '短剧',
+      href: '/shortdrama',
+      color: 'text-purple-500',
+      gradient: 'from-purple-500 to-violet-500',
+    },
+    {
+      icon: Globe,
+      label: '源浏览器',
+      href: '/source-browser',
+      color: 'text-emerald-500',
+      gradient: 'from-emerald-500 to-green-500',
     },
   ]);
 
@@ -222,29 +222,20 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
                   href={item.href}
                   useTransitionNav
                   onClick={() => setActive(item.href)}
-                  className='group relative flex items-center gap-2 px-3 lg:px-4 py-2 rounded-full transition-all duration-300 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 whitespace-nowrap shrink-0'
+                  className='group relative flex items-center gap-2 px-3 lg:px-4 py-2 rounded-full transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50 whitespace-nowrap shrink-0'
                 >
-                  {/* Active indicator */}
-                  {active && (
-                    <div
-                      className={`absolute inset-0 bg-linear-to-r ${item.gradient} opacity-10 rounded-full animate-pulse`}
-                    />
-                  )}
-
                   {/* Icon */}
-                  <div className='relative'>
-                    <Icon
-                      className={`w-5 h-5 transition-all duration-300 ${
-                        active
-                          ? item.color
-                          : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200'
-                      } ${active ? 'scale-110' : 'group-hover:scale-110'}`}
-                    />
-                  </div>
+                  <Icon
+                    className={`w-5 h-5 transition-colors ${
+                      active
+                        ? item.color
+                        : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200'
+                    }`}
+                  />
 
                   {/* Label */}
                   <span
-                    className={`text-sm font-medium transition-all duration-300 ${
+                    className={`text-sm font-medium transition-colors ${
                       active
                         ? `${item.color} font-semibold`
                         : 'text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100'
@@ -252,13 +243,6 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
                   >
                     {item.label}
                   </span>
-
-                  {/* Bottom active border */}
-                  {active && (
-                    <div
-                      className={`absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r ${item.gradient} rounded-full`}
-                    />
-                  )}
                 </FastLink>
               );
             })}
@@ -269,10 +253,10 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
               {showAIButton && onAIButtonClick && (
                 <button
                   onClick={onAIButtonClick}
-                  className='relative p-2 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 active:scale-95 transition-all duration-200 shadow-lg shadow-blue-500/30 group'
+                  className='relative p-2 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-colors shadow-lg shadow-blue-500/30 group'
                   aria-label='AI 推荐'
                 >
-                  <Sparkles className='h-5 w-5 group-hover:scale-110 transition-transform duration-300' />
+                  <Sparkles className='h-5 w-5' />
                 </button>
               )}
               <ThemeToggle />
@@ -319,7 +303,7 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
                       setActive(item.href);
                       setShowMoreMenu(false);
                     }}
-                    className='flex flex-col items-center gap-2 p-3 rounded-2xl transition-all duration-300 active:scale-95 hover:bg-gray-100/50 dark:hover:bg-gray-800/50'
+                    className='flex flex-col items-center gap-2 p-3 rounded-2xl transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50'
                   >
                     <div
                       className={`flex items-center justify-center w-12 h-12 rounded-2xl ${
@@ -373,15 +357,15 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
                 href={item.href}
                 useTransitionNav
                 onClick={() => setActive(item.href)}
-                className='flex flex-col items-center justify-center min-w-[60px] flex-1 py-2 px-1 transition-all duration-200 active:scale-95'
+                className='flex flex-col items-center justify-center min-w-[60px] flex-1 py-2 px-1 transition-colors'
               >
                 <Icon
-                  className={`w-6 h-6 mb-1 transition-colors duration-200 ${
+                  className={`w-6 h-6 mb-1 transition-colors ${
                     active ? item.color : 'text-gray-600 dark:text-gray-400'
                   }`}
                 />
                 <span
-                  className={`text-[10px] font-medium transition-colors duration-200 ${
+                  className={`text-[10px] font-medium transition-colors ${
                     active ? item.color : 'text-gray-600 dark:text-gray-400'
                   }`}
                 >
@@ -394,7 +378,7 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
           {/* More button */}
           <button
             onClick={() => setShowMoreMenu(true)}
-            className='flex flex-col items-center justify-center min-w-[60px] flex-1 py-2 px-1 transition-all duration-200 active:scale-95'
+            className='flex flex-col items-center justify-center min-w-[60px] flex-1 py-2 px-1 transition-colors'
           >
             <MoreHorizontal className='w-6 h-6 mb-1 text-gray-600 dark:text-gray-400' />
             <span className='text-[10px] font-medium text-gray-600 dark:text-gray-400'>更多</span>
