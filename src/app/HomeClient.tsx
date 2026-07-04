@@ -19,7 +19,6 @@ import { useTMDBLogos } from '@/hooks/useTMDBLogo';
 import { getDoubanDetails } from '@/lib/douban.client';
 import { DoubanItem } from '@/lib/types';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
-import { CinematicLoadingFallback } from '@/components/CinematicLoadingFallback';
 import { useFavoritesQuery } from '@/hooks/useFavoritesQuery';
 import { usePlayRecordsQuery } from '@/hooks/usePlayRecordsQuery';
 import { useRemindersQuery } from '@/hooks/useRemindersQuery';
@@ -798,20 +797,8 @@ function HomeClient({ initialConfig }: {
     localStorage.setItem('hasSeenAnnouncement', announcement); // 记录已查看弹窗
   };
 
-  // 🔥 Show cinematic loading screen while data is being fetched
-  // This ensures users see the beautiful loading animation instead of skeleton screens
-  // 🔥 Use overlay instead of unmounting to prevent component remount issues
-  const showCinematicLoading = loading;
-
   return (
     <PageLayout>
-      {/* 🔥 Cinematic loading overlay - doesn't unmount content */}
-      {showCinematicLoading && (
-        <div className="fixed inset-0 z-50">
-          <CinematicLoadingFallback />
-        </div>
-      )}
-
       {/* Telegram 新用户欢迎弹窗 */}
       <TelegramWelcomeModal />
 
