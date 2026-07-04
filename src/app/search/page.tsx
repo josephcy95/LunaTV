@@ -1358,14 +1358,12 @@ function SearchPageClient() {
         <div className='mb-8'>
           {/* 搜索类型选项卡 - 移动优先响应式设计 */}
           <div className='max-w-3xl mx-auto mb-6 px-3 sm:px-0'>
-            {/* 移动端：可滚动横向布局；桌面端：居中排列 */}
             <div className='overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0'>
-              <div className='inline-flex sm:flex items-center justify-start sm:justify-center min-w-full sm:min-w-0 bg-gradient-to-r from-gray-100 via-white to-gray-100 dark:from-gray-800/95 dark:via-gray-750/95 dark:to-gray-800/95 rounded-2xl p-2 gap-2 sm:gap-2.5 shadow-xl border-2 border-gray-200/70 dark:border-gray-600/70 backdrop-blur-md'>
+              <div className='inline-flex sm:flex items-center justify-start sm:justify-center min-w-full sm:min-w-0 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 gap-1 sm:gap-1.5 border border-gray-200 dark:border-gray-700'>
                 <button
                   type='button'
                   onClick={() => {
                     setSearchType('video');
-                    // 切换到影视搜索时，清除网盘、YouTube和TMDB演员搜索状态
                     setNetdiskResults(null);
                     setNetdiskError(null);
                     setNetdiskTotal(0);
@@ -1373,67 +1371,60 @@ function SearchPageClient() {
                     setYoutubeError(null);
                     setTmdbActorResults(null);
                     setTmdbActorError(null);
-                    // 如果有搜索词且当前显示结果，触发影视搜索
                     const currentQuery = searchQuery.trim() || searchParams?.get('q');
                     if (currentQuery && showResults) {
                       router.push(`/search?q=${encodeURIComponent(currentQuery)}`);
                     }
                   }}
-                  className={`flex-shrink-0 px-4 sm:px-6 py-3 text-sm sm:text-base font-bold rounded-xl transition-all duration-300 whitespace-nowrap min-w-[110px] sm:min-w-0 ${
+                  className={`flex-shrink-0 px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
                     searchType === 'video'
-                      ? 'bg-gradient-to-br from-green-400 via-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/50 scale-105 ring-2 ring-green-400/60 dark:ring-green-500/80'
-                      : 'bg-gray-200/60 dark:bg-gray-700/80 text-gray-800 dark:text-gray-100 border-2 border-gray-300/50 dark:border-gray-600/50 shadow-md hover:bg-gray-300/80 dark:hover:bg-gray-600/90 hover:scale-105 hover:shadow-lg active:scale-100'
+                      ? 'bg-green-600 text-white'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
-                  🎬 影视资源
+                  影视资源
                 </button>
                 <button
                   type='button'
                   onClick={() => {
                     setSearchType('netdisk');
-                    // 清除之前的网盘搜索状态，确保重新开始
                     setNetdiskError(null);
                     setNetdiskResults(null);
                     setYoutubeResults(null);
                     setYoutubeError(null);
                     setTmdbActorResults(null);
                     setTmdbActorError(null);
-                    // 如果当前有搜索词，立即触发网盘搜索
                     const currentQuery = searchQuery.trim() || searchParams?.get('q');
                     if (currentQuery && showResults) {
                       handleNetDiskSearch(currentQuery);
                     }
                   }}
-                  className={`flex-shrink-0 px-4 sm:px-6 py-3 text-sm sm:text-base font-bold rounded-xl transition-all duration-300 whitespace-nowrap min-w-[110px] sm:min-w-0 ${
+                  className={`flex-shrink-0 px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
                     searchType === 'netdisk'
-                      ? 'bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/50 scale-105 ring-2 ring-blue-400/60 dark:ring-blue-500/80'
-                      : 'bg-gray-200/60 dark:bg-gray-700/80 text-gray-800 dark:text-gray-100 border-2 border-gray-300/50 dark:border-gray-600/50 shadow-md hover:bg-gray-300/80 dark:hover:bg-gray-600/90 hover:scale-105 hover:shadow-lg active:scale-100'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
-                  💾 网盘资源
+                  网盘资源
                 </button>
                 <button
                   type='button'
                   onClick={() => {
                     const wasAlreadyYoutube = searchType === 'youtube';
                     setSearchType('youtube');
-                    // 清除之前的YouTube搜索状态，确保重新开始
                     setYoutubeError(null);
                     setYoutubeWarning(null);
                     setYoutubeResults(null);
-                    // 注意：不重置排序和内容类型，保持用户选择
                     setNetdiskResults(null);
                     setNetdiskError(null);
                     setNetdiskTotal(0);
                     setTmdbActorResults(null);
                     setTmdbActorError(null);
-                    // 如果是热门推荐模式，加载地区列表
                     if (youtubeMode === 'popular') {
                       if (youtubeRegions.length === 0) {
                         setTimeout(() => fetchYoutubeRegions(), 0);
                       }
                     }
-                    // 如果是搜索模式且当前有搜索词，立即触发YouTube搜索
                     if (youtubeMode === 'search') {
                       const currentQuery = searchQuery.trim() || searchParams?.get('q');
                       if (currentQuery && showResults) {
@@ -1441,19 +1432,18 @@ function SearchPageClient() {
                       }
                     }
                   }}
-                  className={`flex-shrink-0 px-4 sm:px-6 py-3 text-sm sm:text-base font-bold rounded-xl transition-all duration-300 whitespace-nowrap min-w-[110px] sm:min-w-0 ${
+                  className={`flex-shrink-0 px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
                     searchType === 'youtube'
-                      ? 'bg-gradient-to-br from-red-400 via-red-500 to-rose-600 text-white shadow-lg shadow-red-500/50 scale-105 ring-2 ring-red-400/60 dark:ring-red-500/80'
-                      : 'bg-gray-200/60 dark:bg-gray-700/80 text-gray-800 dark:text-gray-100 border-2 border-gray-300/50 dark:border-gray-600/50 shadow-md hover:bg-gray-300/80 dark:hover:bg-gray-600/90 hover:scale-105 hover:shadow-lg active:scale-100'
+                      ? 'bg-red-600 text-white'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
-                  📺 YouTube
+                  YouTube
                 </button>
                 <button
                   type='button'
                   onClick={() => {
                     setSearchType('bilibili');
-                    // 清除之前的搜索状态
                     setBilibiliError(null);
                     setBilibiliResults(null);
                     setNetdiskResults(null);
@@ -1463,7 +1453,6 @@ function SearchPageClient() {
                     setYoutubeError(null);
                     setTmdbActorResults(null);
                     setTmdbActorError(null);
-                    // 如果是搜索模式且当前有搜索词，立即触发Bilibili搜索
                     if (bilibiliMode === 'search') {
                       const currentQuery = searchQuery.trim() || searchParams?.get('q');
                       if (currentQuery && showResults) {
@@ -1471,19 +1460,18 @@ function SearchPageClient() {
                       }
                     }
                   }}
-                  className={`flex-shrink-0 px-4 sm:px-6 py-3 text-sm sm:text-base font-bold rounded-xl transition-all duration-300 whitespace-nowrap min-w-[110px] sm:min-w-0 ${
+                  className={`flex-shrink-0 px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
                     searchType === 'bilibili'
-                      ? 'bg-gradient-to-br from-pink-400 via-pink-500 to-rose-600 text-white shadow-lg shadow-pink-500/50 scale-105 ring-2 ring-pink-400/60 dark:ring-pink-500/80'
-                      : 'bg-gray-200/60 dark:bg-gray-700/80 text-gray-800 dark:text-gray-100 border-2 border-gray-300/50 dark:border-gray-600/50 shadow-md hover:bg-gray-300/80 dark:hover:bg-gray-600/90 hover:scale-105 hover:shadow-lg active:scale-100'
+                      ? 'bg-pink-600 text-white'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
-                  📺 Bilibili
+                  Bilibili
                 </button>
                 <button
                   type='button'
                   onClick={() => {
                     setSearchType('tmdb-actor');
-                    // 清除之前的搜索状态
                     setTmdbActorError(null);
                     setTmdbActorResults(null);
                     setNetdiskResults(null);
@@ -1491,19 +1479,18 @@ function SearchPageClient() {
                     setNetdiskTotal(0);
                     setYoutubeResults(null);
                     setYoutubeError(null);
-                    // 如果当前有搜索词，立即触发TMDB演员搜索
                     const currentQuery = searchQuery.trim() || searchParams?.get('q');
                     if (currentQuery && showResults) {
                       handleTmdbActorSearch(currentQuery, tmdbActorType, tmdbFilterState);
                     }
                   }}
-                  className={`flex-shrink-0 px-4 sm:px-6 py-3 text-sm sm:text-base font-bold rounded-xl transition-all duration-300 whitespace-nowrap min-w-[110px] sm:min-w-0 ${
+                  className={`flex-shrink-0 px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
                     searchType === 'tmdb-actor'
-                      ? 'bg-gradient-to-br from-purple-400 via-purple-500 to-violet-600 text-white shadow-lg shadow-purple-500/50 scale-105 ring-2 ring-purple-400/60 dark:ring-purple-500/80'
-                      : 'bg-gray-200/60 dark:bg-gray-700/80 text-gray-800 dark:text-gray-100 border-2 border-gray-300/50 dark:border-gray-600/50 shadow-md hover:bg-gray-300/80 dark:hover:bg-gray-600/90 hover:scale-105 hover:shadow-lg active:scale-100'
+                      ? 'bg-purple-600 text-white'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
-                  🎬 TMDB演员
+                  TMDB演员
                 </button>
               </div>
             </div>
@@ -1512,19 +1499,18 @@ function SearchPageClient() {
           <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
             <div className='relative group'>
               {/* 搜索图标 - 增强动画 */}
-              <Search className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500 transition-all duration-300 group-focus-within:text-green-500 dark:group-focus-within:text-green-400 group-focus-within:scale-110' />
+                <Search className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500 group-focus-within:text-green-500' />
 
-              {/* 搜索框 - 美化版 */}
-              <input
-                id='searchInput'
-                type='text'
-                value={searchQuery}
-                onChange={handleInputChange}
-                onFocus={handleInputFocus}
-                placeholder={searchType === 'video' ? '🎬 搜索电影、电视剧...' : searchType === 'netdisk' ? '💾 搜索网盘资源...' : searchType === 'youtube' ? '📺 搜索YouTube视频...' : searchType === 'bilibili' ? '📺 搜索Bilibili视频...' : '🎭 搜索演员姓名...'}
-                autoComplete="off"
-                className='w-full h-14 rounded-xl bg-white/90 py-4 pl-12 pr-14 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:bg-white border-2 border-gray-200/80 shadow-lg hover:shadow-xl focus:shadow-2xl focus:border-green-400 transition-all duration-300 dark:bg-gray-800/90 dark:text-gray-300 dark:placeholder-gray-500 dark:focus:bg-gray-800 dark:border-gray-700 dark:focus:border-green-500 backdrop-blur-sm'
-              />
+                <input
+                  id='searchInput'
+                  type='text'
+                  value={searchQuery}
+                  onChange={handleInputChange}
+                  onFocus={handleInputFocus}
+                  placeholder={searchType === 'video' ? '搜索电影、电视剧...' : searchType === 'netdisk' ? '搜索网盘资源...' : searchType === 'youtube' ? '搜索YouTube视频...' : searchType === 'bilibili' ? '搜索Bilibili视频...' : '搜索演员姓名...'}
+                  autoComplete="off"
+                  className='w-full h-12 rounded-lg bg-white py-3 pl-12 pr-14 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 border border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:placeholder-gray-500 dark:border-gray-700 dark:focus:border-green-500'
+                />
 
               {/* 清除按钮 - 美化版 */}
               {searchQuery && (
@@ -1536,7 +1522,7 @@ function SearchPageClient() {
                     setShowSuggestions(true); // 清空后显示搜索历史
                     document.getElementById('searchInput')?.focus();
                   }}
-                  className='absolute right-4 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-full bg-gray-200/80 hover:bg-red-500 text-gray-500 hover:text-white transition-all duration-300 hover:scale-110 hover:rotate-90 dark:bg-gray-700/80 dark:text-gray-400 dark:hover:bg-red-600 shadow-sm hover:shadow-md'
+                  className='absolute right-4 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-500 text-gray-500 hover:text-white transition-colors dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-red-600'
                   aria-label='清除搜索内容'
                 >
                   <X className='h-4 w-4' />
@@ -1996,28 +1982,15 @@ function SearchPageClient() {
                               <button
                                 onClick={() => fetchNextYoutubePopular()}
                                 disabled={isFetchingNextYoutubePopular}
-                                className='relative px-8 py-4 rounded-2xl bg-gradient-to-r from-red-50 via-pink-50 to-rose-50 dark:from-red-900/20 dark:via-pink-900/20 dark:to-rose-900/20 border border-red-200/50 dark:border-red-700/50 shadow-lg backdrop-blur-sm overflow-hidden hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed'
+                                className='px-6 py-2.5 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                               >
                                 {isFetchingNextYoutubePopular ? (
-                                  <>
-                                    <div className='absolute inset-0 bg-gradient-to-r from-red-400/10 via-pink-400/10 to-rose-400/10 animate-pulse'></div>
-                                    <div className='relative flex items-center gap-3 justify-center'>
-                                      <div className='relative'>
-                                        <div className='animate-spin rounded-full h-6 w-6 border-[3px] border-red-200 dark:border-red-800'></div>
-                                        <div className='absolute inset-0 animate-spin rounded-full h-6 w-6 border-[3px] border-transparent border-t-red-500 dark:border-t-red-400'></div>
-                                      </div>
-                                      <div className='flex items-center gap-1'>
-                                        <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>加载中</span>
-                                        <span className='flex gap-0.5'>
-                                          <span className='animate-bounce' style={{ animationDelay: '0ms' }}>.</span>
-                                          <span className='animate-bounce' style={{ animationDelay: '150ms' }}>.</span>
-                                          <span className='animate-bounce' style={{ animationDelay: '300ms' }}>.</span>
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </>
+                                  <span className='flex items-center gap-2'>
+                                    <span className='inline-block h-4 w-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin'></span>
+                                    加载中...
+                                  </span>
                                 ) : (
-                                  <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>👆 点我加载更多</span>
+                                  '加载更多'
                                 )}
                               </button>
                             </div>
@@ -2466,24 +2439,10 @@ function SearchPageClient() {
                 </div>
               ) : !isLoading && (filteredAggResults.length > 0 || filteredAllResults.length > 0) ? (
                 <div className='flex justify-center mt-8 py-8'>
-                  <div className='relative px-8 py-5 rounded-2xl bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 border border-blue-200/50 dark:border-blue-700/50 shadow-lg overflow-hidden'>
-                    <div className='absolute inset-0 bg-gradient-to-br from-blue-100/20 to-purple-100/20 dark:from-blue-800/10 dark:to-purple-800/10'></div>
-                    <div className='relative flex flex-col items-center gap-2'>
-                      <div className='relative'>
-                        <div className='w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg'>
-                          <svg className='w-7 h-7 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2.5' d='M5 13l4 4L19 7'></path>
-                          </svg>
-                        </div>
-                        <div className='absolute inset-0 rounded-full bg-blue-400/30 animate-ping'></div>
-                      </div>
-                      <div className='text-center'>
-                        <p className='text-base font-semibold text-gray-800 dark:text-gray-200 mb-1'>搜索完成</p>
-                        <p className='text-xs text-gray-600 dark:text-gray-400'>
-                          共找到 {viewMode === 'agg' ? filteredAggResults.length : filteredAllResults.length} 个结果
-                        </p>
-                      </div>
-                    </div>
+                  <div className='px-6 py-4 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-center'>
+                    <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                      搜索完成，共找到 {viewMode === 'agg' ? filteredAggResults.length : filteredAllResults.length} 个结果
+                    </p>
                   </div>
                 </div>
               ) : null}
