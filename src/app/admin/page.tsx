@@ -450,6 +450,7 @@ interface CustomCategory {
 
 // 可折叠标签组件
 interface CollapsibleTabProps {
+  id?: string;
   title: string;
   icon?: React.ReactNode;
   isExpanded: boolean;
@@ -458,6 +459,7 @@ interface CollapsibleTabProps {
 }
 
 const CollapsibleTab = ({
+  id,
   title,
   icon,
   isExpanded,
@@ -465,7 +467,7 @@ const CollapsibleTab = ({
   children,
 }: CollapsibleTabProps) => {
   return (
-    <div className='rounded-xl shadow-sm mb-4 overflow-hidden bg-white/80 backdrop-blur-md dark:bg-gray-800/50 dark:ring-1 dark:ring-gray-700'>
+    <div id={id} className='rounded-xl shadow-sm mb-4 overflow-hidden bg-white/80 backdrop-blur-md dark:bg-gray-800/50 dark:ring-1 dark:ring-gray-700 scroll-mt-4'>
       <button
         onClick={onToggle}
         className='w-full px-6 py-4 flex items-center justify-between bg-gray-50/70 dark:bg-gray-800/60 hover:bg-gray-100/80 dark:hover:bg-gray-700/60 transition-colors'
@@ -8094,11 +8096,56 @@ function AdminPageClient() {
             )}
           </div>
 
-          {/* 所有配置标签容器 */}
-          <div className='space-y-6'>
+          <div className='flex gap-6'>
+            {/* 左侧 Sticky 导航菜单 */}
+            <nav className='hidden lg:block w-48 shrink-0'>
+              <div className='sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-hide'>
+                <div className='space-y-0.5'>
+                  {[
+                    { id: 'admin-configFile', label: '配置文件', ownerOnly: true },
+                    { id: 'admin-siteConfig', label: '站点配置' },
+                    { id: 'admin-homePageConfig', label: '首页模块' },
+                    { id: 'admin-userConfig', label: '用户配置' },
+                    { id: 'admin-inviteCodeManager', label: '邀请码', ownerOnly: true },
+                    { id: 'admin-videoSource', label: '视频源' },
+                    { id: 'admin-sourceTest', label: '源检测' },
+                    { id: 'admin-liveSource', label: '直播源' },
+                    { id: 'admin-categoryConfig', label: '分类配置' },
+                    { id: 'admin-netdiskConfig', label: '网盘搜索' },
+                    { id: 'admin-aiRecommendConfig', label: 'AI推荐' },
+                    { id: 'admin-youtubeConfig', label: 'YouTube' },
+                    { id: 'admin-bilibiliConfig', label: 'Bilibili' },
+                    { id: 'admin-embyConfig', label: 'Emby' },
+                    { id: 'admin-downloadConfig', label: '下载配置' },
+                    { id: 'admin-customAdFilter', label: '去广告' },
+                    { id: 'admin-watchRoomConfig', label: '观影室' },
+                    { id: 'admin-tvboxSecurityConfig', label: 'TVBox安全' },
+                    { id: 'admin-trustedNetworkConfig', label: '信任网络', ownerOnly: true },
+                    { id: 'admin-danmuApiConfig', label: '弹幕API', ownerOnly: true },
+                    { id: 'admin-telegramAuthConfig', label: 'Telegram', ownerOnly: true },
+                    { id: 'admin-oidcAuthConfig', label: 'OIDC', ownerOnly: true },
+                    { id: 'admin-cacheManager', label: '缓存管理' },
+                    { id: 'admin-dataMigration', label: '数据迁移' },
+                    { id: 'admin-performanceMonitor', label: '性能监控' },
+                  ].filter(item => !item.ownerOnly || role === 'owner').map((item) => (
+                    <a
+                      key={item.id}
+                      href={`#${item.id}`}
+                      className='block px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors'
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </nav>
+
+            {/* 右侧配置内容 */}
+            <div className='flex-1 min-w-0 space-y-6'>
             {/* 配置文件标签 - 仅站长可见 */}
             {role === 'owner' && (
               <CollapsibleTab
+                id='admin-configFile'
                 title='配置文件'
                 icon={
                   <FileText
@@ -8115,6 +8162,7 @@ function AdminPageClient() {
 
             {/* 站点配置标签 */}
             <CollapsibleTab
+              id='admin-siteConfig'
               title='站点配置'
               icon={
                 <Settings
@@ -8130,6 +8178,7 @@ function AdminPageClient() {
 
             {/* 首页模块配置标签 */}
             <CollapsibleTab
+              id='admin-homePageConfig'
               title='首页模块配置'
               icon={
                 <Layout
@@ -8145,6 +8194,7 @@ function AdminPageClient() {
 
             {/* 用户配置标签 */}
             <CollapsibleTab
+              id='admin-userConfig'
               title='用户配置'
               icon={
                 <Users size={20} className='text-gray-600 dark:text-gray-400' />
@@ -8162,6 +8212,7 @@ function AdminPageClient() {
             {/* 邀请码管理标签 - 仅站长可见 */}
             {role === 'owner' && (
               <CollapsibleTab
+                id='admin-inviteCodeManager'
                 title='邀请码管理'
                 icon={
                   <Ticket size={20} className='text-blue-500 dark:text-blue-400' />
@@ -8175,6 +8226,7 @@ function AdminPageClient() {
 
             {/* 视频源配置标签 */}
             <CollapsibleTab
+              id='admin-videoSource'
               title='视频源配置'
               icon={
                 <Video size={20} className='text-gray-600 dark:text-gray-400' />
@@ -8187,6 +8239,7 @@ function AdminPageClient() {
 
             {/* 源检测标签 */}
             <CollapsibleTab
+              id='admin-sourceTest'
               title='源检测'
               icon={
                 <TestTube size={20} className='text-gray-600 dark:text-gray-400' />
@@ -8199,6 +8252,7 @@ function AdminPageClient() {
 
             {/* 直播源配置标签 */}
             <CollapsibleTab
+              id='admin-liveSource'
               title='直播源配置'
               icon={
                 <Tv size={20} className='text-gray-600 dark:text-gray-400' />
@@ -8211,6 +8265,7 @@ function AdminPageClient() {
 
             {/* 分类配置标签 */}
             <CollapsibleTab
+              id='admin-categoryConfig'
               title='分类配置'
               icon={
                 <FolderOpen
@@ -8226,6 +8281,7 @@ function AdminPageClient() {
 
             {/* 网盘搜索配置标签 */}
             <CollapsibleTab
+              id='admin-netdiskConfig'
               title='网盘搜索配置'
               icon={
                 <Database
@@ -8241,6 +8297,7 @@ function AdminPageClient() {
 
             {/* AI推荐配置标签 */}
             <CollapsibleTab
+              id='admin-aiRecommendConfig'
               title='AI推荐配置'
               icon={
                 <Brain
@@ -8256,6 +8313,7 @@ function AdminPageClient() {
 
             {/* YouTube配置标签 */}
             <CollapsibleTab
+              id='admin-youtubeConfig'
               title='YouTube配置'
               icon={
                 <Video
@@ -8271,6 +8329,7 @@ function AdminPageClient() {
 
             {/* Bilibili配置标签 */}
             <CollapsibleTab
+              id='admin-bilibiliConfig'
               title='Bilibili配置'
               icon={
                 <Video
@@ -8302,6 +8361,7 @@ function AdminPageClient() {
 
             {/* Emby配置标签 */}
             <CollapsibleTab
+              id='admin-embyConfig'
               title='Emby私人影库'
               icon={
                 <FolderOpen
@@ -8317,6 +8377,7 @@ function AdminPageClient() {
 
             {/* 下载配置标签 */}
             <CollapsibleTab
+              id='admin-downloadConfig'
               title='下载配置'
               icon={
                 <Download
@@ -8332,6 +8393,7 @@ function AdminPageClient() {
 
             {/* 自定义去广告标签 */}
             <CollapsibleTab
+              id='admin-customAdFilter'
               title='自定义去广告'
               icon={
                 <Video
@@ -8347,6 +8409,7 @@ function AdminPageClient() {
 
             {/* 观影室配置标签 */}
             <CollapsibleTab
+              id='admin-watchRoomConfig'
               title='观影室配置'
               icon={
                 <Users
@@ -8362,6 +8425,7 @@ function AdminPageClient() {
 
             {/* TVBox安全配置标签 */}
             <CollapsibleTab
+              id='admin-tvboxSecurityConfig'
               title='TVBox安全配置'
               icon={
                 <Settings
@@ -8378,6 +8442,7 @@ function AdminPageClient() {
             {/* 信任网络配置 - 仅站长可见 */}
             {role === 'owner' && (
               <CollapsibleTab
+                id='admin-trustedNetworkConfig'
                 title='信任网络配置'
                 icon={
                   <Shield
@@ -8395,6 +8460,7 @@ function AdminPageClient() {
             {/* 弹幕API配置 - 仅站长可见 */}
             {role === 'owner' && (
               <CollapsibleTab
+                id='admin-danmuApiConfig'
                 title='弹幕API配置'
                 icon={
                   <MessageSquare
@@ -8412,6 +8478,7 @@ function AdminPageClient() {
             {/* Telegram 登录配置 - 仅站长可见 */}
             {role === 'owner' && (
               <CollapsibleTab
+                id='admin-telegramAuthConfig'
                 title='Telegram 登录配置'
                 icon={
                   <svg
@@ -8458,6 +8525,7 @@ function AdminPageClient() {
             {/* OIDC 登录配置 - 仅站长可见 */}
             {role === 'owner' && (
               <CollapsibleTab
+                id='admin-oidcAuthConfig'
                 title='OIDC 登录配置'
                 icon={
                   <KeyRound
@@ -8520,6 +8588,7 @@ function AdminPageClient() {
             {/* 缓存管理标签 - 仅站长可见 */}
             {role === 'owner' && (
               <CollapsibleTab
+                id='admin-cacheManager'
                 title='缓存管理'
                 icon={
                   <Database
@@ -8537,6 +8606,7 @@ function AdminPageClient() {
             {/* 数据迁移标签 - 仅站长可见 */}
             {role === 'owner' && (
               <CollapsibleTab
+                id='admin-dataMigration'
                 title='数据迁移'
                 icon={
                   <Database
@@ -8554,6 +8624,7 @@ function AdminPageClient() {
             {/* 性能监控标签 - 仅站长可见 */}
             {role === 'owner' && (
               <CollapsibleTab
+                id='admin-performanceMonitor'
                 title='性能监控'
                 icon={
                   <Activity
@@ -8567,6 +8638,7 @@ function AdminPageClient() {
                 <PerformanceMonitor />
               </CollapsibleTab>
             )}
+            </div>
           </div>
         </div>
       </div>
