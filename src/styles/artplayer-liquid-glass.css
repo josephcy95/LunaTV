@@ -94,8 +94,26 @@
 }
 
 /* 音量面板：更靠近音量图标 */
-.art-control-volume .art-volume-panel {
+.artplayer-plugin-liquid-glass .art-control-volume {
+  position: relative !important;
+  z-index: 1200 !important;
+}
+
+.artplayer-plugin-liquid-glass .art-control-volume .art-volume-panel {
   bottom: calc(var(--art-control-height) - 4px) !important;
+  z-index: 1201 !important;
+}
+
+/* 让鼠标从音量图标移动到弹出的 slider 时，不会被进度条抢走 hover */
+.artplayer-plugin-liquid-glass .art-control-volume:hover::before,
+.artplayer-plugin-liquid-glass .art-control-volume:focus-within::before {
+  content: '';
+  position: absolute;
+  right: -12px;
+  bottom: 100%;
+  left: -12px;
+  z-index: 1200;
+  height: 56px;
 }
 
 /* 移动端优化 */
