@@ -1519,17 +1519,17 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
               </button>
             </div>
           )}
-        </div>
 
-        {/* 进度条 - overlay在海报底部 */}
-        {config.showProgress && progress !== undefined && (
-          <div className='absolute bottom-0 left-0 right-0 h-1 bg-black/30 z-20'>
-            <div
-              className='h-full bg-red-500'
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        )}
+          {/* 进度条 - overlay在海报底部 */}
+          {config.showProgress && progress !== undefined && (
+            <div className='absolute bottom-0 left-0 right-0 h-1 bg-black/30 z-20'>
+              <div
+                className='h-full bg-red-500'
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          )}
+        </div>
 
         {/* 标题与来源 */}
         <div

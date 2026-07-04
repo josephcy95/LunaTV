@@ -1357,8 +1357,8 @@ function SearchPageClient() {
         {/* 搜索框区域 - 美化版 */}
         <div className='mb-8'>
           {/* 搜索类型选项卡 - 移动优先响应式设计 */}
-          <div className='max-w-3xl mx-auto mb-6 px-3 sm:px-0'>
-            <div className='overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0'>
+          <div className='max-w-3xl mx-auto mb-6'>
+            <div className='overflow-x-auto scrollbar-hide'>
               <div className='inline-flex sm:flex items-center justify-start sm:justify-center min-w-full sm:min-w-0 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 gap-1 sm:gap-1.5 border border-gray-200 dark:border-gray-700'>
                 <button
                   type='button'

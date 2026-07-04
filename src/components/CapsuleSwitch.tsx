@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 
 interface CapsuleSwitchProps {
   options: { label: string; value: string }[];
@@ -15,89 +15,24 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
   onChange,
   className,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [indicatorStyle, setIndicatorStyle] = useState<{
-    left: number;
-    width: number;
-  }>({ left: 0, width: 0 });
-
-  const activeIndex = options.findIndex((opt) => opt.value === active);
-
-  // 更新指示器位置
-  const updateIndicatorPosition = () => {
-    if (
-      activeIndex >= 0 &&
-      buttonRefs.current[activeIndex] &&
-      containerRef.current
-    ) {
-      const button = buttonRefs.current[activeIndex];
-      const container = containerRef.current;
-      if (button && container) {
-        const buttonRect = button.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-
-        if (buttonRect.width > 0) {
-          setIndicatorStyle({
-            left: buttonRect.left - containerRect.left,
-            width: buttonRect.width,
-          });
-        }
-      }
-    }
-  };
-
-  // 组件挂载时立即计算初始位置
-  useEffect(() => {
-    const timeoutId = setTimeout(updateIndicatorPosition, 0);
-    return () => clearTimeout(timeoutId);
-  }, []);
-
-  // 监听选中项变化
-  useEffect(() => {
-    const timeoutId = setTimeout(updateIndicatorPosition, 0);
-    return () => clearTimeout(timeoutId);
-  }, [activeIndex]);
-
   return (
-    <div className="max-w-full overflow-x-auto scrollbar-hide">
-    <div
-      ref={containerRef}
-      className={`relative inline-flex bg-linear-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 rounded-full p-1 ${
-        className || ''
-      }`}
-    >
-      {/* 滑动的渐变背景指示器 */}
-      {indicatorStyle.width > 0 && (
-        <div
-          className='absolute top-1 bottom-1 bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 dark:from-blue-600 dark:via-purple-600 dark:to-pink-600 rounded-full transition-all duration-300 ease-out'
-          style={{
-            left: `${indicatorStyle.left}px`,
-            width: `${indicatorStyle.width}px`,
-          }}
-        />
-      )}
-
-      {options.map((opt, index) => {
+    <div className={`inline-flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 gap-1 border border-gray-200 dark:border-gray-700 ${className || ''}`}>
+      {options.map((opt) => {
         const isActive = active === opt.value;
         return (
           <button
             key={opt.value}
-            ref={(el) => {
-              buttonRefs.current[index] = el;
-            }}
             onClick={() => onChange(opt.value)}
-            className={`relative z-10 w-16 px-3 py-1 text-xs sm:w-20 sm:py-2 sm:text-sm rounded-full font-bold transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer ${
               isActive
-                ? 'text-white dark:text-white'
-                : 'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+                ? 'bg-green-600 text-white'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
             {opt.label}
           </button>
         );
       })}
-    </div>
     </div>
   );
 };

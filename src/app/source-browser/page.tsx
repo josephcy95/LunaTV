@@ -611,31 +611,17 @@ export default function SourceBrowserPage() {
   return (
     <PageLayout activePath='/source-browser'>
       <div className='max-w-7xl mx-auto space-y-6 -mt-6 md:mt-0 pb-40 md:pb-safe-bottom'>
-        {/* Header - 美化版 */}
-        <div className='relative'>
-          <div className='absolute inset-0 bg-linear-to-r from-emerald-400/10 via-green-400/10 to-teal-400/10 rounded-2xl blur-3xl'></div>
-          <div className='relative flex items-center gap-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl'>
-            <div className='relative w-16 h-16 rounded-2xl bg-linear-to-br from-emerald-500 via-green-500 to-teal-500 flex items-center justify-center shadow-lg group hover:scale-110 transition-transform duration-300'>
-              <div className='absolute inset-0 bg-emerald-400 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity'></div>
-              <Layers className='relative w-8 h-8 text-white drop-shadow-lg' />
-            </div>
-            <div className='flex-1'>
-              <h1 className='text-3xl md:text-4xl font-bold bg-linear-to-r from-emerald-600 via-green-600 to-teal-600 dark:from-emerald-400 dark:via-green-400 dark:to-teal-400 bg-clip-text text-transparent'>
-                源浏览器
-              </h1>
-              <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
-                按来源站与分类浏览内容，探索海量影视资源
-              </p>
-            </div>
-            {sources.length > 0 && (
-              <div className='hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800'>
-                <Server className='w-4 h-4 text-emerald-600 dark:text-emerald-400' />
-                <span className='text-sm font-medium text-emerald-700 dark:text-emerald-300'>
-                  {sources.length} 个源可用
-                </span>
-              </div>
-            )}
-          </div>
+        {/* Header */}
+        <div className='flex items-center gap-3'>
+          <Layers className='w-6 h-6 text-emerald-600 dark:text-emerald-400' />
+          <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
+            源浏览器
+          </h1>
+          {sources.length > 0 && (
+            <span className='text-sm text-gray-500 dark:text-gray-400'>
+              {sources.length} 个源可用
+            </span>
+          )}
         </div>
 
         {/* Sources */}
