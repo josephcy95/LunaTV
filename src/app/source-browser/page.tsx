@@ -638,13 +638,11 @@ export default function SourceBrowserPage() {
           </div>
         </div>
 
-        {/* Sources - 美化版 */}
-        <div className='bg-linear-to-br from-white via-emerald-50/30 to-white dark:from-gray-800 dark:via-emerald-900/10 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200/80 dark:border-gray-700/80 backdrop-blur-sm'>
+        {/* Sources */}
+        <div className='bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700'>
           <div className='px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between'>
             <div className='flex items-center gap-2.5 font-semibold text-gray-900 dark:text-white'>
-              <div className='w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center'>
-                <Server className='w-4 h-4 text-emerald-600 dark:text-emerald-400' />
-              </div>
+              <Server className='w-4 h-4 text-emerald-600 dark:text-emerald-400' />
               <span>选择来源站</span>
             </div>
             {!loadingSources && sources.length > 0 && (
@@ -667,14 +665,12 @@ export default function SourceBrowserPage() {
               </div>
             ) : sources.length === 0 ? (
               <div className='text-center py-8'>
-                <div className='w-16 h-16 mx-auto mb-3 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center'>
-                  <Server className='w-8 h-8 text-gray-400' />
-                </div>
+                <Server className='w-8 h-8 text-gray-400 mx-auto mb-3' />
                 <p className='text-sm text-gray-500'>暂无可用来源</p>
               </div>
             ) : (
-              <div className='flex flex-wrap gap-2.5'>
-                {sources.map((s, index) => (
+              <div className='flex flex-wrap gap-2'>
+                {sources.map((s) => (
                   <button
                     key={s.key}
                     onClick={() => {
@@ -682,18 +678,12 @@ export default function SourceBrowserPage() {
                       setActiveCategory('');
                       updateUrlParams({ source: s.key, category: null });
                     }}
-                    className={`group relative px-4 py-2.5 rounded-xl text-sm font-medium border-2 transition-all duration-300 transform hover:scale-105 ${
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       activeSourceKey === s.key
-                        ? 'bg-linear-to-r from-emerald-500 to-green-500 text-white border-transparent shadow-lg shadow-emerald-500/30'
-                        : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-linear-to-r hover:from-emerald-50 hover:to-green-50 dark:hover:from-emerald-900/20 dark:hover:to-green-900/20 hover:border-emerald-300 dark:hover:border-emerald-700'
+                        ? 'bg-emerald-600 text-white'
+                        : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
-                    style={{
-                      animation: `fadeInUp 0.3s ease-out ${index * 0.05}s both`,
-                    }}
                   >
-                    {activeSourceKey === s.key && (
-                      <div className='absolute inset-0 rounded-xl bg-linear-to-r from-emerald-400 to-green-400 blur-lg opacity-50 -z-10'></div>
-                    )}
                     {s.name}
                   </button>
                 ))}
@@ -811,12 +801,10 @@ export default function SourceBrowserPage() {
 
         {/* Categories and Items */}
         {activeSource && (
-          <div className='bg-linear-to-br from-white via-blue-50/20 to-white dark:from-gray-800 dark:via-blue-900/5 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200/80 dark:border-gray-700/80 backdrop-blur-sm'>
+          <div className='bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700'>
             <div className='px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between'>
               <div className='flex items-center gap-2.5 font-semibold text-gray-900 dark:text-white'>
-                <div className='w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center'>
-                  <Tv className='w-4 h-4 text-blue-600 dark:text-blue-400' />
-                </div>
+                <Tv className='w-4 h-4 text-blue-600 dark:text-blue-400' />
                 <span>{activeSource.name} 分类</span>
               </div>
               {categories.length > 0 && (
@@ -980,21 +968,19 @@ export default function SourceBrowserPage() {
         {/* 预览弹层 */}
         {previewOpen && (
           <div
-            className='fixed inset-0 z-1000 flex items-center justify-center bg-black/60 backdrop-blur-sm px-3 py-6 sm:p-4 pb-20 md:pb-4 animate-fadeIn'
+            className='fixed inset-0 z-1000 flex items-center justify-center bg-black/60 px-3 py-6 sm:p-4 pb-20 md:pb-4'
             role='dialog'
             aria-modal='true'
             onClick={() => setPreviewOpen(false)}
           >
             <div
-              className='w-full max-w-5xl bg-linear-to-br from-white via-blue-50/20 to-white dark:from-gray-800 dark:via-blue-900/10 dark:to-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] md:max-h-[90vh] border-2 border-gray-200/50 dark:border-gray-700/50 animate-scaleIn'
+              className='w-full max-w-5xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] md:max-h-[90vh] border border-gray-200 dark:border-gray-700'
               onClick={(e) => e.stopPropagation()}
             >
               {/* 头部 */}
-              <div className='relative flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm'>
+              <div className='relative flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700'>
                 <div className='flex items-center gap-3 flex-1 min-w-0'>
-                  <div className='w-10 h-10 rounded-xl bg-linear-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-lg'>
-                    <Tv className='w-5 h-5 text-white' />
-                  </div>
+                  <Tv className='w-5 h-5 text-blue-600 dark:text-blue-400' />
                   <div className='font-bold text-lg sm:text-xl text-gray-900 dark:text-white truncate'>
                     {previewItem?.title || '详情预览'}
                   </div>
