@@ -819,25 +819,19 @@ export default function SourceBrowserPage() {
                       <p className='text-sm text-gray-500'>暂无分类</p>
                     </div>
                   ) : (
-                    categories.map((c, index) => (
+                    categories.map((c) => (
                       <button
                         key={String(c.type_id)}
                         onClick={() => {
                           setActiveCategory(c.type_id);
                           updateUrlParams({ category: String(c.type_id) });
                         }}
-                        className={`group relative px-4 py-2 rounded-xl text-sm font-medium border-2 transition-all duration-300 transform hover:scale-105 ${
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                           String(activeCategory) === String(c.type_id)
-                            ? 'bg-linear-to-r from-blue-500 to-indigo-500 text-white border-transparent shadow-lg shadow-blue-500/30'
-                            : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-linear-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/20 dark:hover:to-indigo-900/20 hover:border-blue-300 dark:hover:border-blue-700'
+                            ? 'bg-blue-600 text-white'
+                            : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                         }`}
-                        style={{
-                          animation: `fadeInUp 0.3s ease-out ${index * 0.03}s both`,
-                        }}
                       >
-                        {String(activeCategory) === String(c.type_id) && (
-                          <div className='absolute inset-0 rounded-xl bg-linear-to-r from-blue-400 to-indigo-400 blur-lg opacity-50 -z-10'></div>
-                        )}
                         {c.type_name}
                       </button>
                     ))
@@ -868,26 +862,20 @@ export default function SourceBrowserPage() {
                       {filteredAndSorted.map((item, index) => (
                         <div
                           key={item.id}
-                          className='group relative rounded-xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 bg-white dark:bg-gray-800 cursor-pointer hover:shadow-2xl hover:shadow-blue-500/20 hover:-translate-y-1'
+                          className='group relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors'
                           onClick={() => openPreview(item)}
                           role='button'
                           tabIndex={0}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') openPreview(item);
                           }}
-                          style={{
-                            animation: `fadeInUp 0.4s ease-out ${index * 0.02}s both`,
-                          }}
                         >
-                          {/* 发光效果 */}
-                          <div className='absolute inset-0 bg-linear-to-t from-blue-500/0 via-blue-500/0 to-blue-500/0 group-hover:from-blue-500/10 group-hover:via-blue-500/5 group-hover:to-transparent transition-all duration-300 pointer-events-none z-10'></div>
-
-                          <div className='aspect-[2/3] bg-linear-to-br from-gray-100 via-gray-50 to-gray-100 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700 overflow-hidden relative'>
+                          <div className='aspect-[2/3] bg-gray-100 dark:bg-gray-700 overflow-hidden relative'>
                             {item.poster ? (
                               <img
                                 src={item.poster}
                                 alt={item.title}
-                                className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-500'
+                                className='w-full h-full object-cover'
                                 loading='lazy'
                               />
                             ) : (

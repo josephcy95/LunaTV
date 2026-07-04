@@ -183,24 +183,14 @@ export default function ShortDramaPage() {
     <PageLayout activePath="/shortdrama">
       <div className="min-h-screen -mt-6 md:mt-0 pb-40 md:pb-safe-bottom">
         <div className="">
-          {/* 页面标题 */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              短剧频道
-            </h1>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-              精彩短剧，一刷到底
-            </p>
-          </div>
-
           {/* 搜索栏 */}
           <div className="mb-6">
-            <div className="relative group">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500 transition-all duration-300 group-focus-within:text-purple-500 dark:group-focus-within:text-purple-400 group-focus-within:scale-110" />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="搜索短剧名称..."
-                className="w-full rounded-xl border border-gray-200 bg-white/80 pl-11 pr-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent focus:bg-white shadow-sm hover:shadow-md focus:shadow-lg dark:bg-gray-800/80 dark:text-white dark:placeholder-gray-500 dark:border-gray-700 dark:focus:bg-gray-800 dark:focus:ring-purple-500 transition-all duration-300"
+                className="w-full rounded-lg border border-gray-300 bg-white pl-11 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent dark:bg-gray-800 dark:text-white dark:placeholder-gray-500 dark:border-gray-700"
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
               />
@@ -210,43 +200,27 @@ export default function ShortDramaPage() {
           {/* 分类筛选 */}
           {!isSearchMode && categories.length > 0 && (
             <div className="mb-6">
-              <div className="flex items-center space-x-2.5 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-linear-to-br from-purple-500 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
-                  <Filter className="h-4 w-4 text-white" />
-                </div>
-                <span className="text-base font-bold text-gray-900 dark:text-gray-100">
-                  分类筛选
+              <div className="flex items-center space-x-2 mb-3">
+                <Filter className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  分类
                 </span>
-                <div className="flex-1"></div>
-                <span className="text-xs px-2.5 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium">
-                  {categories.length} 个分类
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {categories.length} 个
                 </span>
               </div>
-              <div className="flex flex-wrap gap-2.5">
-                {categories.map((category, index) => (
+              <div className="flex flex-wrap gap-2">
+                {categories.map((category) => (
                   <button
                     key={category.type_id}
                     onClick={() => setSelectedCategory(category.type_id)}
-                    className={`group relative overflow-hidden rounded-xl px-5 py-2.5 text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                       selectedCategory === category.type_id
-                        ? 'bg-linear-to-r from-purple-500 via-purple-600 to-pink-500 text-white shadow-lg shadow-purple-500/40'
-                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-md'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
-                    style={{
-                      animation: `fadeInUp 0.3s ease-out ${index * 0.03}s both`,
-                    }}
                   >
-                    {/* 激活状态的光泽效果 */}
-                    {selectedCategory === category.type_id && (
-                      <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                    )}
-
-                    {/* 未激活状态的悬停背景 */}
-                    {selectedCategory !== category.type_id && (
-                      <div className="absolute inset-0 bg-linear-to-r from-purple-50 via-pink-50 to-purple-50 dark:from-purple-900/20 dark:via-pink-900/20 dark:to-purple-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    )}
-
-                    <span className="relative z-10">{category.type_name}</span>
+                    {category.type_name}
                   </button>
                 ))}
               </div>

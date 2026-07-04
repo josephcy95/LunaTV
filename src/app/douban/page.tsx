@@ -423,19 +423,8 @@ function DoubanPageClient() {
   return (
     <PageLayout activePath={getActivePath()}>
       <div className='overflow-visible -mt-6 md:mt-0 pb-40 md:pb-safe-bottom'>
-        {/* 页面标题和选择器 */}
+        {/* 选择器组件 */}
         <div className='mb-6 sm:mb-8 space-y-4 sm:space-y-6'>
-          {/* 页面标题 */}
-          <div>
-            <h1 className='text-2xl sm:text-3xl font-bold text-gray-800 mb-1 sm:mb-2 dark:text-gray-200'>
-              {getPageTitle()}
-            </h1>
-            <p className='text-sm sm:text-base text-gray-600 dark:text-gray-400'>
-              {getPageDescription()}
-            </p>
-          </div>
-
-          {/* 选择器组件 */}
           {type !== 'custom' ? (
             <div className='relative bg-linear-to-br from-white/80 via-blue-50/30 to-purple-50/30 dark:from-gray-800/60 dark:via-blue-900/20 dark:to-purple-900/20 rounded-2xl p-4 sm:p-6 border border-blue-200/40 dark:border-blue-700/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300'>
               <div className='absolute -top-20 -right-20 w-40 h-40 bg-linear-to-br from-blue-300/20 to-purple-300/20 rounded-full blur-3xl pointer-events-none'></div>

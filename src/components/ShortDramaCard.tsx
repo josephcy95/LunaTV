@@ -273,7 +273,7 @@ function ShortDramaCard({
   return (
     <>
       <div
-        className={`group relative ${className} transition-all duration-300 ease-in-out hover:scale-[1.05] hover:z-30 hover:shadow-2xl cursor-pointer`}
+        className={`group relative ${className} transition-transform hover:scale-[1.02] cursor-pointer`}
         onClick={handleClick}
         onMouseEnter={handlePrefetch}
         onFocus={handlePrefetch}
@@ -313,7 +313,7 @@ function ShortDramaCard({
             src={drama.cover ? `/api/image-proxy?url=${encodeURIComponent(drama.cover)}` : '/placeholder-cover.jpg'}
             alt={drama.name}
             className={`h-full w-full object-cover transition-all duration-700 ease-out ${
-              imageLoaded ? 'opacity-100 blur-0 scale-100 group-hover:scale-105' : 'opacity-0 blur-md scale-105'
+              imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             loading={priority ? undefined : 'lazy'}
             onLoad={() => {
@@ -407,7 +407,7 @@ function ShortDramaCard({
 
         {/* 信息区域 */}
         <div className="mt-2 space-y-1.5">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-linear-to-r group-hover:from-blue-600 group-hover:to-purple-600 dark:group-hover:from-blue-400 dark:group-hover:to-purple-400 transition-all duration-300">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 transition-colors">
             {drama.name}
           </h3>
 

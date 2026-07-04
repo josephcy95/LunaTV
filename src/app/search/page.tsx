@@ -1353,13 +1353,13 @@ function SearchPageClient() {
 
   return (
     <PageLayout activePath='/search'>
-      <div className='overflow-visible mb-10 -mt-6 md:mt-0 pb-40 md:pb-safe-bottom'>
-        {/* 搜索框区域 - 美化版 */}
+      <div className='mb-10 -mt-6 md:mt-0 pb-40 md:pb-safe-bottom overflow-hidden'>
+        {/* 搜索框区域 */}
         <div className='mb-8'>
-          {/* 搜索类型选项卡 - 移动优先响应式设计 */}
+          {/* 搜索类型选项卡 */}
           <div className='max-w-3xl mx-auto mb-6'>
-            <div className='overflow-x-auto scrollbar-hide'>
-              <div className='inline-flex sm:flex items-center justify-start sm:justify-center min-w-full sm:min-w-0 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 gap-1 sm:gap-1.5 border border-gray-200 dark:border-gray-700'>
+            <div className='flex items-center justify-center'>
+              <div className='inline-flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 gap-1 border border-gray-200 dark:border-gray-700'>
                 <button
                   type='button'
                   onClick={() => {
