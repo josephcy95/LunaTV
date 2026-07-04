@@ -617,6 +617,25 @@ function PlayPageClient() {
   const artPlayerRef = useRef<any>(null);
   const artRef = useRef<HTMLDivElement | null>(null);
 
+  const applyControlBarOpacity = (opacity: number) => {
+    const safeOpacity = Math.max(0, Math.min(0.85, opacity));
+    const player = artPlayerRef.current?.template?.$player as HTMLElement | undefined;
+    const bottom = (player?.querySelector('.art-bottom') || document.querySelector('.artplayer-plugin-liquid-glass .art-bottom')) as HTMLElement | null;
+    const liquidGlass = (player?.querySelector('.art-liquid-glass') || document.querySelector('.art-liquid-glass')) as HTMLElement | null;
+
+    if (bottom) {
+      bottom.style.setProperty('background-image', `linear-gradient(to top, rgba(0, 0, 0, ${safeOpacity}), rgba(0, 0, 0, ${safeOpacity * 0.55}), transparent)`, 'important');
+    }
+
+    if (liquidGlass) {
+      liquidGlass.style.setProperty('background-color', 'transparent', 'important');
+      liquidGlass.style.setProperty('background-image', 'none', 'important');
+      liquidGlass.style.setProperty('box-shadow', 'none', 'important');
+      liquidGlass.style.setProperty('backdrop-filter', 'none', 'important');
+      liquidGlass.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
+    }
+  };
+
   // 音轨管理状态
   const [audioTracks, setAudioTracks] = useState<Array<{
     index: number;
@@ -4750,16 +4769,7 @@ function PlayPageClient() {
             onChange: function (item: any) {
               const opacity = item.range[0];
               localStorage.setItem('control_bar_opacity', opacity.toString());
-
-              // 实时应用透明度到毛玻璃容器
-              const liquidGlass = document.querySelector('.art-liquid-glass') as HTMLElement;
-              if (liquidGlass) {
-                // 调整背景色透明度
-                liquidGlass.style.setProperty('background-color', `rgba(0, 0, 0, ${opacity})`, 'important');
-                // 同时调整模糊效果：透明度越低，模糊越少
-                const blurAmount = Math.max(0, opacity * 15); // 0-12px
-                liquidGlass.style.setProperty('backdrop-filter', `blur(${blurAmount}px)`, 'important');
-              }
+              applyControlBarOpacity(opacity);
 
               return `${Math.round(opacity * 100)}%`;
             },
@@ -5046,16 +5056,9 @@ function PlayPageClient() {
           video.style.objectFit = savedObjectFit;
         }
 
-        // 🎨 应用保存的控制栏透明度设置（毛玻璃效果）
+        // 🎨 应用保存的控制栏遮挡度设置到底部渐变
         const savedOpacity = parseFloat(localStorage.getItem('control_bar_opacity') || '0.5');
-        const liquidGlass = document.querySelector('.art-liquid-glass') as HTMLElement;
-        if (liquidGlass) {
-          // 调整背景色透明度
-          liquidGlass.style.setProperty('background-color', `rgba(0, 0, 0, ${savedOpacity})`, 'important');
-          // 同时调整模糊效果：透明度越低，模糊越少
-          const blurAmount = Math.max(0, savedOpacity * 15); // 0-12px
-          liquidGlass.style.setProperty('backdrop-filter', `blur(${blurAmount}px)`, 'important');
-        }
+        applyControlBarOpacity(savedOpacity);
 
         // 添加分辨率徽章layer
         artPlayerRef.current.layers.add({
@@ -5697,7 +5700,7 @@ function PlayPageClient() {
         }
       });
 
-      // 监听全屏事件，进入全屏后自动隐藏控制栏 + 显示标题层 + 应用透明度
+      // 监听全屏事件，进入全屏后自动隐藏控制栏 + 显示标题层 + 应用遮挡度
       artPlayerRef.current.on('fullscreen', (isFullscreen: boolean) => {
         const titleLayer = artPlayerRef.current?.layers['fullscreen-title'];
         if (titleLayer) {
@@ -5708,27 +5711,8 @@ function PlayPageClient() {
             clockLayer.style.display = isFullscreen ? 'flex' : 'none';
           }
 
-        // 应用保存的透明度设置
-        const liquidGlass = artPlayerRef.current?.template?.$player?.querySelector('.art-liquid-glass') as HTMLElement | null;
-        if (liquidGlass) {
-          const savedOpacity = parseFloat(localStorage.getItem('control_bar_opacity') || '0.5');
-          if (isFullscreen) {
-            // 全屏：禁用 backdrop-filter，使用渐变 + 阴影（根据用户透明度调整）
-            liquidGlass.style.setProperty('backdrop-filter', 'none', 'important');
-            liquidGlass.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
-            liquidGlass.style.setProperty('background-color', 'transparent', 'important');
-            liquidGlass.style.setProperty('background-image', `linear-gradient(to top, rgba(0, 0, 0, ${savedOpacity}), rgba(0, 0, 0, ${savedOpacity * 0.6}), transparent)`, 'important');
-            liquidGlass.style.setProperty('box-shadow', `0 -10px 30px rgba(0, 0, 0, ${savedOpacity * 0.8})`, 'important');
-          } else {
-            // 非全屏：恢复毛玻璃效果
-            const blurAmount = Math.max(0, savedOpacity * 15);
-            liquidGlass.style.setProperty('backdrop-filter', `blur(${blurAmount}px)`, 'important');
-            liquidGlass.style.setProperty('-webkit-backdrop-filter', `blur(${blurAmount}px)`, 'important');
-            liquidGlass.style.setProperty('background-color', `rgba(0, 0, 0, ${savedOpacity})`, 'important');
-            liquidGlass.style.setProperty('background-image', 'none', 'important');
-            liquidGlass.style.setProperty('box-shadow', 'none', 'important');
-          }
-        }
+        const savedOpacity = parseFloat(localStorage.getItem('control_bar_opacity') || '0.5');
+        applyControlBarOpacity(savedOpacity);
 
         if (isFullscreen) {
           // 进入全屏后，延迟100ms触发控制栏自动隐藏
@@ -6181,13 +6165,13 @@ function PlayPageClient() {
           >
             {/* 播放器 */}
             <div
-              className={`h-full transition-all duration-300 ease-in-out rounded-xl border border-white/0 dark:border-white/30 ${isEpisodeSelectorCollapsed ? 'col-span-1' : 'md:col-span-3'
+              className={`h-full transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed ? 'col-span-1' : 'md:col-span-3'
                 }`}
             >
               <div className='relative w-full h-[300px] lg:h-full'>
                 <div
                   ref={artRef}
-                  className='bg-black w-full h-full rounded-xl overflow-hidden shadow-lg'
+                  className='bg-black w-full h-full overflow-hidden'
                 ></div>
 
                 {/* WebSR 分屏对比分割线 */}
