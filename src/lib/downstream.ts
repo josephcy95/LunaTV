@@ -24,6 +24,22 @@ interface ApiSearchItem {
   type_name?: string;
 }
 
+function normalizeEpisodeUrl(apiSite: ApiSite, url: string): string {
+  if (apiSite.key !== 'YOGURT') {
+    return url;
+  }
+  try {
+    const parsed = new URL(url);
+    if (parsed.pathname.includes('/media/') && parsed.pathname.endsWith('/index.m3u8')) {
+      parsed.searchParams.set('transcode', 'h264');
+      return parsed.toString();
+    }
+  } catch {
+    return url;
+  }
+  return url;
+}
+
 /**
  * 通用的带缓存搜索函数
  */
@@ -97,14 +113,14 @@ async function searchWithCache(
             ) {
               // 标准格式：第1集$https://xxx.m3u8
               matchTitles.push(episode_title_url[0]);
-              matchEpisodes.push(episode_title_url[1]);
+              matchEpisodes.push(normalizeEpisodeUrl(apiSite, episode_title_url[1]));
             } else if (
               episode_title_url.length === 1 &&
               /^https?:\/\//i.test(episode_title_url[0].trim())
             ) {
               // 纯链接格式：https://xxx.m3u8（无标题信息）
               matchTitles.push(`第${matchEpisodes.length + 1}集`);
-              matchEpisodes.push(episode_title_url[0]);
+              matchEpisodes.push(normalizeEpisodeUrl(apiSite, episode_title_url[0]));
             }
           });
           if (matchEpisodes.length > episodes.length) {
@@ -537,7 +553,7 @@ export async function getDetailFromApi(
           /^https?:\/\//i.test(episode_title_url[1].trim())
         ) {
           matchTitles.push(episode_title_url[0]);
-          matchEpisodes.push(episode_title_url[1]);
+          matchEpisodes.push(normalizeEpisodeUrl(apiSite, episode_title_url[1]));
         }
       });
       if (matchEpisodes.length > episodes.length) {
@@ -550,7 +566,7 @@ export async function getDetailFromApi(
   // 如果播放源为空，则尝试从内容中解析 m3u8
   if (episodes.length === 0 && videoDetail.vod_content) {
     const matches = videoDetail.vod_content.match(M3U8_PATTERN) || [];
-    episodes = matches.map((link: string) => link.replace(/^\$/, ''));
+    episodes = matches.map((link: string) => normalizeEpisodeUrl(apiSite, link.replace(/^\$/, '')));
   }
 
   const result = {
