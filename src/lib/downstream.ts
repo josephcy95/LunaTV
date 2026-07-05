@@ -52,6 +52,7 @@ async function searchWithCache(
     const response = await fetch(url, {
       headers: API_CONFIG.search.headers,
       signal: controller.signal,
+      cache: 'no-store',
     });
 
     clearTimeout(timeoutId);
@@ -496,6 +497,7 @@ export async function getDetailFromApi(
   const response = await fetch(detailUrl, {
     headers: API_CONFIG.detail.headers,
     signal: controller.signal,
+    cache: 'no-store',
   });
 
   clearTimeout(timeoutId);
@@ -584,6 +586,7 @@ async function handleSpecialSourceDetail(
   const response = await fetch(detailUrl, {
     headers: API_CONFIG.detail.headers,
     signal: controller.signal,
+    cache: 'no-store',
   });
 
   clearTimeout(timeoutId);

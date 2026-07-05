@@ -4502,7 +4502,45 @@ function PlayPageClient() {
               startFragPrefetch: !isMobile, // 移动端关闭预取以节省资源
               testBandwidth: !localIsIOS13, // iOS13+关闭带宽测试以快速启动
               
-              /* Loader配置 - 参考官方 fragLoadPolicy */
+              /* Loader配置 - 参考官方 loadPolicy
+               * YogurtTV provider cold manifest resolution can take >60s because
+               * native crypto is serialized and album ids may first resolve to a
+               * child video id. HLS.js defaults manifest loads to 20s, which
+               * aborts before the provider can return a valid playlist. Keep the
+               * longer timeout for manifests/levels as well as fragments.
+               */
+              manifestLoadPolicy: {
+                default: {
+                  maxTimeToFirstByteMs: isMobile ? 30000 : 120000,
+                  maxLoadTimeMs: isMobile ? 90000 : 180000,
+                  timeoutRetry: {
+                    maxNumRetry: isMobile ? 1 : 2,
+                    retryDelayMs: 0,
+                    maxRetryDelayMs: 0,
+                  },
+                  errorRetry: {
+                    maxNumRetry: isMobile ? 2 : 3,
+                    retryDelayMs: 1000,
+                    maxRetryDelayMs: isMobile ? 4000 : 8000,
+                  },
+                },
+              },
+              playlistLoadPolicy: {
+                default: {
+                  maxTimeToFirstByteMs: isMobile ? 30000 : 120000,
+                  maxLoadTimeMs: isMobile ? 90000 : 180000,
+                  timeoutRetry: {
+                    maxNumRetry: isMobile ? 1 : 2,
+                    retryDelayMs: 0,
+                    maxRetryDelayMs: 0,
+                  },
+                  errorRetry: {
+                    maxNumRetry: isMobile ? 2 : 3,
+                    retryDelayMs: 1000,
+                    maxRetryDelayMs: isMobile ? 4000 : 8000,
+                  },
+                },
+              },
               fragLoadPolicy: {
                 default: {
                   maxTimeToFirstByteMs: isMobile ? 6000 : 10000,

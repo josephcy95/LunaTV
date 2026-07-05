@@ -25,7 +25,7 @@ let lastCleanupTime = 0;
  * 生成搜索缓存键：source + query + page
  */
 function makeSearchCacheKey(sourceKey: string, query: string, page: number): string {
-  return `${sourceKey}::${query.trim()}::${page}`;
+  return `v2::${sourceKey}::${query.trim()}::${page}`;
 }
 
 /**

@@ -36,6 +36,15 @@ export async function fetchVideoDetail({
   if (!apiSite) {
     throw new Error('无效的API来源');
   }
+
+  // YogurtTV search rows are summaries; direct detail carries the full episode list.
+  if (apiSite.key === 'YOGURT') {
+    const detail = await getDetailFromApi(apiSite, id);
+    if (detail) {
+      return detail;
+    }
+  }
+
   if (fallbackTitle) {
     try {
       const searchData = await searchFromApi(apiSite, fallbackTitle.trim());

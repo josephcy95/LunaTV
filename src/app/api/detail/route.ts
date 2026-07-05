@@ -264,10 +264,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    // 优先通过搜索匹配（如果有 title）
+    // YogurtTV search rows are catalog summaries; direct detail contains the real episode list.
     let result: any = null;
 
-    if (title.trim()) {
+    if (apiSite.key === 'YOGURT') {
+      try {
+        result = await getDetailFromApi(apiSite, id);
+      } catch {
+        // 直接获取失败时继续走原有搜索 fallback
+      }
+    }
+
+    // 优先通过搜索匹配（如果有 title）
+    if (!result && title.trim()) {
       try {
         const searchResults = await searchFromApi(apiSite, title.trim());
         result = searchResults.find(
