@@ -19,6 +19,15 @@ type VideoInfo = VideoSourceTestResult;
 // 延迟容差：延迟差距小于此值时，优先比较速度（避免因微小延迟差异导致排序抖动）
 const RESPONSE_TIE_BREAKER_MS = 300;
 
+function sourceQualityLabel(source: SearchResult): string {
+  if (source.resolution) return source.resolution;
+  const text = [source.quality_tag, source.remarks, source.class, source.type_name]
+    .filter(Boolean)
+    .join(' ');
+  const match = text.match(/\b(?:4K|3K|2K|1080P|720P|HD|FHD|UHD)\b/i);
+  return match ? match[0].toUpperCase() : '';
+}
+
 interface EpisodeSelectorProps {
   /** 总集数 */
   totalEpisodes: number;
@@ -787,6 +796,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                     const isCurrentSource =
                       source.source?.toString() === currentSource?.toString() &&
                       source.id?.toString() === currentId?.toString();
+                    const qualityLabel = sourceQualityLabel(source);
                     return (
                       <div
                         key={`${source.source}-${source.id}`}
@@ -847,6 +857,11 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                                 </div>
                               )}
                             </div>
+                            {qualityLabel && (
+                              <span className='shrink-0 text-[10px] sm:text-xs px-1.5 py-0.5 rounded bg-purple-500/10 dark:bg-purple-400/20 text-purple-700 dark:text-purple-300 font-semibold leading-none'>
+                                {qualityLabel}
+                              </span>
+                            )}
                           </div>
 
                           {/* 源名称和集数信息 - 垂直居中 */}
