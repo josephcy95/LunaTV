@@ -3809,6 +3809,7 @@ function PlayPageClient() {
         fullscreenWeb: true,
         subtitleOffset: true,
         miniProgressBar: true,
+        hotkey: false,
         mutex: true,
         backdrop: true,
         playsInline: true,
