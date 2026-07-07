@@ -47,6 +47,7 @@ import { getDoubanDetails, getDoubanComments, getDoubanActorMovies } from '@/lib
 import { SearchResult } from '@/lib/types';
 import { getVideoResolutionFromM3u8, processImageUrl, VideoSourceTestResult } from '@/lib/utils';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
+import { useSite } from '@/components/SiteProvider';
 import { useWatchRoomSync } from './hooks/useWatchRoomSync';
 import {
   useSavePlayRecordMutation,
@@ -179,6 +180,7 @@ function PlayPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { createTask, setShowDownloadPanel } = useDownload();
+  const { siteName } = useSite();
   const watchRoom = useWatchRoomContextSafe();
 
   // TanStack Query mutations
@@ -674,6 +676,29 @@ function PlayPageClient() {
 
   // 总集数
   const totalEpisodes = detail?.episodes?.length || 0;
+
+  useEffect(() => {
+    const title = videoTitle.trim();
+    const episodeTitle =
+      totalEpisodes > 1
+        ? detail?.episodes_titles?.[currentEpisodeIndex]?.trim() ||
+          `第 ${currentEpisodeIndex + 1} 集`
+        : '';
+
+    document.title = title
+      ? `${title}${episodeTitle ? ` - ${episodeTitle}` : ''} | ${siteName}`
+      : siteName;
+
+    return () => {
+      document.title = siteName;
+    };
+  }, [
+    videoTitle,
+    currentEpisodeIndex,
+    detail?.episodes_titles,
+    totalEpisodes,
+    siteName,
+  ]);
 
   // 用于记录是否需要在播放器 ready 后跳转到指定进度
   const resumeTimeRef = useRef<number | null>(null);
