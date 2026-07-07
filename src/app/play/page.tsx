@@ -2744,10 +2744,6 @@ function PlayPageClient() {
       // 🚀 设置换源标识，防止useEffect重复处理弹幕
       isSourceChangingRef.current = true;
 
-      // 显示换源加载状态
-      setVideoLoadingStage('sourceChanging');
-      setIsVideoLoading(true);
-
       // 清除集数切换定时器
       if (episodeSwitchTimeoutRef.current) {
         clearTimeout(episodeSwitchTimeoutRef.current);
@@ -2756,6 +2752,7 @@ function PlayPageClient() {
 
       // 记录当前播放进度（仅在同一集数切换时恢复）
       const currentPlayTime = artPlayerRef.current?.currentTime || 0;
+      resumeTimeRef.current = currentPlayTime > 1 ? currentPlayTime : null;
       console.log('换源前当前播放时间:', currentPlayTime);
 
       // 🔥 关键修复：将播放进度保存到 sessionStorage，防止组件重新挂载时丢失
@@ -3767,6 +3764,14 @@ function PlayPageClient() {
               artPlayerRef.current.currentTime = 0;
               console.log('🎯 集数切换完成，重置播放时间为 0');
               isEpisodeChangingRef.current = false;
+            } else if (currentTime > 1) {
+              const duration = artPlayerRef.current.duration || 0;
+              const targetTime =
+                duration && currentTime >= duration - 2
+                  ? Math.max(0, duration - 5)
+                  : currentTime;
+              artPlayerRef.current.currentTime = targetTime;
+              resumeTimeRef.current = null;
             }
           }
         }).catch((error: any) => {
