@@ -507,6 +507,7 @@ function PlayPageClient() {
   const spaceLongPressConsumedRef = useRef(false);
   const fastForwardActiveRef = useRef(false);
   const fastForwardPreviousRateRef = useRef(1);
+  const fastForwardWasPausedRef = useRef(false);
 
   // 音轨管理状态
   // 音轨管理状态
@@ -3112,11 +3113,27 @@ function PlayPageClient() {
 
   const startTemporaryFastForward = () => {
     const player = artPlayerRef.current;
-    if (!player || player.paused || fastForwardActiveRef.current) return;
+    if (!player || fastForwardActiveRef.current) return;
 
     const currentRate = Number(player.playbackRate || player.video?.playbackRate || 1);
+    const wasPaused = Boolean(player.paused || player.video?.paused);
     fastForwardPreviousRateRef.current = currentRate || 1;
+    fastForwardWasPausedRef.current = wasPaused;
     fastForwardActiveRef.current = true;
+
+    if (wasPaused) {
+      try {
+        const playResult = player.play?.() || player.video?.play?.();
+        if (playResult && typeof playResult.catch === 'function') {
+          playResult.catch(() => {
+            // Browser may reject play without a valid user gesture.
+          });
+        }
+      } catch {
+        // ignore play failures
+      }
+    }
+
     player.playbackRate = 2;
     if (player.video) {
       player.video.playbackRate = 2;
@@ -3134,6 +3151,17 @@ function PlayPageClient() {
     if (player.video) {
       player.video.playbackRate = previousRate;
     }
+
+    if (fastForwardWasPausedRef.current) {
+      try {
+        player.pause?.();
+        player.video?.pause?.();
+      } catch {
+        // ignore pause failures
+      }
+    }
+
+    fastForwardWasPausedRef.current = false;
   };
 
   const isTextInputTarget = (target: EventTarget | null) => {
