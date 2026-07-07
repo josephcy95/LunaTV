@@ -6,7 +6,6 @@ import { SqliteStorage } from './sqlite.db';
 import { RedisStorage } from './redis.db';
 import {
   ContentStat,
-  EpisodeSkipConfig,
   Favorite,
   IStorage,
   PlayRecord,
@@ -380,98 +379,6 @@ export class DbManager {
     if (typeof (this.storage as any).setAdminConfig === 'function') {
       await (this.storage as any).setAdminConfig(config);
     }
-  }
-
-  // ---------- 跳过片头片尾配置 ----------
-  async getSkipConfig(
-    userName: string,
-    source: string,
-    id: string
-  ): Promise<EpisodeSkipConfig | null> {
-    incrementDbQuery();
-    if (typeof (this.storage as any).getSkipConfig === 'function') {
-      return (this.storage as any).getSkipConfig(userName, source, id);
-    }
-    return null;
-  }
-
-  async setSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-    config: EpisodeSkipConfig
-  ): Promise<void> {
-    incrementDbQuery();
-    if (typeof (this.storage as any).setSkipConfig === 'function') {
-      await (this.storage as any).setSkipConfig(userName, source, id, config);
-    }
-  }
-
-  async deleteSkipConfig(
-    userName: string,
-    source: string,
-    id: string
-  ): Promise<void> {
-    incrementDbQuery();
-    if (typeof (this.storage as any).deleteSkipConfig === 'function') {
-      await (this.storage as any).deleteSkipConfig(userName, source, id);
-    }
-  }
-
-  async getAllSkipConfigs(
-    userName: string
-  ): Promise<{ [key: string]: EpisodeSkipConfig }> {
-    incrementDbQuery();
-    if (typeof (this.storage as any).getAllSkipConfigs === 'function') {
-      return (this.storage as any).getAllSkipConfigs(userName);
-    }
-    return {};
-  }
-
-  // ---------- 剧集跳过配置（新版，多片段支持）----------
-  async getEpisodeSkipConfig(
-    userName: string,
-    source: string,
-    id: string
-  ): Promise<EpisodeSkipConfig | null> {
-    incrementDbQuery();
-    if (typeof (this.storage as any).getEpisodeSkipConfig === 'function') {
-      return (this.storage as any).getEpisodeSkipConfig(userName, source, id);
-    }
-    return null;
-  }
-
-  async saveEpisodeSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-    config: EpisodeSkipConfig
-  ): Promise<void> {
-    incrementDbQuery();
-    if (typeof (this.storage as any).saveEpisodeSkipConfig === 'function') {
-      await (this.storage as any).saveEpisodeSkipConfig(userName, source, id, config);
-    }
-  }
-
-  async deleteEpisodeSkipConfig(
-    userName: string,
-    source: string,
-    id: string
-  ): Promise<void> {
-    incrementDbQuery();
-    if (typeof (this.storage as any).deleteEpisodeSkipConfig === 'function') {
-      await (this.storage as any).deleteEpisodeSkipConfig(userName, source, id);
-    }
-  }
-
-  async getAllEpisodeSkipConfigs(
-    userName: string
-  ): Promise<{ [key: string]: EpisodeSkipConfig }> {
-    incrementDbQuery();
-    if (typeof (this.storage as any).getAllEpisodeSkipConfigs === 'function') {
-      return (this.storage as any).getAllEpisodeSkipConfigs(userName);
-    }
-    return {};
   }
 
   // ---------- 数据清理 ----------

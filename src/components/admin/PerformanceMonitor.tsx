@@ -66,7 +66,6 @@ export default function PerformanceMonitor() {
       '/api/series': '剧集管理',
       '/api/favorites': '收藏管理',
       '/api/playrecords': '播放记录',
-      '/api/skipconfigs': '跳过配置',
       '/api/search': '视频搜索',
       '/api/source-browser/list': '视频列表',
       '/api/detail': '视频详情',
@@ -113,7 +112,6 @@ export default function PerformanceMonitor() {
       if (apiFilter === 'series') return req.path.startsWith('/api/series');
       if (apiFilter === 'favorites') return req.path.startsWith('/api/favorites');
       if (apiFilter === 'playrecords') return req.path.startsWith('/api/playrecords');
-      if (apiFilter === 'skipconfigs') return req.path.startsWith('/api/skipconfigs');
       if (apiFilter === 'search') return req.path.startsWith('/api/search');
       if (apiFilter === 'list') return req.path.startsWith('/api/source-browser/list');
       if (apiFilter === 'detail') return req.path.startsWith('/api/detail');
@@ -384,7 +382,6 @@ export default function PerformanceMonitor() {
             <option value='danmu'>弹幕获取</option>
             <option value='favorites'>收藏管理</option>
             <option value='playrecords'>播放记录</option>
-            <option value='skipconfigs'>跳过配置</option>
             <option value='cron'>Cron 任务</option>
             <option value='series'>剧集管理</option>
             <option value='admin'>管理后台</option>

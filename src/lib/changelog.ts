@@ -307,7 +307,6 @@ export const changelog: ChangelogEntry[] = [
     date: "2026-03-21",
     added: [
     "🔔 下载Toast通知：下载开始时显示即时Toast通知，提升下载体验",
-    "🎯 快速跳过预设：添加灵活的片头片尾快速跳过预设功能",
     "🙈 隐藏短剧API配置：从管理后台隐藏短剧API配置项",
     "🖥️ 超宽显示器视频显示模式：添加超宽显示器视频显示模式控制",
     "🔓 Emby免密登录：支持Emby免密登录并添加认证模式切换器",
@@ -319,8 +318,7 @@ export const changelog: ChangelogEntry[] = [
     "📦 升级TanStack包：@tanstack/react-query从5.90.21升级到5.91.0，@tanstack/react-virtual从3.13.22升级到3.13.23",
     "📚 部署文档更新：移除Zeabur，添加Vercel/Render部署指南",
     "🎬 升级ArtPlayer至5.4.0和弹幕插件至5.3.0",
-    "🔄 重构搜索：将EventSource迁移到experimental_streamedQuery",
-    "🎯 重构跳过预设：从快速跳过按钮重新设计为片头片尾模板"
+    "🔄 重构搜索：将EventSource迁移到experimental_streamedQuery"
     ],
     fixed: [
     "📥 修复短剧下载系统：修复短剧下载功能、IndexedDB序列化问题和AES加密任务序列化错误，改善下载UX",
@@ -1026,13 +1024,6 @@ export const changelog: ChangelogEntry[] = [
     "⚡ 优化短剧分页分类UI闪烁问题：通过智能加载状态管理，切换分类时保持旧内容显示直到新内容加载完成，大幅减少UI闪烁"
     ],
     fixed: [
-    "🔧 修复片尾自动播放导致跳跃2集的问题：",
-    "添加冷却机制防止双集跳过",
-    "在SkipController添加episodeIndex prop修复剧集切换时的自动跳过",
-    "防止视频结束时保存播放进度以避免不正确的恢复位置",
-    "重置lastProcessedSegmentRef状态防止重复处理片段",
-    "添加详细调试日志协助排查匹配失败",
-    "优化剧集切换后的自动跳过重置机制",
     "🎯 修复VideoCard装饰元素的悬停缩放和z-index同步问题",
     "🔄 改进视频卡片装饰覆盖层的悬停效果同步",
     "📐 优化视频卡片徽章和装饰覆盖层的z-index层级",
@@ -1062,17 +1053,7 @@ export const changelog: ChangelogEntry[] = [
     "🎯 VirtualDoubanGrid完成消息优化：改进Bangumi模式下的完成提示消息"
     ],
     fixed: [
-    "🔥 彻底修复片尾自动播放双集跳跃问题：通过多层防护机制完全解决片尾自动播放时跳2集的bug",
-    "添加`lastProcessedSegmentRef`防重复触发机制，确保同一片段只处理一次",
-    "添加`videoEndedHandledRef`防止同一video:ended事件被多个监听器重复处理",
-    "移除SkipController中的1秒延迟，避免延迟期间触发video:ended事件",
-    "延迟重置`isSkipControllerTriggeredRef`标志至2秒，适配短剧异步URL解析",
     "🎭 剧集选择器标签页文字不可见问题：修复剧集选择器中标签页文本隐形的问题",
-    "🔄 跳过配置段落长度未定义错误：修复SkipController中segments.length未定义导致的错误",
-    "⚙️ 跳过设置对话框UX优化：新增多种关闭选项提升用户体验",
-    "🎯 切换集数时自动跳过设置重置问题：修复切换集数时跳过设置被重置的问题，确保用户设置持久化",
-    "📝 跨组件自动跳过设置同步：修复所有UI组件之间的自动跳过设置同步问题",
-    "🔁 用户设置跨集数和跨进度保持：修复用户跳过设置在seek和切换集数时的持久化问题",
     "📊 番剧模式继续观看卡片集数显示：修复继续观看卡片的集数显示与播放统计页面保持一致"
     ]
   },
@@ -1080,15 +1061,10 @@ export const changelog: ChangelogEntry[] = [
     version: "5.5.6",
     date: "2025-10-08",
     added: [
-    "🎯 片头片尾跳过实时标记按钮：新增实时标记片头片尾时间点的交互按钮，方便用户快速配置跳过设置",
-    "🎮 可拖拽跳过配置悬浮窗：新增可拖拽的跳过配置悬浮窗组件，支持触摸操作和位置持久化存储",
-    "📱 移动端跳过设置按钮显示：修复移动端设备上跳过设置按钮的显示问题",
-    "🎬 片尾剩余时间模式跨集数支持：实现片尾跳过配置的剩余时间模式在切换集数时的正确处理",
     "📊 继续观看卡片完结徽章：为所有继续观看部分添加已完结系列徽章显示",
     "🔍 TVBox深度JAR诊断系统：新增JAR文件头验证的深度诊断系统和智能健康检查"
     ],
     changed: [
-    "📐 可拖拽跳过配置悬浮窗边界限制：优化悬浮窗拖拽边界限制和位置持久化机制",
     "🎨 Zeabur部署指南简化：简化Zeabur部署指南为仅Docker镜像方式，移除复杂的GitHub集成部署",
     "📝 Zeabur部署指南KVRocks配置更正：修正KVRocks持久化卷路径说明，从`/data`改为正确的`/var/lib/kvrocks/db`",
     "🌐 Zeabur一键部署模板链接更新：更新README中的Zeabur一键部署模板链接",
@@ -1099,9 +1075,6 @@ export const changelog: ChangelogEntry[] = [
     "🔧 original_episodes损坏和无限API请求防护：防止original_episodes数据损坏导致的无限API请求问题",
     "🛡️ 剧集检测时自动original_episodes更新防护：防止剧集检测过程中original_episodes被自动更新",
     "📝 剧集更新检测时original_episodes覆盖防护：防止剧集更新检测时original_episodes字段被意外覆盖",
-    "🎬 片尾跳过剩余时间模式跨集数修复：修复片尾跳过配置在剩余时间模式下切换集数时的处理逻辑（多次优化）",
-    "🔄 KVRocks跳过配置首次加载问题：修复KVRocks环境下跳过配置首次加载不生效的问题",
-    "📊 跳过配置架构重构：采用新的跳过配置架构设计，实现更稳定可靠的片头片尾跳过功能",
     "🎯 观看更新卡片闪烁优化：通过排序updatedSeries防止继续观看卡片闪烁",
     "🌐 Zeabur部署指南和演示站点更新：更新Zeabur部署指南内容并添加最新演示站点链接"
     ]

@@ -75,8 +75,6 @@ export async function POST(req: NextRequest) {
         reminders: await db.getAllReminders(username),
         // 搜索历史
         searchHistory: await db.getSearchHistory(username),
-        // 跳过片头片尾配置
-        skipConfigs: await db.getAllSkipConfigs(username),
         // V2用户信息（包含 oidcSub, role, tags, enabledApis 等）
         userInfoV2: await db.getUserInfoV2(username),
         // 登录统计（loginCount, firstLoginTime, lastLoginTime）

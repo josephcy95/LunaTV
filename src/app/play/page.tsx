@@ -21,7 +21,6 @@ import EpisodeSelector from '@/components/EpisodeSelector';
 import NetDiskSearchResults from '@/components/NetDiskSearchResults';
 import AcgSearch from '@/components/AcgSearch';
 import PageLayout from '@/components/PageLayout';
-import SkipController, { SkipSettingsButton } from '@/components/SkipController';
 import VideoCard from '@/components/VideoCard';
 import CommentSection from '@/components/play/CommentSection';
 import DownloadButtons from '@/components/play/DownloadButtons';
@@ -278,8 +277,7 @@ function PlayPageClient() {
   const [celebrityWorks, setCelebrityWorks] = useState<any[]>([]);
   const [loadingCelebrityWorks, setLoadingCelebrityWorks] = useState(false);
 
-  // SkipController 相关状态
-  const [isSkipSettingOpen, setIsSkipSettingOpen] = useState(false);
+  // 播放时间状态（用于下一集预取等播放页功能）
   const [currentPlayTime, setCurrentPlayTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
 
@@ -1014,7 +1012,6 @@ function PlayPageClient() {
   const episodeSwitchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isSourceChangingRef = useRef<boolean>(false); // 标记是否正在换源
   const isEpisodeChangingRef = useRef<boolean>(false); // 标记是否正在切换集数
-  const isSkipControllerTriggeredRef = useRef<boolean>(false); // 标记是否通过 SkipController 触发了下一集
   const videoEndedHandledRef = useRef<boolean>(false); // 🔥 标记当前视频的 video:ended 事件是否已经被处理过（防止多个监听器重复触发）
 
   // 🚀 新增：连续切换源防抖和资源管理
@@ -2843,12 +2840,6 @@ function PlayPageClient() {
     // 🔥 标记正在切换集数（只在非换源时）
     if (!isSourceChangingRef.current) {
       isEpisodeChangingRef.current = true;
-      // 🔥 关键修复：延迟重置 SkipController 触发标志，避免新集数立即触发跳过
-      // 给 SkipController 的冷却时间（3秒）足够的时间来防止重复触发
-      setTimeout(() => {
-        isSkipControllerTriggeredRef.current = false;
-        console.log('✅ 延迟重置自动跳过标志，允许新集数自动跳过片头片尾');
-      }, 3500); // 比 SkipController 的冷却时间（3000ms）稍长
       videoEndedHandledRef.current = false;
       console.log('🔄 开始切换集数');
     }
@@ -3718,15 +3709,9 @@ function PlayPageClient() {
     const d = detailRef.current;
     const idx = currentEpisodeIndexRef.current;
     if (d && d.episodes && idx < d.episodes.length - 1) {
-      // 🔥 关键修复：通过 SkipController 自动跳下一集时，不保存播放进度
-      // 因为此时的播放位置是片尾，用户并没有真正看到这个位置
-      // 如果保存了片尾的进度，下次"继续观看"会从片尾开始，导致进度错误
-      // if (artPlayerRef.current && !artPlayerRef.current.paused) {
-      //   saveCurrentPlayProgress();
-      // }
-
-      // 🔑 标记通过 SkipController 触发了下一集
-      isSkipControllerTriggeredRef.current = true;
+      if (artPlayerRef.current && !artPlayerRef.current.paused) {
+        saveCurrentPlayProgress();
+      }
       setCurrentEpisodeIndex(idx + 1);
     }
   };
@@ -4288,7 +4273,7 @@ function PlayPageClient() {
 
             // 🔥 重置集数切换标识
             if (isEpisodeChange) {
-              // 🔑 关键修复：切换集数后显式重置播放时间为 0，确保片头自动跳过能触发
+              // 切换集数后显式重置播放时间为 0
               artPlayerRef.current.currentTime = 0;
               console.log('🎯 集数切换完成，重置播放时间为 0');
               isEpisodeChangingRef.current = false;
@@ -5690,7 +5675,7 @@ function PlayPageClient() {
 
       artPlayerRef.current.on('pause', () => {
         releaseWakeLock();
-        // 🔥 关键修复：暂停时也检查是否在片尾，避免保存错误的进度
+        // 暂停时如果已经接近结尾，不覆盖用户的历史进度
         const currentTime = artPlayerRef.current?.currentTime || 0;
         const duration = artPlayerRef.current?.duration || 0;
         const remainingTime = duration - currentTime;
@@ -5929,16 +5914,6 @@ function PlayPageClient() {
           return;
         }
 
-        // 🔑 检查是否已经通过 SkipController 触发了下一集，避免重复触发
-        if (isSkipControllerTriggeredRef.current) {
-          videoEndedHandledRef.current = true;
-          // 🔥 关键修复：延迟重置标志，等待新集数开始加载
-          setTimeout(() => {
-            isSkipControllerTriggeredRef.current = false;
-          }, 2000);
-          return;
-        }
-
         const d = detailRef.current;
         if (d && d.episodes && idx < d.episodes.length - 1) {
           videoEndedHandledRef.current = true;
@@ -5948,13 +5923,13 @@ function PlayPageClient() {
         }
       });
 
-      // 合并的timeupdate监听器 - 处理跳过片头片尾和保存进度
+      // 合并的timeupdate监听器 - 更新播放时间并保存进度
       artPlayerRef.current.on('video:timeupdate', () => {
         const currentTime = artPlayerRef.current.currentTime || 0;
         const duration = artPlayerRef.current.duration || 0;
         const now = performance.now(); // 使用performance.now()更精确
 
-        // 更新 SkipController 所需的时间信息
+        // 更新播放时间信息
         setCurrentPlayTime(currentTime);
         setVideoDuration(duration);
 
@@ -5965,8 +5940,7 @@ function PlayPageClient() {
         // 用户暂停、切换集数、页面卸载时会立即保存，因此较长间隔不影响体验
         const interval = process.env.NEXT_PUBLIC_STORAGE_TYPE === 'upstash' ? 60000 : 30000;
 
-        // 🔥 关键修复：如果当前播放位置接近视频结尾（最后3分钟），不保存进度
-        // 这是为了避免自动跳过片尾时保存了片尾位置的进度，导致"继续观看"从错误位置开始
+        // 如果当前播放位置接近视频结尾（最后3分钟），不保存进度，避免"继续观看"从结尾开始
         const remainingTime = duration - currentTime;
         const isNearEnd = duration > 0 && remainingTime < 180; // 最后3分钟
 
@@ -5977,7 +5951,7 @@ function PlayPageClient() {
       });
 
       artPlayerRef.current.on('pause', () => {
-        // 🔥 关键修复：暂停时也检查是否在片尾，避免保存错误的进度
+        // 暂停时如果已经接近结尾，不覆盖用户的历史进度
         const currentTime = artPlayerRef.current?.currentTime || 0;
         const duration = artPlayerRef.current?.duration || 0;
         const remainingTime = duration - currentTime;
@@ -6255,31 +6229,6 @@ function PlayPageClient() {
                       ↔
                     </div>
                   </div>
-                )}
-
-                {/* 跳过设置按钮 - 播放器内右上角 */}
-                {currentSource && currentId && (
-                  <div className='absolute top-4 right-4 z-10'>
-                    <SkipSettingsButton onClick={() => setIsSkipSettingOpen(true)} />
-                  </div>
-                )}
-
-                {/* SkipController 组件 */}
-                {currentSource && currentId && detail?.title && (
-                  <SkipController
-                    source={currentSource}
-                    id={currentId}
-                    title={detail.title}
-                    doubanId={videoDoubanId}
-                    year={videoYear}
-                    episodeIndex={currentEpisodeIndex}
-                    artPlayerRef={artPlayerRef}
-                    currentTime={currentPlayTime}
-                    duration={videoDuration}
-                    isSettingMode={isSkipSettingOpen}
-                    onSettingModeChange={setIsSkipSettingOpen}
-                    onNextEpisode={handleNextEpisode}
-                  />
                 )}
 
                 {/* 换源加载蒙层 */}

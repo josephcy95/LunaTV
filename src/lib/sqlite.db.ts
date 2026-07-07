@@ -16,7 +16,6 @@ import { hashPassword as hashPwd, isHashed, verifyPassword } from './password';
 import {
   ContentStat,
   CrashLog,
-  EpisodeSkipConfig,
   Favorite,
   IStorage,
   PlayRecord,
@@ -126,22 +125,6 @@ export class SqliteStorage implements IStorage {
         keyword TEXT NOT NULL,
         created_at INTEGER NOT NULL,
         PRIMARY KEY (username, keyword)
-      );
-
-      CREATE TABLE IF NOT EXISTS skip_configs (
-        username TEXT NOT NULL,
-        source TEXT NOT NULL,
-        id TEXT NOT NULL,
-        value TEXT NOT NULL,
-        PRIMARY KEY (username, source, id)
-      );
-
-      CREATE TABLE IF NOT EXISTS episode_skip_configs (
-        username TEXT NOT NULL,
-        source TEXT NOT NULL,
-        id TEXT NOT NULL,
-        value TEXT NOT NULL,
-        PRIMARY KEY (username, source, id)
       );
 
       CREATE TABLE IF NOT EXISTS admin_config (
@@ -421,12 +404,6 @@ export class SqliteStorage implements IStorage {
         .prepare('DELETE FROM search_history WHERE username = ?')
         .run(userName);
       this.db
-        .prepare('DELETE FROM skip_configs WHERE username = ?')
-        .run(userName);
-      this.db
-        .prepare('DELETE FROM episode_skip_configs WHERE username = ?')
-        .run(userName);
-      this.db
         .prepare('DELETE FROM login_stats WHERE username = ?')
         .run(userName);
       this.db
@@ -640,122 +617,6 @@ export class SqliteStorage implements IStorage {
       .run(JSON.stringify(config));
   }
 
-  // ==================== 跳过片头片尾配置 ====================
-
-  private skipField(source: string, id: string): string {
-    return `${source}+${id}`;
-  }
-
-  async getSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-  ): Promise<EpisodeSkipConfig | null> {
-    const row = this.db
-      .prepare(
-        'SELECT value FROM skip_configs WHERE username = ? AND source = ? AND id = ?',
-      )
-      .get(userName, source, id) as { value: string } | undefined;
-    return row ? (JSON.parse(row.value) as EpisodeSkipConfig) : null;
-  }
-
-  async setSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-    config: EpisodeSkipConfig,
-  ): Promise<void> {
-    this.db
-      .prepare(
-        'INSERT OR REPLACE INTO skip_configs (username, source, id, value) VALUES (?, ?, ?, ?)',
-      )
-      .run(userName, source, id, JSON.stringify(config));
-  }
-
-  async deleteSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-  ): Promise<void> {
-    this.db
-      .prepare(
-        'DELETE FROM skip_configs WHERE username = ? AND source = ? AND id = ?',
-      )
-      .run(userName, source, id);
-  }
-
-  async getAllSkipConfigs(
-    userName: string,
-  ): Promise<Record<string, EpisodeSkipConfig>> {
-    const rows = this.db
-      .prepare('SELECT source, id, value FROM skip_configs WHERE username = ?')
-      .all(userName) as Array<{ source: string; id: string; value: string }>;
-    const result: Record<string, EpisodeSkipConfig> = {};
-    for (const row of rows) {
-      result[this.skipField(row.source, row.id)] = JSON.parse(
-        row.value,
-      ) as EpisodeSkipConfig;
-    }
-    return result;
-  }
-
-  // ==================== 剧集跳过配置（新版，多片段支持）====================
-
-  async getEpisodeSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-  ): Promise<EpisodeSkipConfig | null> {
-    const row = this.db
-      .prepare(
-        'SELECT value FROM episode_skip_configs WHERE username = ? AND source = ? AND id = ?',
-      )
-      .get(userName, source, id) as { value: string } | undefined;
-    return row ? (JSON.parse(row.value) as EpisodeSkipConfig) : null;
-  }
-
-  async saveEpisodeSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-    config: EpisodeSkipConfig,
-  ): Promise<void> {
-    this.db
-      .prepare(
-        'INSERT OR REPLACE INTO episode_skip_configs (username, source, id, value) VALUES (?, ?, ?, ?)',
-      )
-      .run(userName, source, id, JSON.stringify(config));
-  }
-
-  async deleteEpisodeSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-  ): Promise<void> {
-    this.db
-      .prepare(
-        'DELETE FROM episode_skip_configs WHERE username = ? AND source = ? AND id = ?',
-      )
-      .run(userName, source, id);
-  }
-
-  async getAllEpisodeSkipConfigs(
-    userName: string,
-  ): Promise<Record<string, EpisodeSkipConfig>> {
-    const rows = this.db
-      .prepare(
-        'SELECT source, id, value FROM episode_skip_configs WHERE username = ?',
-      )
-      .all(userName) as Array<{ source: string; id: string; value: string }>;
-    const result: Record<string, EpisodeSkipConfig> = {};
-    for (const row of rows) {
-      result[this.skipField(row.source, row.id)] = JSON.parse(
-        row.value,
-      ) as EpisodeSkipConfig;
-    }
-    return result;
-  }
-
   // ==================== 数据清理 ====================
 
   async clearAllData(): Promise<void> {
@@ -766,8 +627,6 @@ export class SqliteStorage implements IStorage {
       'favorites',
       'reminders',
       'search_history',
-      'skip_configs',
-      'episode_skip_configs',
       'admin_config',
       'cache',
       'login_stats',

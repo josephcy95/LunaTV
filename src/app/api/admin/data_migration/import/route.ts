@@ -181,16 +181,6 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // 导入跳过片头片尾配置
-      if (user.skipConfigs) {
-        for (const [key, skipConfig] of Object.entries(user.skipConfigs)) {
-          const [source, id] = key.split('+');
-          if (source && id) {
-            await db.setSkipConfig(username, source, id, skipConfig as any);
-          }
-        }
-      }
-
       // 导入登录统计（恢复 loginCount, firstLoginTime, lastLoginTime）
       if (user.loginStats) {
         try {

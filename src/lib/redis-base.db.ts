@@ -6,7 +6,6 @@ import { AdminConfig } from './admin.types';
 import { hashPassword as hashPwd, isHashed, verifyPassword } from './password';
 import {
   ContentStat,
-  EpisodeSkipConfig,
   Favorite,
   Reminder,
   IStorage,
@@ -399,8 +398,6 @@ export abstract class BaseRedisStorage implements IStorage {
     await this.withRetry(() => this.client.del(this.prHashKey(userName)));
     await this.withRetry(() => this.client.del(this.favHashKey(userName)));
     await this.withRetry(() => this.client.del(this.reminderHashKey(userName))); // 删除提醒
-    await this.withRetry(() => this.client.del(this.skipHashKey(userName)));
-    await this.withRetry(() => this.client.del(this.episodeSkipHashKey(userName)));
 
     // 删除用户登入统计数据
     const loginStatsKey = `user_login_stats:${userName}`;
@@ -644,110 +641,6 @@ export abstract class BaseRedisStorage implements IStorage {
     );
   }
 
-  // ---------- 跳过片头片尾配置 ----------
-  private skipHashKey(user: string) {
-    return `u:${user}:skip`; // 一个用户的所有跳过配置存在一个 Hash 中
-  }
-
-  private skipField(source: string, id: string) {
-    return `${source}+${id}`;
-  }
-
-  async getSkipConfig(
-    userName: string,
-    source: string,
-    id: string
-  ): Promise<EpisodeSkipConfig | null> {
-    const val = await this.withRetry(() =>
-      this.client.hGet(this.skipHashKey(userName), this.skipField(source, id))
-    );
-    return val ? (JSON.parse(val) as EpisodeSkipConfig) : null;
-  }
-
-  async setSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-    config: EpisodeSkipConfig
-  ): Promise<void> {
-    await this.withRetry(() =>
-      this.client.hSet(this.skipHashKey(userName), this.skipField(source, id), JSON.stringify(config))
-    );
-  }
-
-  async deleteSkipConfig(
-    userName: string,
-    source: string,
-    id: string
-  ): Promise<void> {
-    await this.withRetry(() =>
-      this.client.hDel(this.skipHashKey(userName), this.skipField(source, id))
-    );
-  }
-
-  async getAllSkipConfigs(
-    userName: string
-  ): Promise<{ [key: string]: EpisodeSkipConfig }> {
-    const all = await this.withRetry(() =>
-      this.client.hGetAll(this.skipHashKey(userName))
-    );
-    const configs: { [key: string]: EpisodeSkipConfig } = {};
-    for (const [field, raw] of Object.entries(all)) {
-      if (raw) configs[field] = JSON.parse(raw) as EpisodeSkipConfig;
-    }
-    return configs;
-  }
-
-  // ---------- 剧集跳过配置（新版，多片段支持）----------
-  private episodeSkipHashKey(user: string) {
-    return `u:${user}:episodeskip`; // 一个用户的所有剧集跳过配置存在一个 Hash 中
-  }
-
-  async getEpisodeSkipConfig(
-    userName: string,
-    source: string,
-    id: string
-  ): Promise<EpisodeSkipConfig | null> {
-    const val = await this.withRetry(() =>
-      this.client.hGet(this.episodeSkipHashKey(userName), this.skipField(source, id))
-    );
-    return val ? (JSON.parse(val) as EpisodeSkipConfig) : null;
-  }
-
-  async saveEpisodeSkipConfig(
-    userName: string,
-    source: string,
-    id: string,
-    config: EpisodeSkipConfig
-  ): Promise<void> {
-    await this.withRetry(() =>
-      this.client.hSet(this.episodeSkipHashKey(userName), this.skipField(source, id), JSON.stringify(config))
-    );
-  }
-
-  async deleteEpisodeSkipConfig(
-    userName: string,
-    source: string,
-    id: string
-  ): Promise<void> {
-    await this.withRetry(() =>
-      this.client.hDel(this.episodeSkipHashKey(userName), this.skipField(source, id))
-    );
-  }
-
-  async getAllEpisodeSkipConfigs(
-    userName: string
-  ): Promise<{ [key: string]: EpisodeSkipConfig }> {
-    const all = await this.withRetry(() =>
-      this.client.hGetAll(this.episodeSkipHashKey(userName))
-    );
-    const configs: { [key: string]: EpisodeSkipConfig } = {};
-    for (const [field, raw] of Object.entries(all)) {
-      if (raw) configs[field] = JSON.parse(raw) as EpisodeSkipConfig;
-    }
-    return configs;
-  }
-
   // 清空所有数据
   async clearAllData(): Promise<void> {
     try {
@@ -925,36 +818,6 @@ export abstract class BaseRedisStorage implements IStorage {
         }
         await this.withRetry(() => this.client.del(oldFavKeys));
         console.log(`迁移了 ${oldFavKeys.length} 条收藏`);
-      }
-
-      // 迁移 skipConfig
-      const skipKeys = await this.scanKeys('u:*:skip:*');
-      const oldSkipKeys = skipKeys.filter(k => { const p = k.split(':'); return p.length >= 4 && p[2] === 'skip' && p[3] !== ''; });
-      if (oldSkipKeys.length > 0) {
-        const values = await this.withRetry(() => this.client.mGet(oldSkipKeys));
-        for (let i = 0; i < oldSkipKeys.length; i++) {
-          const raw = values[i]; if (!raw) continue;
-          const match = oldSkipKeys[i].match(/^u:(.+?):skip:(.+)$/); if (!match) continue;
-          const [, userName, field] = match;
-          await this.withRetry(() => this.client.hSet(this.skipHashKey(userName), field, raw));
-        }
-        await this.withRetry(() => this.client.del(oldSkipKeys));
-        console.log(`迁移了 ${oldSkipKeys.length} 条跳过配置`);
-      }
-
-      // 迁移 episodeSkipConfig
-      const esKeys = await this.scanKeys('u:*:episodeskip:*');
-      const oldEsKeys = esKeys.filter(k => { const p = k.split(':'); return p.length >= 4 && p[2] === 'episodeskip' && p[3] !== ''; });
-      if (oldEsKeys.length > 0) {
-        const values = await this.withRetry(() => this.client.mGet(oldEsKeys));
-        for (let i = 0; i < oldEsKeys.length; i++) {
-          const raw = values[i]; if (!raw) continue;
-          const match = oldEsKeys[i].match(/^u:(.+?):episodeskip:(.+)$/); if (!match) continue;
-          const [, userName, field] = match;
-          await this.withRetry(() => this.client.hSet(this.episodeSkipHashKey(userName), field, raw));
-        }
-        await this.withRetry(() => this.client.del(oldEsKeys));
-        console.log(`迁移了 ${oldEsKeys.length} 条剧集跳过配置`);
       }
 
       await this.withRetry(() => this.client.set(this.migrationKey(), 'done'));

@@ -102,8 +102,6 @@ export const SettingsPanel = memo(({ isOpen, onClose }: SettingsPanelProps) => {
   const [continueWatchingMinProgress, setContinueWatchingMinProgress] = useState(5);
   const [continueWatchingMaxProgress, setContinueWatchingMaxProgress] = useState(100);
   const [enableContinueWatchingFilter, setEnableContinueWatchingFilter] = useState(false);
-  const [enableAutoSkip, setEnableAutoSkip] = useState(true);
-  const [enableAutoNextEpisode, setEnableAutoNextEpisode] = useState(true);
   const [requireClearConfirmation, setRequireClearConfirmation] = useState(false);
   const [downloadFormat, setDownloadFormat] = useState<'TS' | 'MP4'>('TS');
   const [exactSearch, setExactSearch] = useState(true);
@@ -139,8 +137,6 @@ export const SettingsPanel = memo(({ isOpen, onClose }: SettingsPanelProps) => {
     setContinueWatchingMinProgress(readLS('continueWatchingMinProgress', 5));
     setContinueWatchingMaxProgress(readLS('continueWatchingMaxProgress', 100));
     setEnableContinueWatchingFilter(readLS('enableContinueWatchingFilter', false));
-    setEnableAutoSkip(readLS('enableAutoSkip', true));
-    setEnableAutoNextEpisode(readLS('enableAutoNextEpisode', true));
     setRequireClearConfirmation(readLS('requireClearConfirmation', false));
     const fmt = localStorage.getItem('downloadFormat');
     if (fmt === 'TS' || fmt === 'MP4') setDownloadFormat(fmt);
@@ -176,18 +172,6 @@ export const SettingsPanel = memo(({ isOpen, onClose }: SettingsPanelProps) => {
   const handleContinueWatchingMaxProgressChange = (v: number) => { setContinueWatchingMaxProgress(v); localStorage.setItem('continueWatchingMaxProgress', v.toString()); };
   const handleEnableContinueWatchingFilterToggle = set(setEnableContinueWatchingFilter, 'enableContinueWatchingFilter');
 
-  const handleEnableAutoSkipToggle = (v: boolean) => {
-    setEnableAutoSkip(v);
-    localStorage.setItem('enableAutoSkip', JSON.stringify(v));
-    window.dispatchEvent(new Event('localStorageChanged'));
-  };
-
-  const handleEnableAutoNextEpisodeToggle = (v: boolean) => {
-    setEnableAutoNextEpisode(v);
-    localStorage.setItem('enableAutoNextEpisode', JSON.stringify(v));
-    window.dispatchEvent(new Event('localStorageChanged'));
-  };
-
   const handleResetSettings = () => {
     const RC = (window as any).RUNTIME_CONFIG || {};
     const defaultDoubanProxyType = RC.DOUBAN_PROXY_TYPE || 'direct';
@@ -211,8 +195,6 @@ export const SettingsPanel = memo(({ isOpen, onClose }: SettingsPanelProps) => {
     setContinueWatchingMinProgress(5);
     setContinueWatchingMaxProgress(100);
     setEnableContinueWatchingFilter(false);
-    setEnableAutoSkip(true);
-    setEnableAutoNextEpisode(true);
     setPlayerBufferMode('standard');
     setDownloadFormat('TS');
 
@@ -231,8 +213,6 @@ export const SettingsPanel = memo(({ isOpen, onClose }: SettingsPanelProps) => {
     localStorage.setItem('continueWatchingMinProgress', '5');
     localStorage.setItem('continueWatchingMaxProgress', '100');
     localStorage.setItem('enableContinueWatchingFilter', JSON.stringify(false));
-    localStorage.setItem('enableAutoSkip', JSON.stringify(true));
-    localStorage.setItem('enableAutoNextEpisode', JSON.stringify(true));
     localStorage.setItem('requireClearConfirmation', JSON.stringify(false));
     localStorage.setItem('playerBufferMode', 'standard');
     localStorage.setItem('downloadFormat', 'TS');
@@ -652,35 +632,14 @@ export const SettingsPanel = memo(({ isOpen, onClose }: SettingsPanelProps) => {
 
             <div className='border-t border-gray-200 dark:border-gray-700'></div>
 
-            {/* 跳过片头片尾 */}
+            {/* 清空记录确认 */}
             <div className='space-y-4'>
-              <div>
-                <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>跳过片头片尾设置</h4>
-                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>控制播放器默认的片头片尾跳过行为</p>
-              </div>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <h5 className='text-sm font-medium text-gray-700 dark:text-gray-300'>启用自动跳过</h5>
-                  <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>开启后将自动跳过片头片尾，关闭则显示手动跳过按钮</p>
-                </div>
-                <Toggle checked={enableAutoSkip} onChange={handleEnableAutoSkipToggle} />
-              </div>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <h5 className='text-sm font-medium text-gray-700 dark:text-gray-300'>片尾自动播放下一集</h5>
-                  <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>开启后片尾结束时自动跳转到下一集</p>
-                </div>
-                <Toggle checked={enableAutoNextEpisode} onChange={handleEnableAutoNextEpisodeToggle} />
-              </div>
               <div className='flex items-center justify-between'>
                 <div>
                   <h5 className='text-sm font-medium text-gray-700 dark:text-gray-300'>清空记录确认提示</h5>
                   <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>开启后点击清空按钮时会弹出确认对话框，防止误操作</p>
                 </div>
                 <Toggle checked={requireClearConfirmation} onChange={handleRequireClearConfirmationToggle} />
-              </div>
-              <div className='text-xs text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800'>
-                💡 这些设置会作为新视频的默认配置。对于已配置的视频，请在播放页面的"跳过设置"中单独调整。
               </div>
             </div>
 
