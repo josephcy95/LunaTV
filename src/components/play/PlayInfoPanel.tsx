@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useState, useRef, useLayoutEffect, useEffect, useCallback } from 'react';
+import { useState, useRef, useLayoutEffect, useEffect, useCallback, type ReactNode } from 'react';
 import { Heart } from 'lucide-react';
 import VideoCard from '@/components/VideoCard';
 import CommentSection from '@/components/play/CommentSection';
@@ -41,6 +41,7 @@ interface PlayInfoPanelProps {
   onClearCelebrity: () => void;
   videoDoubanId: number;
   currentSource: string;
+  rightActions?: ReactNode;
 }
 
 export default function PlayInfoPanel(props: PlayInfoPanelProps) {
@@ -52,6 +53,7 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
     movieComments, commentsError, loadingMovieDetails, loadingBangumiDetails,
     loadingComments, loadingCelebrityWorks, selectedCelebrityName,
     celebrityWorks, onCelebrityClick, onClearCelebrity, videoDoubanId, currentSource,
+    rightActions,
   } = props;
 
   const [activeTab, setActiveTab] = useState<Tab>('overview');
@@ -154,18 +156,21 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
             </h2>
           </div>
 
-          <button
-            onClick={onToggleFavorite}
-            className={`inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors ${
-              favorited
-                ? 'border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-500/40 dark:bg-rose-500/15 dark:text-rose-300'
-                : 'border-gray-300 bg-white/85 text-gray-800 hover:border-green-400 hover:bg-green-50 hover:text-green-700 dark:border-gray-600 dark:bg-gray-800/85 dark:text-gray-100 dark:hover:border-green-500/60 dark:hover:bg-green-500/15 dark:hover:text-green-300'
-            }`}
-            aria-label={favorited ? '取消收藏' : '加入收藏'}
-          >
-            <Heart className={`size-4 transition-colors ${favorited ? 'fill-rose-500 text-rose-500' : ''}`} />
-            {favorited ? '已收藏' : '加入收藏'}
-          </button>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <button
+              onClick={onToggleFavorite}
+              className={`inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors ${
+                favorited
+                  ? 'border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-500/40 dark:bg-rose-500/15 dark:text-rose-300'
+                  : 'border-gray-300 bg-white/85 text-gray-800 hover:border-green-400 hover:bg-green-50 hover:text-green-700 dark:border-gray-600 dark:bg-gray-800/85 dark:text-gray-100 dark:hover:border-green-500/60 dark:hover:bg-green-500/15 dark:hover:text-green-300'
+              }`}
+              aria-label={favorited ? '取消收藏' : '加入收藏'}
+            >
+              <Heart className={`size-4 transition-colors ${favorited ? 'fill-rose-500 text-rose-500' : ''}`} />
+              {favorited ? '已收藏' : '加入收藏'}
+            </button>
+            {rightActions}
+          </div>
         </div>
       </section>
 

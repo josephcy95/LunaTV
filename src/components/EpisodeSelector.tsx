@@ -50,6 +50,9 @@ interface EpisodeSelectorProps {
   sourceSearchError?: string | null;
   /** 预计算的测速结果，避免重复测速 */
   precomputedVideoInfo?: Map<string, VideoInfo>;
+  /** 大屏右侧选集面板折叠控制 */
+  isPanelCollapsed?: boolean;
+  onTogglePanelCollapse?: () => void;
 }
 
 /**
@@ -69,6 +72,8 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   sourceSearchLoading = false,
   sourceSearchError = null,
   precomputedVideoInfo,
+  isPanelCollapsed = false,
+  onTogglePanelCollapse,
 }) => {
   const router = useRouter();
   const pageCount = Math.ceil(totalEpisodes / episodesPerPage);
@@ -494,6 +499,34 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
           <div className='absolute inset-0 bg-linear-to-r from-transparent via-blue-100/0 to-transparent dark:via-blue-500/0 group-hover:via-blue-100/50 dark:group-hover:via-blue-500/10 transition-all duration-300 -z-10'></div>
           <span className='relative z-10 font-bold text-sm sm:text-base'>换源</span>
         </div>
+        {onTogglePanelCollapse && (
+          <button
+            type='button'
+            onClick={(event) => {
+              event.stopPropagation();
+              onTogglePanelCollapse();
+            }}
+            className='hidden lg:flex w-12 shrink-0 items-center justify-center bg-gray-100/70 text-gray-500 transition-all duration-200 hover:bg-gray-200 hover:text-gray-800 active:scale-95 dark:bg-gray-800/60 dark:text-gray-300 dark:hover:bg-gray-700'
+            title={isPanelCollapsed ? '显示选集面板' : '隐藏选集面板'}
+            aria-label={isPanelCollapsed ? '显示选集面板' : '隐藏选集面板'}
+          >
+            <svg
+              className={`h-4 w-4 transition-transform duration-200 ${
+                isPanelCollapsed ? 'rotate-180' : 'rotate-0'
+              }`}
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth='2'
+                d='M9 5l7 7-7 7'
+              />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* 选集 Tab 内容 */}

@@ -22,7 +22,6 @@ import CommentSection from '@/components/play/CommentSection';
 import DownloadButtons from '@/components/play/DownloadButtons';
 import FavoriteButton from '@/components/play/FavoriteButton';
 import NetDiskButton from '@/components/play/NetDiskButton';
-import CollapseButton from '@/components/play/CollapseButton';
 import BackToTopButton from '@/components/play/BackToTopButton';
 import LoadingScreen from '@/components/play/LoadingScreen';
 import PlayInfoPanel from '@/components/play/PlayInfoPanel';
@@ -4102,35 +4101,20 @@ function PlayPageClient() {
         </div>
         {/* 第二行：播放器和选集 */}
         <div className='space-y-2'>
-          {/* 折叠控制 */}
+          {downloadEnabled && (
           <div className='flex justify-end items-center gap-2 sm:gap-3'>
-            {/* 网盘资源按钮 */}
-            <NetDiskButton
-              videoTitle={videoTitle}
-              netdiskLoading={netdiskLoading}
-              netdiskTotal={netdiskTotal}
-              netdiskResults={netdiskResults}
-              onSearch={handleNetDiskSearch}
-              onOpenModal={() => setShowNetdiskModal(true)}
-            />
-
             {/* 下载按钮 - 使用独立组件优化性能 */}
             <DownloadButtons
               downloadEnabled={downloadEnabled}
               onDownloadClick={() => setShowDownloadEpisodeSelector(true)}
               onDownloadPanelClick={() => setShowDownloadPanel(true)}
             />
-
-            {/* 折叠控制按钮 - 仅在 lg 及以上屏幕显示 */}
-            <CollapseButton
-              isCollapsed={isEpisodeSelectorCollapsed}
-              onToggle={() => setIsEpisodeSelectorCollapsed(!isEpisodeSelectorCollapsed)}
-            />
           </div>
+          )}
 
           <div
             className={`grid gap-4 lg:h-[500px] xl:h-[650px] 2xl:h-[750px] transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
-              ? 'grid-cols-1'
+              ? 'grid-cols-1 lg:grid-cols-[minmax(0,1fr)_56px]'
               : 'grid-cols-1 md:grid-cols-4'
               }`}
           >
@@ -4156,11 +4140,34 @@ function PlayPageClient() {
             {/* 选集和换源 - 在移动端始终显示，在 lg 及以上可折叠 */}
             <div
               className={`h-[300px] lg:h-full md:overflow-hidden transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
-                ? 'md:col-span-1 lg:hidden lg:opacity-0 lg:scale-95'
+                ? 'hidden lg:flex lg:opacity-100 lg:scale-100'
                 : 'md:col-span-1 lg:opacity-100 lg:scale-100'
                 }`}
             >
-              <EpisodeSelector
+              {isEpisodeSelectorCollapsed ? (
+                <button
+                  type='button'
+                  onClick={() => setIsEpisodeSelectorCollapsed(false)}
+                  className='flex h-full w-full items-start justify-center rounded-xl border border-white/0 bg-black/10 pt-4 text-gray-500 transition-colors hover:bg-black/15 hover:text-gray-900 dark:border-white/30 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10'
+                  title='显示选集面板'
+                  aria-label='显示选集面板'
+                >
+                  <svg
+                    className='h-5 w-5 rotate-180'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth='2'
+                      d='M9 5l7 7-7 7'
+                    />
+                  </svg>
+                </button>
+              ) : (
+                <EpisodeSelector
                 totalEpisodes={totalEpisodes}
                 episodes_titles={detail?.episodes_titles || []}
                 value={currentEpisodeIndex + 1}
@@ -4191,7 +4198,10 @@ function PlayPageClient() {
                 sourceSearchLoading={sourceSearchLoading}
                 sourceSearchError={sourceSearchError}
                 precomputedVideoInfo={precomputedVideoInfo}
-              />
+                isPanelCollapsed={isEpisodeSelectorCollapsed}
+                onTogglePanelCollapse={() => setIsEpisodeSelectorCollapsed(!isEpisodeSelectorCollapsed)}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -4225,6 +4235,16 @@ function PlayPageClient() {
           loadingCelebrityWorks={loadingCelebrityWorks}
           selectedCelebrityName={selectedCelebrityName}
           celebrityWorks={celebrityWorks}
+          rightActions={
+            <NetDiskButton
+              videoTitle={videoTitle}
+              netdiskLoading={netdiskLoading}
+              netdiskTotal={netdiskTotal}
+              netdiskResults={netdiskResults}
+              onSearch={handleNetDiskSearch}
+              onOpenModal={() => setShowNetdiskModal(true)}
+            />
+          }
           onCelebrityClick={handleCelebrityClick}
           onClearCelebrity={() => {
             setSelectedCelebrityName(null);
