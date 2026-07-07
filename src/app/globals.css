@@ -192,6 +192,12 @@ html:not(.dark) body {
   display: none; /* Chrome, Safari, Opera */
 }
 
+.art-video-player .art-poster {
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+}
+
 /* ============================================
    View Transitions API 动画
    优化：0.8s → 0.6s (更流畅的过渡体验)
