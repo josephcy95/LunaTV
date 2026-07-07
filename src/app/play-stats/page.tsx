@@ -72,7 +72,7 @@ const PlayStatsPage: React.FC = () => {
   const router = useRouter();
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [authInfo, setAuthInfo] = useState<{ username?: string; role?: string } | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const isAdmin = false;
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showWatchingUpdates, setShowWatchingUpdates] = useState(false);
   const [activeTab, setActiveTab] = useState<'admin' | 'personal'>('admin'); // 新增Tab状态
@@ -80,9 +80,7 @@ const PlayStatsPage: React.FC = () => {
   // 🚀 TanStack Query - 管理员统计数据
   const {
     data: statsData = null,
-    error: adminError,
-    isLoading: adminLoading,
-  } = useAdminStatsQuery(!!authInfo && isAdmin);
+  } = useAdminStatsQuery(false);
 
   // 🚀 TanStack Query - 用户个人统计数据
   const {
@@ -106,8 +104,8 @@ const PlayStatsPage: React.FC = () => {
   const invalidatePlayStats = useInvalidatePlayStats();
 
   // 兼容旧代码的loading和error状态
-  const loading = isAdmin ? (adminLoading || userLoading) : userLoading;
-  const error = adminError?.message || userError?.message || null;
+  const loading = userLoading;
+  const error = userError?.message || null;
   const upcomingInitialized = !upcomingLoading;
 
   // 检查用户权限
@@ -119,8 +117,6 @@ const PlayStatsPage: React.FC = () => {
     }
 
     setAuthInfo(auth);
-    const adminRole = auth.role === 'admin' || auth.role === 'owner';
-    setIsAdmin(adminRole);
   }, [router]);
 
   // 时间格式化函数
@@ -279,14 +275,13 @@ const PlayStatsPage: React.FC = () => {
       : 'localstorage';
 
   // 🚀 数据获取由 TanStack Query 的 enabled 选项自动控制
-  // 当 authInfo 和 isAdmin 变化时，queries 自动重新执行
 
   // 处理401重定向
   useEffect(() => {
-    if (adminError?.message === 'UNAUTHORIZED' || userError?.message === 'UNAUTHORIZED') {
+    if (userError?.message === 'UNAUTHORIZED') {
       router.push('/login');
     }
-  }, [adminError, userError, router]);
+  }, [userError, router]);
 
   // 监听播放记录更新事件，刷新追番数据
   useEffect(() => {
