@@ -159,7 +159,6 @@ export default function SourceBrowserPage() {
   const hasMore = page < pageCount;
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const lastFetchAtRef = useRef(0);
-  const autoFillInProgressRef = useRef(false);
 
   // 搜索与排序
   const [query, setQuery] = useState(queryFromUrl);
@@ -351,63 +350,6 @@ export default function SourceBrowserPage() {
     loadingMore,
     hasMore,
     page,
-    mode,
-    activeSourceKey,
-    activeCategory,
-    query,
-    fetchItems,
-    fetchSearch,
-  ]);
-
-  // 首屏填充：若列表高度不足以产生滚动且仍有更多，则自动连续翻页尝试填满视口
-  useEffect(() => {
-    const tryAutoFill = async () => {
-      if (autoFillInProgressRef.current) return;
-      if (!loadMoreRef.current) return;
-      if (loadingItems || loadingMore || !hasMore) return;
-      const sentinel = loadMoreRef.current.getBoundingClientRect();
-      const inViewport = sentinel.top <= window.innerHeight + 100;
-      if (!inViewport) return;
-
-      autoFillInProgressRef.current = true;
-      try {
-        let iterations = 0;
-        while (iterations < 5) {
-          // 最多连续加载5页以防过载
-          if (!hasMore) break;
-          const now = Date.now();
-          if (now - lastFetchAtRef.current <= 400) break; // 避免过于频繁
-          lastFetchAtRef.current = now;
-          const next = page + iterations + 1;
-          if (mode === 'search' && query.trim()) {
-            await fetchSearch(activeSourceKey, query.trim(), next, true);
-          } else if (mode === 'category' && activeCategory) {
-            await fetchItems(activeSourceKey, activeCategory, next, true);
-          } else {
-            break;
-          }
-          iterations++;
-
-          // 重新检测是否还在视口之内（内容增长可能已挤出视口）
-          if (!loadMoreRef.current) break;
-          const rect = loadMoreRef.current.getBoundingClientRect();
-          if (rect.top > window.innerHeight + 100) break;
-        }
-      } finally {
-        autoFillInProgressRef.current = false;
-      }
-    };
-
-    // 异步执行以等待布局更新
-    const id = setTimeout(tryAutoFill, 50);
-    return () => clearTimeout(id);
-  }, [
-    items,
-    page,
-    pageCount,
-    hasMore,
-    loadingItems,
-    loadingMore,
     mode,
     activeSourceKey,
     activeCategory,
