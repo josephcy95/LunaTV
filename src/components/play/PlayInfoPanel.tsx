@@ -123,57 +123,57 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
           </>
         )}
 
-        <div className="relative flex flex-col gap-3 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0 flex-1 space-y-2">
-            <div className="flex flex-wrap items-center gap-1.5">
+        <div className="relative flex flex-col gap-2 p-3 sm:gap-3 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0 flex-1 space-y-1.5 sm:space-y-2">
+            <div className="flex flex-wrap items-center gap-1">
               {sourceName && (
-                <span className="rounded-md border border-gray-300/70 bg-white/70 px-2 py-0.5 text-[11px] font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-200">
+                <span className="max-w-[42vw] truncate rounded-md border border-gray-300/70 bg-white/70 px-1.5 py-0.5 text-[10px] font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-200 sm:max-w-none sm:px-2 sm:text-[11px]">
                   {sourceName}
                 </span>
               )}
               {episodeText && (
-                <span className="rounded-md border border-green-500/30 bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700 dark:bg-green-500/15 dark:text-green-300">
+                <span className="rounded-md border border-green-500/30 bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-500/15 dark:text-green-300 sm:px-2 sm:text-[11px]">
                   {episodeText}
                 </span>
               )}
               {(detail?.year || year) && (
-                <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300 sm:px-2 sm:text-[11px]">
                   {detail?.year || year}
                 </span>
               )}
               {displayRating && displayRating > 0 && (
-                <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 sm:px-2 sm:text-[11px]">
                   ★ {displayRating.toFixed(1)}
                 </span>
               )}
               {detail?.class && String(detail.class) !== '0' && (
-                <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                <span className="max-w-[34vw] truncate rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300 sm:max-w-none sm:px-2 sm:text-[11px]">
                   {detail.class}
                 </span>
               )}
               {tmdbNumberOfSeasons && tmdbNumberOfSeasons > 1 && (
-                <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300 sm:px-2 sm:text-[11px]">
                   共 {tmdbNumberOfSeasons} 季
                 </span>
               )}
             </div>
 
-            <h2 className="truncate text-lg font-semibold leading-tight text-gray-950 dark:text-gray-50 sm:text-xl">
+            <h2 className="truncate text-base font-semibold leading-tight text-gray-950 dark:text-gray-50 sm:text-xl">
               {title}
             </h2>
           </div>
 
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:gap-2">
             <button
               onClick={onToggleFavorite}
-              className={`inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors ${
+              className={`inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors sm:h-10 sm:gap-2 sm:px-4 sm:text-sm ${
                 favorited
                   ? 'border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-500/40 dark:bg-rose-500/15 dark:text-rose-300'
                   : 'border-gray-300 bg-white/85 text-gray-800 hover:border-green-400 hover:bg-green-50 hover:text-green-700 dark:border-gray-600 dark:bg-gray-800/85 dark:text-gray-100 dark:hover:border-green-500/60 dark:hover:bg-green-500/15 dark:hover:text-green-300'
               }`}
               aria-label={favorited ? '取消收藏' : '加入收藏'}
             >
-              <Heart className={`size-4 transition-colors ${favorited ? 'fill-rose-500 text-rose-500' : ''}`} />
+              <Heart className={`size-3.5 transition-colors sm:size-4 ${favorited ? 'fill-rose-500 text-rose-500' : ''}`} />
               {favorited ? '已收藏' : '加入收藏'}
             </button>
             {rightActions}
@@ -183,14 +183,14 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
 
       {/* ── Tab 导航 ── */}
       {visibleTabs.length > 1 && (
-        <div className="border-b border-gray-200 dark:border-gray-700 px-2">
+        <div className="border-b border-gray-200 px-1 dark:border-gray-700 sm:px-2">
           <div ref={tabListRef} className="relative flex">
             {visibleTabs.map(tab => (
               <button
                 key={tab.key}
                 data-tab={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors sm:px-4 sm:py-3 ${
                   activeTab === tab.key
                     ? 'text-gray-900 dark:text-white'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
@@ -210,7 +210,7 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
       )}
 
       {/* ── Tab 内容 ── */}
-      <div className="p-4 sm:p-6">
+      <div className="p-3 sm:p-6">
         {activeTab === 'overview' && (
           <OverviewTab
             detail={detail} year={year} movieDetails={movieDetails}
@@ -250,9 +250,9 @@ function OverviewTab({ detail, year, movieDetails, tmdbAlias, bangumiDetails, sh
     && detail && detail.source !== 'shortdrama';
 
   return (
-    <div className="space-y-4 text-sm">
+    <div className="space-y-3 text-sm sm:space-y-4">
       {/* 关键信息行 */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
         {detail?.class && String(detail.class) !== '0' && (
           <span className="text-green-600 dark:text-green-400 font-semibold">{detail.class}</span>
         )}
@@ -260,7 +260,7 @@ function OverviewTab({ detail, year, movieDetails, tmdbAlias, bangumiDetails, sh
           <span className="text-gray-600 dark:text-gray-400">{detail?.year || year}</span>
         )}
         {detail?.source_name && (
-          <span className="border border-gray-400/50 dark:border-gray-600 px-2 py-0.5 rounded text-gray-600 dark:text-gray-400">
+          <span className="rounded border border-gray-400/50 px-1.5 py-0.5 text-xs text-gray-600 dark:border-gray-600 dark:text-gray-400 sm:px-2 sm:text-sm">
             {detail.source_name}
           </span>
         )}
@@ -269,7 +269,7 @@ function OverviewTab({ detail, year, movieDetails, tmdbAlias, bangumiDetails, sh
 
       {/* 简介 — 始终用豆瓣数据 */}
       {(shortdramaDetails?.desc || bangumiDetails?.summary || movieDetails?.plot_summary || detail?.desc) && (
-        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+        <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
           {movieDetails?.plot_summary || bangumiDetails?.summary || shortdramaDetails?.desc || detail?.desc}
         </p>
       )}
