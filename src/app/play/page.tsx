@@ -5190,11 +5190,8 @@ function PlayPageClient() {
         const updateResolution = () => {
           if (video.videoWidth && video.videoHeight) {
             const width = video.videoWidth;
-            const label = width >= 3840 ? '4K' :
-                         width >= 2560 ? '2K' :
-                         width >= 1920 ? '1080P' :
-                         width >= 1280 ? '720P' :
-                         width + 'P';
+            const height = video.videoHeight;
+            const label = `${width}×${height}`;
 
             // 根据质量设置不同的渐变背景和发光效果
             let gradientStyle = '';
