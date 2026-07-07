@@ -4198,8 +4198,8 @@ function PlayPageClient() {
 
         {/* 详情展示 */}
         <PlayInfoPanel
-          title={tmdbData?.title || videoTitle}
-          year={tmdbData?.year || videoYear}
+          title={videoTitle}
+          year={videoYear}
           cover={videoCover}
           sourceName={detail?.source_name}
           totalEpisodes={totalEpisodes}
