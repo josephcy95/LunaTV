@@ -11,6 +11,7 @@ interface ScrollableRowProps {
   enableVirtualization?: boolean; // 启用虚拟化（仅当子元素很多时）
   edgeBleed?: boolean;
   showControls?: boolean;
+  compact?: boolean;
 }
 
 function ScrollableRow({
@@ -20,6 +21,7 @@ function ScrollableRow({
   enableVirtualization = false,
   edgeBleed = false,
   showControls = true,
+  compact = false,
 }: ScrollableRowProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -289,7 +291,9 @@ function ScrollableRow({
     >
       <div
         ref={containerRef}
-        className={`flex space-x-6 overflow-x-auto scrollbar-hide pt-3 pb-12 sm:pt-4 sm:pb-14 ${
+        className={`flex space-x-6 overflow-x-auto scrollbar-hide pt-3 sm:pt-4 ${
+          compact ? 'pb-7 sm:pb-8' : 'pb-12 sm:pb-14'
+        } ${
           edgeBleed ? 'pr-0' : 'px-4 sm:px-6'
         } ${
           isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'

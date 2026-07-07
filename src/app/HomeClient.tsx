@@ -1351,7 +1351,7 @@ function HomeClient({ initialConfig }: {
                     ))}
                   </div>
 
-                  <ScrollableRow edgeBleed showControls={false}>
+                  <ScrollableRow edgeBleed showControls={false} compact>
                     {upcomingReleases
                       .filter(release => upcomingFilter === 'all' || release.type === upcomingFilter)
                       .map((release, index) => {
@@ -1413,7 +1413,7 @@ function HomeClient({ initialConfig }: {
                 iconColor='text-red-500'
                 href='/douban?type=movie'
               >
-                <ScrollableRow edgeBleed showControls={false}>
+                <ScrollableRow edgeBleed showControls={false} compact>
                   {loading
                     ? // 加载状态显示灰色占位数据
                     Array.from({ length: 8 }).map((_, index) => (
@@ -1451,7 +1451,7 @@ function HomeClient({ initialConfig }: {
                 iconColor='text-blue-500'
                 href='/douban?type=tv'
               >
-                <ScrollableRow edgeBleed showControls={false}>
+                <ScrollableRow edgeBleed showControls={false} compact>
                   {loading
                     ? // 加载状态显示灰色占位数据
                     Array.from({ length: 8 }).map((_, index) => (
@@ -1489,7 +1489,7 @@ function HomeClient({ initialConfig }: {
                 iconColor='text-purple-500'
                 href='/douban?type=anime'
               >
-                <ScrollableRow edgeBleed showControls={false}>
+                <ScrollableRow edgeBleed showControls={false} compact>
                   {loading
                     ? // 加载状态显示灰色占位数据
                     Array.from({ length: 8 }).map((_, index) => (
@@ -1534,7 +1534,7 @@ function HomeClient({ initialConfig }: {
                 iconColor='text-pink-500'
                 href='/douban?type=show'
               >
-                <ScrollableRow edgeBleed showControls={false}>
+                <ScrollableRow edgeBleed showControls={false} compact>
                   {loading
                     ? // 加载状态显示灰色占位数据
                     Array.from({ length: 8 }).map((_, index) => (
@@ -1572,7 +1572,7 @@ function HomeClient({ initialConfig }: {
                 iconColor='text-orange-500'
                 href='/shortdrama'
               >
-                <ScrollableRow edgeBleed showControls={false}>
+                <ScrollableRow edgeBleed showControls={false} compact>
                   {loading
                     ? // 加载状态显示灰色占位数据
                     Array.from({ length: 8 }).map((_, index) => (
