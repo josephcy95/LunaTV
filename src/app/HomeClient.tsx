@@ -2,8 +2,17 @@
 
 'use client';
 
-import { ChevronRight, Film, Tv, Calendar, Sparkles, Play, Trash2 } from 'lucide-react';
+import {
+  Calendar,
+  ChevronRight,
+  Film,
+  Play,
+  Sparkles,
+  Trash2,
+  Tv,
+} from 'lucide-react';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { Suspense, useEffect, useState, useRef, useMemo, useReducer, useTransition } from 'react';
 import { useQuery, queryOptions } from '@tanstack/react-query';
 
@@ -130,6 +139,40 @@ import { remindersQueryOptions } from '@/hooks/useRemindersQuery';
 const allFavoritesOptions = () => favoritesQueryOptions;
 const allPlayRecordsOptions = () => playRecordsQueryOptions;
 const allRemindersOptions = () => remindersQueryOptions;
+
+function HomeSection({
+  title,
+  icon,
+  iconColor,
+  href,
+  children,
+}: {
+  title: string;
+  icon: typeof Film;
+  iconColor: string;
+  href?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className='rounded-lg border border-white/70 bg-white/82 py-5 shadow-[0_10px_34px_rgba(15,23,42,0.07)] backdrop-blur-xl dark:border-white/10 dark:bg-gray-950/62 dark:shadow-[0_18px_50px_rgba(0,0,0,0.28)]'>
+      <div className='mb-1 flex items-end justify-between gap-4 px-4 sm:px-6'>
+        <div className='min-w-0'>
+          <SectionTitle title={title} icon={icon} iconColor={iconColor} />
+        </div>
+        {href && (
+          <Link
+            href={href}
+            className='inline-flex shrink-0 items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-green-300 hover:text-green-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:border-green-500/60 dark:hover:text-green-300'
+          >
+            查看更多
+            <ChevronRight className='h-4 w-4' />
+          </Link>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
 
 function HomeClient({ initialConfig }: {
   initialConfig: {
@@ -1246,18 +1289,20 @@ function HomeClient({ initialConfig }: {
           ) : (
             // 首页视图
             <>
-              {/* Hero Banner 轮播 */}
-              {state.homePageConfig.showHeroBanner && heroBannerItemsWithLogos.length > 0 && (
-                <section className='mb-8'>
-                  <HeroBanner
-                    items={heroBannerItemsWithLogos}
-                    autoPlayInterval={8000}
-                    showControls={true}
-                    showIndicators={true}
-                    enableVideo={enableVideo}
-                  />
-                </section>
-              )}
+              <div className='mx-auto w-full max-w-[1800px] space-y-8 px-0 sm:px-2'>
+                {state.homePageConfig.showHeroBanner && heroBannerItemsWithLogos.length > 0 && (
+                  <section className='overflow-hidden rounded-lg border border-white/70 bg-white/80 p-2 shadow-[0_18px_60px_rgba(15,23,42,0.10)] backdrop-blur-xl dark:border-white/10 dark:bg-gray-950/62 dark:shadow-[0_26px_80px_rgba(0,0,0,0.34)] sm:p-3'>
+                    <div className='overflow-hidden rounded-lg bg-black'>
+                      <HeroBanner
+                        items={heroBannerItemsWithLogos}
+                        autoPlayInterval={8000}
+                        showControls={true}
+                        showIndicators={true}
+                        enableVideo={enableVideo}
+                      />
+                    </div>
+                  </section>
+                )}
 
               {/* 继续观看 */}
               {/* 继续观看 */}
@@ -1269,20 +1314,15 @@ function HomeClient({ initialConfig }: {
                 return null;
               })()}
               {state.homePageConfig.showUpcomingReleases && upcomingReleases.length > 0 && (
-                <section className='mb-8'>
-                  <div className='mb-4 flex items-center justify-between'>
-                    <SectionTitle title="即将上映" icon={Calendar} iconColor="text-orange-500" />
-                    <Link
-                      href='/release-calendar'
-                      className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
-                    >
-                      查看更多
-                      <ChevronRight className='w-4 h-4 ml-1' />
-                    </Link>
-                  </div>
+                <HomeSection
+                  title='即将上映'
+                  icon={Calendar}
+                  iconColor='text-orange-500'
+                  href='/release-calendar'
+                >
 
                   {/* Tab 切换 */}
-                  <div className='mb-4 flex gap-2'>
+                  <div className='mb-2 mt-4 flex gap-2 px-4 sm:px-6'>
                     {[
                       { key: 'all', label: '全部', count: upcomingReleases.length },
                       { key: 'movie', label: '电影', count: upcomingReleases.filter(r => r.type === 'movie').length },
@@ -1362,22 +1402,17 @@ function HomeClient({ initialConfig }: {
                       );
                     })}
                   </ScrollableRow>
-                </section>
+                </HomeSection>
               )}
 
               {/* 热门电影 */}
               {state.homePageConfig.showHotMovies && (
-              <section className='mb-8'>
-                <div className='mb-4 flex items-center justify-between'>
-                  <SectionTitle title="热门电影" icon={Film} iconColor="text-red-500" />
-                  <Link
-                    href='/douban?type=movie'
-                    className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
-                  >
-                    查看更多
-                    <ChevronRight className='w-4 h-4 ml-1' />
-                  </Link>
-                </div>
+              <HomeSection
+                title='热门电影'
+                icon={Film}
+                iconColor='text-red-500'
+                href='/douban?type=movie'
+              >
                 <ScrollableRow enableVirtualization={true}>
                   {loading
                     ? // 加载状态显示灰色占位数据
@@ -1405,22 +1440,17 @@ function HomeClient({ initialConfig }: {
                       </div>
                     ))}
                 </ScrollableRow>
-              </section>
+              </HomeSection>
               )}
 
               {/* 热门剧集 */}
               {state.homePageConfig.showHotTvShows && (
-              <section className='mb-8'>
-                <div className='mb-4 flex items-center justify-between'>
-                  <SectionTitle title="热门剧集" icon={Tv} iconColor="text-blue-500" />
-                  <Link
-                    href='/douban?type=tv'
-                    className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
-                  >
-                    查看更多
-                    <ChevronRight className='w-4 h-4 ml-1' />
-                  </Link>
-                </div>
+              <HomeSection
+                title='热门剧集'
+                icon={Tv}
+                iconColor='text-blue-500'
+                href='/douban?type=tv'
+              >
                 <ScrollableRow enableVirtualization={true}>
                   {loading
                     ? // 加载状态显示灰色占位数据
@@ -1448,22 +1478,17 @@ function HomeClient({ initialConfig }: {
                       </div>
                     ))}
                 </ScrollableRow>
-              </section>
+              </HomeSection>
               )}
 
               {/* 每日新番放送 */}
               {state.homePageConfig.showNewAnime && (
-              <section className='mb-8'>
-                <div className='mb-4 flex items-center justify-between'>
-                  <SectionTitle title="新番放送" icon={Calendar} iconColor="text-purple-500" />
-                  <Link
-                    href='/douban?type=anime'
-                    className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
-                  >
-                    查看更多
-                    <ChevronRight className='w-4 h-4 ml-1' />
-                  </Link>
-                </div>
+              <HomeSection
+                title='新番放送'
+                icon={Calendar}
+                iconColor='text-purple-500'
+                href='/douban?type=anime'
+              >
                 <ScrollableRow enableVirtualization={true}>
                   {loading
                     ? // 加载状态显示灰色占位数据
@@ -1498,22 +1523,17 @@ function HomeClient({ initialConfig }: {
                         </div>
                       ))}
                 </ScrollableRow>
-              </section>
+              </HomeSection>
               )}
 
               {/* 热门综艺 */}
               {state.homePageConfig.showHotVariety && (
-              <section className='mb-8'>
-                <div className='mb-4 flex items-center justify-between'>
-                  <SectionTitle title="热门综艺" icon={Sparkles} iconColor="text-pink-500" />
-                  <Link
-                    href='/douban?type=show'
-                    className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
-                  >
-                    查看更多
-                    <ChevronRight className='w-4 h-4 ml-1' />
-                  </Link>
-                </div>
+              <HomeSection
+                title='热门综艺'
+                icon={Sparkles}
+                iconColor='text-pink-500'
+                href='/douban?type=show'
+              >
                 <ScrollableRow enableVirtualization={true}>
                   {loading
                     ? // 加载状态显示灰色占位数据
@@ -1541,22 +1561,17 @@ function HomeClient({ initialConfig }: {
                       </div>
                     ))}
                 </ScrollableRow>
-              </section>
+              </HomeSection>
               )}
 
               {/* 热门短剧 */}
               {state.homePageConfig.showHotShortDramas && (
-              <section className='mb-8'>
-                <div className='mb-4 flex items-center justify-between'>
-                  <SectionTitle title="热门短剧" icon={Play} iconColor="text-orange-500" />
-                  <Link
-                    href='/shortdrama'
-                    className='flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
-                  >
-                    查看更多
-                    <ChevronRight className='w-4 h-4 ml-1' />
-                  </Link>
-                </div>
+              <HomeSection
+                title='热门短剧'
+                icon={Play}
+                iconColor='text-orange-500'
+                href='/shortdrama'
+              >
                 <ScrollableRow enableVirtualization={true}>
                   {loading
                     ? // 加载状态显示灰色占位数据
@@ -1572,8 +1587,9 @@ function HomeClient({ initialConfig }: {
                       />
                     ))}
                 </ScrollableRow>
-              </section>
+              </HomeSection>
               )}
+              </div>
             </>
           )}
         </div>
