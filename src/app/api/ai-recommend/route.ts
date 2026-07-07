@@ -4,6 +4,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, hasSpecialFeaturePermission } from '@/lib/config';
 import { db } from '@/lib/db';
 import { orchestrateDataSources } from '@/lib/ai-orchestrator';
+import { buildUserPersonalizationPrompt } from '@/lib/ai-personalization';
 
 export const runtime = 'nodejs';
 
@@ -113,7 +114,15 @@ export async function POST(request: NextRequest) {
     
     // 只有在单轮对话且消息较短时才使用缓存，避免过度缓存复杂对话
     if (messages.length === 1 && messages[0].role === 'user' && messages[0].content.length < 50) {
-      const questionHash = Buffer.from(messages[0].content.trim().toLowerCase()).toString('base64').slice(0, 16);
+      const contextKey = [
+        username,
+        context?.title || '',
+        context?.year || '',
+        context?.type || '',
+        context?.currentEpisode || '',
+        messages[0].content.trim().toLowerCase(),
+      ].join('|');
+      const questionHash = Buffer.from(contextKey).toString('base64').slice(0, 32);
       cacheKey = `ai-recommend-simple-${questionHash}`;
       cachedResponse = await db.getCache(cacheKey);
     }
@@ -124,6 +133,18 @@ export async function POST(request: NextRequest) {
 
     // 获取最后一条用户消息用于分析
     const userMessage = messages[messages.length - 1]?.content || '';
+
+    const personalizationPrompt = hasAIModel
+      ? await buildUserPersonalizationPrompt({
+        username,
+        userMessage,
+        context,
+        enabled: aiConfig.enablePersonalization ?? true,
+        mode: aiConfig.personalizationMode || 'balanced',
+        preferAvailable: aiConfig.preferAvailableResults ?? true,
+        cacheTtlSeconds: aiConfig.personalizationCacheTtlSeconds || 300,
+      })
+      : '';
 
     // 🔥 使用 Orchestrator 进行意图分析和可选的联网搜索
     let orchestrationResult;
@@ -279,6 +300,10 @@ ${youtubeEnabled && youtubeConfig.apiKey ? `### YouTube推荐格式：
         }
         systemPrompt += '\n';
       }
+    }
+
+    if (personalizationPrompt) {
+      systemPrompt += personalizationPrompt;
     }
 
     // 🎥 如果检测到YouTube链接，先解析视频信息并加入系统提示词

@@ -125,6 +125,10 @@ export interface AdminConfig {
     enableOrchestrator?: boolean;        // 是否启用智能协调器（意图分析+联网搜索）
     enableWebSearch?: boolean;           // 是否启用联网搜索
     tavilyApiKeys?: string[];            // Tavily API Keys（支持多个轮询，1000次/月免费）
+    enablePersonalization?: boolean;      // 是否启用当前用户个性化上下文（默认 true）
+    personalizationMode?: 'minimal' | 'balanced' | 'max'; // 个性化上下文注入强度
+    preferAvailableResults?: boolean;     // 推荐时是否优先站内更可能可用的标题（默认 true）
+    personalizationCacheTtlSeconds?: number; // 个性化画像缓存时间，默认 300 秒
   };
   YouTubeConfig?: {
     enabled: boolean;                    // 是否启用YouTube搜索功能
