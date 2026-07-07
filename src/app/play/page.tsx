@@ -500,6 +500,13 @@ function PlayPageClient() {
   // ArtPlayer ref
   const artPlayerRef = useRef<any>(null);
   const artRef = useRef<HTMLDivElement | null>(null);
+  const playerPointerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPlayerTapRef = useRef<{ time: number; x: number; y: number } | null>(null);
+  const playerLongPressActiveRef = useRef(false);
+  const spacePressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const spaceLongPressConsumedRef = useRef(false);
+  const fastForwardActiveRef = useRef(false);
+  const fastForwardPreviousRateRef = useRef(1);
 
   // 音轨管理状态
   // 音轨管理状态
@@ -2858,10 +2865,150 @@ function PlayPageClient() {
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyboardShortcuts);
+    document.addEventListener('keyup', handleKeyboardShortcutKeyUp);
     return () => {
       document.removeEventListener('keydown', handleKeyboardShortcuts);
+      document.removeEventListener('keyup', handleKeyboardShortcutKeyUp);
+      if (spacePressTimerRef.current) {
+        clearTimeout(spacePressTimerRef.current);
+        spacePressTimerRef.current = null;
+      }
+      stopTemporaryFastForward();
     };
   }, []);
+
+  useEffect(() => {
+    if (loading || !artRef.current) return;
+
+    const playerElement = artRef.current;
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let pointerStartedAt = 0;
+    let pointerMoved = false;
+    let pointerId: number | null = null;
+    let suppressClickUntil = 0;
+
+    const clearPlayerPointerTimer = () => {
+      if (playerPointerTimerRef.current) {
+        clearTimeout(playerPointerTimerRef.current);
+        playerPointerTimerRef.current = null;
+      }
+    };
+
+    const getEdgeSeekDirection = (clientX: number) => {
+      const rect = playerElement.getBoundingClientRect();
+      const ratio = (clientX - rect.left) / rect.width;
+      if (ratio <= 0.2) return -10;
+      if (ratio >= 0.8) return 10;
+      return 0;
+    };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      if (isPlayerChromeTarget(event.target)) return;
+
+      pointerId = event.pointerId;
+      pointerStartX = event.clientX;
+      pointerStartY = event.clientY;
+      pointerStartedAt = Date.now();
+      pointerMoved = false;
+      playerLongPressActiveRef.current = false;
+      clearPlayerPointerTimer();
+
+      playerPointerTimerRef.current = setTimeout(() => {
+        playerLongPressActiveRef.current = true;
+        startTemporaryFastForward();
+      }, 380);
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (pointerId !== event.pointerId) return;
+      if (
+        Math.abs(event.clientX - pointerStartX) > 8 ||
+        Math.abs(event.clientY - pointerStartY) > 8
+      ) {
+        pointerMoved = true;
+        clearPlayerPointerTimer();
+      }
+    };
+
+    const handlePointerUp = (event: PointerEvent) => {
+      if (pointerId !== event.pointerId) return;
+      clearPlayerPointerTimer();
+
+      if (playerLongPressActiveRef.current) {
+        stopTemporaryFastForward();
+        playerLongPressActiveRef.current = false;
+        pointerId = null;
+        suppressClickUntil = Date.now() + 350;
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
+      const tapDuration = Date.now() - pointerStartedAt;
+      const seekDirection = getEdgeSeekDirection(event.clientX);
+
+      if (!pointerMoved && tapDuration < 260 && seekDirection) {
+        suppressClickUntil = Date.now() + 350;
+        const lastTap = lastPlayerTapRef.current;
+        const now = Date.now();
+        const doubleTap =
+          lastTap &&
+          now - lastTap.time < 280 &&
+          Math.abs(lastTap.x - event.clientX) < 48 &&
+          Math.abs(lastTap.y - event.clientY) < 48;
+
+        if (doubleTap) {
+          seekBySeconds(seekDirection);
+          lastPlayerTapRef.current = null;
+          pointerId = null;
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+
+        lastPlayerTapRef.current = {
+          time: now,
+          x: event.clientX,
+          y: event.clientY,
+        };
+      }
+
+      pointerId = null;
+    };
+
+    const handleClickCapture = (event: MouseEvent) => {
+      if (Date.now() > suppressClickUntil) return;
+      event.preventDefault();
+      event.stopPropagation();
+    };
+
+    const handlePointerCancel = () => {
+      clearPlayerPointerTimer();
+      stopTemporaryFastForward();
+      playerLongPressActiveRef.current = false;
+      pointerId = null;
+    };
+
+    playerElement.addEventListener('pointerdown', handlePointerDown);
+    playerElement.addEventListener('pointermove', handlePointerMove);
+    playerElement.addEventListener('pointerup', handlePointerUp);
+    playerElement.addEventListener('pointercancel', handlePointerCancel);
+    playerElement.addEventListener('pointerleave', handlePointerCancel);
+    playerElement.addEventListener('click', handleClickCapture, true);
+
+    return () => {
+      clearPlayerPointerTimer();
+      stopTemporaryFastForward();
+      playerElement.removeEventListener('pointerdown', handlePointerDown);
+      playerElement.removeEventListener('pointermove', handlePointerMove);
+      playerElement.removeEventListener('pointerup', handlePointerUp);
+      playerElement.removeEventListener('pointercancel', handlePointerCancel);
+      playerElement.removeEventListener('pointerleave', handlePointerCancel);
+      playerElement.removeEventListener('click', handleClickCapture, true);
+    };
+  }, [loading, videoUrl]);
 
   // 🚀 组件卸载时清理所有定时器和状态
   useEffect(() => {
@@ -2946,16 +3093,75 @@ function PlayPageClient() {
     }
   };
 
+  const seekBySeconds = (seconds: number) => {
+    const player = artPlayerRef.current;
+    if (!player) return;
+
+    const duration = Number(player.duration || player.video?.duration || 0);
+    const currentTime = Number(player.currentTime || player.video?.currentTime || 0);
+    const nextTime = duration
+      ? Math.max(0, Math.min(duration, currentTime + seconds))
+      : Math.max(0, currentTime + seconds);
+
+    player.currentTime = nextTime;
+    if (player.video) {
+      player.video.currentTime = nextTime;
+    }
+    player.notice.show = seconds < 0 ? '⏪ 后退 10 秒' : '⏩ 前进 10 秒';
+  };
+
+  const startTemporaryFastForward = () => {
+    const player = artPlayerRef.current;
+    if (!player || player.paused || fastForwardActiveRef.current) return;
+
+    const currentRate = Number(player.playbackRate || player.video?.playbackRate || 1);
+    fastForwardPreviousRateRef.current = currentRate || 1;
+    fastForwardActiveRef.current = true;
+    player.playbackRate = 2;
+    if (player.video) {
+      player.video.playbackRate = 2;
+    }
+    player.notice.show = '2x';
+  };
+
+  const stopTemporaryFastForward = () => {
+    const player = artPlayerRef.current;
+    if (!player || !fastForwardActiveRef.current) return;
+
+    const previousRate = fastForwardPreviousRateRef.current || 1;
+    fastForwardActiveRef.current = false;
+    player.playbackRate = previousRate;
+    if (player.video) {
+      player.video.playbackRate = previousRate;
+    }
+  };
+
+  const isTextInputTarget = (target: EventTarget | null) => {
+    const element = target as HTMLElement | null;
+    if (!element) return false;
+    return (
+      element.tagName === 'INPUT' ||
+      element.tagName === 'TEXTAREA' ||
+      element.isContentEditable
+    );
+  };
+
+  const isPlayerChromeTarget = (target: EventTarget | null) => {
+    const element = target as HTMLElement | null;
+    return Boolean(
+      element?.closest(
+        '.art-controls, .art-setting, .art-volume-panel, .art-contextmenus, .art-layers, button, input, textarea, select, a'
+      )
+    );
+  };
+
   // ---------------------------------------------------------------------------
   // 键盘快捷键
   // ---------------------------------------------------------------------------
   // 处理全局快捷键
   const handleKeyboardShortcuts = (e: KeyboardEvent) => {
     // 忽略输入框中的按键事件
-    if (
-      (e.target as HTMLElement).tagName === 'INPUT' ||
-      (e.target as HTMLElement).tagName === 'TEXTAREA'
-    )
+    if (isTextInputTarget(e.target))
       return;
 
     const isArtPlayerNativeHotkey =
@@ -2965,7 +3171,6 @@ function PlayPageClient() {
       !e.metaKey &&
       !e.shiftKey &&
       [
-        'Space',
         'ArrowLeft',
         'ArrowRight',
         'ArrowUp',
@@ -2998,7 +3203,7 @@ function PlayPageClient() {
     // 左箭头 = 快退
     if (!e.altKey && e.key === 'ArrowLeft') {
       if (artPlayerRef.current && artPlayerRef.current.currentTime > 5) {
-        artPlayerRef.current.currentTime -= 10;
+        seekBySeconds(-10);
         e.preventDefault();
       }
     }
@@ -3009,7 +3214,7 @@ function PlayPageClient() {
         artPlayerRef.current &&
         artPlayerRef.current.currentTime < artPlayerRef.current.duration - 5
       ) {
-        artPlayerRef.current.currentTime += 10;
+        seekBySeconds(10);
         e.preventDefault();
       }
     }
@@ -3038,10 +3243,16 @@ function PlayPageClient() {
       }
     }
 
-    // 空格 = 播放/暂停
+    // 空格短按 = 播放/暂停；长按 = 临时 2x
     if (e.key === ' ') {
       if (artPlayerRef.current) {
-        artPlayerRef.current.toggle();
+        if (!e.repeat && !spacePressTimerRef.current) {
+          spaceLongPressConsumedRef.current = false;
+          spacePressTimerRef.current = setTimeout(() => {
+            spaceLongPressConsumedRef.current = true;
+            startTemporaryFastForward();
+          }, 260);
+        }
         e.preventDefault();
       }
     }
@@ -3053,6 +3264,24 @@ function PlayPageClient() {
         e.preventDefault();
       }
     }
+  };
+
+  const handleKeyboardShortcutKeyUp = (e: KeyboardEvent) => {
+    if (isTextInputTarget(e.target)) return;
+    if (e.key !== ' ') return;
+
+    if (spacePressTimerRef.current) {
+      clearTimeout(spacePressTimerRef.current);
+      spacePressTimerRef.current = null;
+    }
+
+    if (spaceLongPressConsumedRef.current) {
+      stopTemporaryFastForward();
+      spaceLongPressConsumedRef.current = false;
+    } else if (artPlayerRef.current) {
+      artPlayerRef.current.toggle();
+    }
+    e.preventDefault();
   };
 
   // ---------------------------------------------------------------------------
