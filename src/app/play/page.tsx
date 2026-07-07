@@ -4112,7 +4112,7 @@ function PlayPageClient() {
               className={`h-full transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed ? 'col-span-1' : 'md:col-span-3'
                 }`}
             >
-              <div className='relative w-full h-[300px] lg:h-full'>
+              <div className='relative w-full h-[300px] lg:h-full overflow-hidden rounded-lg border border-gray-200/80 shadow-sm dark:border-gray-700/60'>
                 <div
                   ref={artRef}
                   className='bg-black w-full h-full overflow-hidden'
@@ -4137,7 +4137,7 @@ function PlayPageClient() {
                 <button
                   type='button'
                   onClick={() => setIsEpisodeSelectorCollapsed(false)}
-                  className='flex h-full w-full items-start justify-center rounded-xl border border-white/0 bg-black/10 pt-4 text-gray-500 transition-colors hover:bg-black/15 hover:text-gray-900 dark:border-white/30 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10'
+                  className='flex h-full w-full items-start justify-center rounded-lg border border-gray-200/80 bg-black/10 pt-4 text-gray-500 shadow-sm transition-colors hover:bg-black/15 hover:text-gray-900 dark:border-gray-700/60 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10'
                   title='显示选集面板'
                   aria-label='显示选集面板'
                 >
