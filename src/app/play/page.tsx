@@ -4087,7 +4087,7 @@ function PlayPageClient() {
   return (
     <>
       <PageLayout activePath='/play'>
-      <div className='flex flex-col gap-3 py-4 px-5 lg:px-[3rem] 2xl:px-20 pb-40 md:pb-safe-bottom'>
+      <div className='flex flex-col gap-3 pt-1 px-5 lg:px-[3rem] 2xl:px-20 pb-40 md:pb-safe-bottom'>
         {/* 第一行：影片标题（小屏幕用，大屏幕在 PlayInfoPanel 里） */}
         <div className='py-1 lg:hidden'>
           <h1 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
@@ -4101,17 +4101,6 @@ function PlayPageClient() {
         </div>
         {/* 第二行：播放器和选集 */}
         <div className='space-y-2'>
-          {downloadEnabled && (
-          <div className='flex justify-end items-center gap-2 sm:gap-3'>
-            {/* 下载按钮 - 使用独立组件优化性能 */}
-            <DownloadButtons
-              downloadEnabled={downloadEnabled}
-              onDownloadClick={() => setShowDownloadEpisodeSelector(true)}
-              onDownloadPanelClick={() => setShowDownloadPanel(true)}
-            />
-          </div>
-          )}
-
           <div
             className={`grid gap-4 lg:h-[500px] xl:h-[650px] 2xl:h-[750px] transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
               ? 'grid-cols-1 lg:grid-cols-[minmax(0,1fr)_56px]'
@@ -4236,14 +4225,21 @@ function PlayPageClient() {
           selectedCelebrityName={selectedCelebrityName}
           celebrityWorks={celebrityWorks}
           rightActions={
-            <NetDiskButton
-              videoTitle={videoTitle}
-              netdiskLoading={netdiskLoading}
-              netdiskTotal={netdiskTotal}
-              netdiskResults={netdiskResults}
-              onSearch={handleNetDiskSearch}
-              onOpenModal={() => setShowNetdiskModal(true)}
-            />
+            <>
+              <NetDiskButton
+                videoTitle={videoTitle}
+                netdiskLoading={netdiskLoading}
+                netdiskTotal={netdiskTotal}
+                netdiskResults={netdiskResults}
+                onSearch={handleNetDiskSearch}
+                onOpenModal={() => setShowNetdiskModal(true)}
+              />
+              <DownloadButtons
+                downloadEnabled={downloadEnabled}
+                onDownloadClick={() => setShowDownloadEpisodeSelector(true)}
+                onDownloadPanelClick={() => setShowDownloadPanel(true)}
+              />
+            </>
           }
           onCelebrityClick={handleCelebrityClick}
           onClearCelebrity={() => {

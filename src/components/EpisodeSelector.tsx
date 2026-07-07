@@ -458,7 +458,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
         {totalEpisodes > 1 && (
           <div
             onClick={() => setActiveTab('episodes')}
-            className={`group flex-1 py-3.5 sm:py-4 px-4 sm:px-6 text-center cursor-pointer transition-all duration-300 font-semibold relative overflow-hidden active:scale-[0.98] min-h-[44px]
+            className={`flex-1 py-3.5 sm:py-4 px-4 sm:px-6 text-center cursor-pointer transition-colors duration-150 font-semibold relative min-h-[44px]
               ${activeTab === 'episodes'
                 ? 'text-green-600 dark:text-green-400'
                 : 'text-gray-700 hover:text-green-600 dark:text-gray-300 dark:hover:text-green-400'
@@ -471,16 +471,14 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
             )}
             {/* 非激活态背景 */}
             {activeTab !== 'episodes' && (
-              <div className='absolute inset-0 bg-gray-100/50 dark:bg-gray-800/50 group-hover:bg-gray-100 dark:group-hover:bg-gray-800/70 transition-colors duration-300 -z-10'></div>
+              <div className='absolute inset-0 bg-gray-100/50 transition-colors duration-150 dark:bg-gray-800/50 -z-10'></div>
             )}
-            {/* 悬浮光效 */}
-            <div className='absolute inset-0 bg-linear-to-r from-transparent via-green-100/0 to-transparent dark:via-green-500/0 group-hover:via-green-100/50 dark:group-hover:via-green-500/10 transition-all duration-300 -z-10'></div>
             <span className='relative z-10 font-bold text-sm sm:text-base'>选集</span>
           </div>
         )}
         <div
           onClick={handleSourceTabClick}
-          className={`group flex-1 py-3.5 sm:py-4 px-4 sm:px-6 text-center cursor-pointer transition-all duration-300 font-semibold relative overflow-hidden active:scale-[0.98] min-h-[44px]
+          className={`flex-1 py-3.5 sm:py-4 px-4 sm:px-6 text-center cursor-pointer transition-colors duration-150 font-semibold relative min-h-[44px]
             ${activeTab === 'sources'
               ? 'text-blue-600 dark:text-blue-400'
               : 'text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400'
@@ -493,10 +491,8 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
           )}
           {/* 非激活态背景 */}
           {activeTab !== 'sources' && (
-            <div className='absolute inset-0 bg-gray-100/50 dark:bg-gray-800/50 group-hover:bg-gray-100 dark:group-hover:bg-gray-800/70 transition-colors duration-300 -z-10'></div>
+            <div className='absolute inset-0 bg-gray-100/50 transition-colors duration-150 dark:bg-gray-800/50 -z-10'></div>
           )}
-          {/* 悬浮光效 */}
-          <div className='absolute inset-0 bg-linear-to-r from-transparent via-blue-100/0 to-transparent dark:via-blue-500/0 group-hover:via-blue-100/50 dark:group-hover:via-blue-500/10 transition-all duration-300 -z-10'></div>
           <span className='relative z-10 font-bold text-sm sm:text-base'>换源</span>
         </div>
         {onTogglePanelCollapse && (
@@ -506,7 +502,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
               event.stopPropagation();
               onTogglePanelCollapse();
             }}
-            className='hidden lg:flex w-12 shrink-0 items-center justify-center bg-gray-100/70 text-gray-500 transition-all duration-200 hover:bg-gray-200 hover:text-gray-800 active:scale-95 dark:bg-gray-800/60 dark:text-gray-300 dark:hover:bg-gray-700'
+            className='hidden lg:flex w-12 shrink-0 items-center justify-center bg-gray-100/70 text-gray-500 transition-colors duration-150 hover:bg-gray-200 hover:text-gray-800 dark:bg-gray-800/60 dark:text-gray-300 dark:hover:bg-gray-700'
             title={isPanelCollapsed ? '显示选集面板' : '隐藏选集面板'}
             aria-label={isPanelCollapsed ? '显示选集面板' : '隐藏选集面板'}
           >
