@@ -4376,10 +4376,10 @@ function PlayPageClient() {
   return (
     <>
       <PageLayout activePath='/play'>
-      <div className='flex flex-col gap-3 pt-1 px-5 lg:px-[3rem] 2xl:px-20 pb-40 md:pb-safe-bottom'>
+      <div className='-mx-4 flex flex-col gap-2 -mt-14 px-[max(0.5rem,env(safe-area-inset-left))] pb-32 sm:mx-0 sm:px-5 md:mt-0 md:gap-3 md:pt-1 md:pb-safe-bottom lg:px-[3rem] 2xl:px-20'>
         {/* 第一行：影片标题（小屏幕用，大屏幕在 PlayInfoPanel 里） */}
-        <div className='py-1 lg:hidden'>
-          <h1 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+        <div className='py-0.5 lg:hidden'>
+          <h1 className='text-lg font-semibold leading-snug text-gray-900 dark:text-gray-100 sm:text-xl'>
             {videoTitle || '影片标题'}
             {totalEpisodes > 1 && (
               <span className='text-gray-500 dark:text-gray-400'>
@@ -4391,7 +4391,7 @@ function PlayPageClient() {
         {/* 第二行：播放器和选集 */}
         <div className='space-y-2'>
           <div
-            className={`grid gap-4 lg:h-[500px] xl:h-[650px] 2xl:h-[750px] transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
+            className={`grid gap-2 md:gap-4 lg:h-[500px] xl:h-[650px] 2xl:h-[750px] transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
               ? 'grid-cols-1 lg:grid-cols-[minmax(0,1fr)_56px]'
               : 'grid-cols-1 md:grid-cols-4'
               }`}
@@ -4401,7 +4401,7 @@ function PlayPageClient() {
               className={`h-full transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed ? 'col-span-1' : 'md:col-span-3'
                 }`}
             >
-              <div className='relative w-full h-[300px] lg:h-full overflow-hidden rounded-lg border border-gray-200/80 shadow-sm dark:border-gray-700/60'>
+              <div className='relative aspect-video w-full overflow-hidden rounded-lg border border-gray-200/80 shadow-sm dark:border-gray-700/60 lg:h-full lg:aspect-auto'>
                 <div
                   ref={artRef}
                   className='bg-black w-full h-full overflow-hidden'
@@ -4417,7 +4417,7 @@ function PlayPageClient() {
 
             {/* 选集和换源 - 在移动端始终显示，在 lg 及以上可折叠 */}
             <div
-              className={`h-[300px] lg:h-full md:overflow-hidden transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
+              className={`h-[260px] sm:h-[300px] lg:h-full md:overflow-hidden transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
                 ? 'hidden lg:flex lg:opacity-100 lg:scale-100'
                 : 'md:col-span-1 lg:opacity-100 lg:scale-100'
                 }`}
