@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Children, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Children, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { MouseEvent, PointerEvent } from 'react';
 
 import AnimatedCardGrid from '@/components/AnimatedCardGrid';
@@ -21,11 +21,13 @@ function ScrollableRow({
   edgeBleed = false,
   showControls = true,
 }: ScrollableRowProps) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [showLeftScroll, setShowLeftScroll] = useState(false);
   const [showRightScroll, setShowRightScroll] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [edgeLeadingOffset, setEdgeLeadingOffset] = useState(0);
   const checkScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dragStateRef = useRef({
     active: false,
@@ -38,6 +40,36 @@ function ScrollableRow({
 
   // 使用 useMemo 缓存 children 数量，减少不必要的 effect 触发
   const childrenCount = useMemo(() => Children.count(children), [children]);
+
+  useLayoutEffect(() => {
+    if (!edgeBleed) return;
+
+    let rafId = 0;
+    const measureLeadingOffset = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const parent = wrapperRef.current?.parentElement;
+        if (!parent) return;
+        const sectionLeft = parent.getBoundingClientRect().left;
+        const titleInset = window.matchMedia('(min-width: 640px)').matches ? 24 : 16;
+        setEdgeLeadingOffset(Math.max(0, Math.round(sectionLeft + titleInset)));
+      });
+    };
+
+    measureLeadingOffset();
+    window.addEventListener('resize', measureLeadingOffset, { passive: true });
+
+    const resizeObserver = new ResizeObserver(measureLeadingOffset);
+    if (wrapperRef.current?.parentElement) {
+      resizeObserver.observe(wrapperRef.current.parentElement);
+    }
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', measureLeadingOffset);
+      resizeObserver.disconnect();
+    };
+  }, [edgeBleed]);
 
   const checkScroll = useCallback(() => {
     if (containerRef.current) {
@@ -228,13 +260,13 @@ function ScrollableRow({
 
   return (
     <div
+      ref={wrapperRef}
       className='relative'
       style={
         edgeBleed
           ? {
               marginLeft: 'calc(50% - 50vw)',
               marginRight: 'calc(50% - 50vw)',
-              paddingLeft: 'calc(50vw - 50%)',
               paddingRight: 0,
             }
           : undefined
@@ -249,7 +281,7 @@ function ScrollableRow({
       <div
         ref={containerRef}
         className={`flex space-x-6 overflow-x-auto scrollbar-hide pt-3 pb-12 sm:pt-4 sm:pb-14 ${
-          edgeBleed ? 'pl-4 pr-0 sm:pl-6 sm:pr-0' : 'px-4 sm:px-6'
+          edgeBleed ? 'pr-0' : 'px-4 sm:px-6'
         } ${
           isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'
         }`}
@@ -260,6 +292,7 @@ function ScrollableRow({
         onPointerCancel={endDrag}
         onClickCapture={handleClickCapture}
         style={{
+          ...(edgeBleed ? { paddingLeft: edgeLeadingOffset } : {}),
           WebkitOverflowScrolling: 'touch', // iOS 惯性滚动
           willChange: 'scroll-position', // 提示浏览器优化滚动
           transform: 'translateZ(0)', // 启用 GPU 硬件加速
