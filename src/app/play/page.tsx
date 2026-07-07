@@ -241,6 +241,7 @@ function PlayPageClient() {
   // 播放时间状态（用于下一集预取等播放页功能）
   const [currentPlayTime, setCurrentPlayTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
+  const [playerAspectRatio, setPlayerAspectRatio] = useState('16 / 9');
 
   // 下载选集面板状态
   const [showDownloadEpisodeSelector, setShowDownloadEpisodeSelector] = useState(false);
@@ -3514,6 +3515,8 @@ function PlayPageClient() {
     try {
       // 使用动态导入的 Artplayer
       const Artplayer = (window as any).DynamicArtplayer;
+      setPlayerAspectRatio('16 / 9');
+
       artPlayerRef.current = new Artplayer({
         container: artRef.current,
         url: videoUrl,
@@ -3857,6 +3860,22 @@ function PlayPageClient() {
         }
       });
 
+      artPlayerRef.current.on('video:loadedmetadata', () => {
+        const video = artPlayerRef.current?.video as HTMLVideoElement | undefined;
+        if (!video?.videoWidth || !video?.videoHeight) return;
+
+        const nextRatio = `${video.videoWidth} / ${video.videoHeight}`;
+        setPlayerAspectRatio(nextRatio);
+
+        if (artRef.current) {
+          artRef.current.style.aspectRatio = nextRatio;
+        }
+
+        requestAnimationFrame(() => {
+          artPlayerRef.current?.autoSize?.();
+        });
+      });
+
       // 监听播放器错误
       artPlayerRef.current.on('error', (err: any) => {
         console.error('播放器错误:', err);
@@ -4109,7 +4128,7 @@ function PlayPageClient() {
           </div>
 
           <div
-            className={`grid gap-4 lg:h-[500px] xl:h-[650px] 2xl:h-[750px] transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
+            className={`grid items-start gap-4 transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
               ? 'grid-cols-1'
               : 'grid-cols-1 md:grid-cols-4'
               }`}
@@ -4119,10 +4138,11 @@ function PlayPageClient() {
               className={`h-full transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed ? 'col-span-1' : 'md:col-span-3'
                 }`}
             >
-              <div className='relative w-full h-[300px] lg:h-full'>
+              <div className='relative w-full'>
                 <div
                   ref={artRef}
-                  className='bg-black w-full h-full overflow-hidden'
+                  className='w-full bg-black overflow-hidden'
+                  style={{ aspectRatio: playerAspectRatio }}
                 ></div>
 
                 {/* 换源加载蒙层 */}
@@ -4135,7 +4155,7 @@ function PlayPageClient() {
 
             {/* 选集和换源 - 在移动端始终显示，在 lg 及以上可折叠 */}
             <div
-              className={`h-[300px] lg:h-full md:overflow-hidden transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
+              className={`h-[300px] lg:h-[500px] xl:h-[650px] 2xl:h-[750px] md:overflow-hidden transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
                 ? 'md:col-span-1 lg:hidden lg:opacity-0 lg:scale-95'
                 : 'md:col-span-1 lg:opacity-100 lg:scale-100'
                 }`}
