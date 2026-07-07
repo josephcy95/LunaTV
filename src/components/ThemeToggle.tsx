@@ -41,23 +41,15 @@ export function ThemeToggle() {
   }
 
   const toggleTheme = () => {
-    // 检查浏览器是否支持 View Transitions API
     const targetTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
     setThemeColor(targetTheme);
-    if (!(document as any).startViewTransition) {
-      setTheme(targetTheme);
-      return;
-    }
-
-    (document as any).startViewTransition(() => {
-      setTheme(targetTheme);
-    });
+    setTheme(targetTheme);
   };
 
   return (
     <button
       onClick={toggleTheme}
-      className='relative w-10 h-10 p-2 rounded-full flex items-center justify-center text-gray-600 hover:text-amber-500 dark:text-gray-300 dark:hover:text-amber-400 transition-colors'
+      className='relative w-10 h-10 p-2 rounded-full flex items-center justify-center text-gray-600 hover:text-amber-500 dark:text-gray-300 dark:hover:text-amber-400'
       aria-label='Toggle theme'
     >
       {resolvedTheme === 'dark' ? (
