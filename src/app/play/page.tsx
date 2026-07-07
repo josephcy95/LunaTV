@@ -2982,6 +2982,19 @@ function PlayPageClient() {
           lastPlayerTapRef.current = null;
           pendingEdgeTapTimer = null;
         }, 280);
+        event.preventDefault();
+        event.stopPropagation();
+        pointerId = null;
+        return;
+      }
+
+      if (!pointerMoved && tapDuration < 260) {
+        clearPendingEdgeTapTimer();
+        lastPlayerTapRef.current = null;
+        suppressClickUntil = Date.now() + 350;
+        artPlayerRef.current?.toggle();
+        event.preventDefault();
+        event.stopPropagation();
       }
 
       pointerId = null;
@@ -3187,7 +3200,7 @@ function PlayPageClient() {
     const element = target as HTMLElement | null;
     return Boolean(
       element?.closest(
-        '.art-controls, .art-setting, .art-volume-panel, .art-contextmenus, .art-layers, button, input, textarea, select, a'
+        '.art-controls, .art-setting, .art-volume-panel, .art-contextmenus, button, input, textarea, select, a'
       )
     );
   };
