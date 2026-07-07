@@ -20,6 +20,7 @@ interface PlayInfoPanelProps {
   backdropUrl?: string | null;
   tmdbPoster?: string | null;
   tmdbOverview?: string | null;
+  tmdbTitle?: string | null;
   tmdbRating?: number | null;
   tmdbLogo?: string | null;
   tmdbNumberOfSeasons?: number | null;
@@ -47,7 +48,7 @@ interface PlayInfoPanelProps {
 export default function PlayInfoPanel(props: PlayInfoPanelProps) {
   const {
     title, year, cover, sourceName, totalEpisodes, currentEpisodeIndex,
-    episodeName, backdropUrl, tmdbRating, tmdbNumberOfSeasons,
+    episodeName, backdropUrl, tmdbTitle, tmdbRating, tmdbNumberOfSeasons,
     favorited, onToggleFavorite,
     detail, movieDetails, bangumiDetails, shortdramaDetails,
     movieComments, commentsError, loadingMovieDetails, loadingBangumiDetails,
@@ -61,6 +62,12 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
   const [indicator, setIndicator] = useState({ x: 0, width: 0, ready: false });
 
   const bgUrl = backdropUrl || (cover ? processImageUrl(cover) : null);
+  const normalizedTitle = title.trim().toLowerCase();
+  const normalizedTmdbTitle = tmdbTitle?.trim().toLowerCase();
+  const tmdbAlias =
+    tmdbTitle && normalizedTmdbTitle && normalizedTmdbTitle !== normalizedTitle
+      ? tmdbTitle.trim()
+      : null;
   // 评分：TMDB 优先
   const displayRating = tmdbRating || (movieDetails?.rate ? parseFloat(movieDetails.rate) : null) || (bangumiDetails?.rating?.score ? parseFloat(bangumiDetails.rating.score) : null);
 
@@ -207,6 +214,7 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
         {activeTab === 'overview' && (
           <OverviewTab
             detail={detail} year={year} movieDetails={movieDetails}
+            tmdbAlias={tmdbAlias}
             bangumiDetails={bangumiDetails} shortdramaDetails={shortdramaDetails}
             loadingMovieDetails={loadingMovieDetails} loadingBangumiDetails={loadingBangumiDetails}
             currentSource={currentSource} videoDoubanId={videoDoubanId}
@@ -235,7 +243,7 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
 
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 
-function OverviewTab({ detail, year, movieDetails, bangumiDetails, shortdramaDetails,
+function OverviewTab({ detail, year, movieDetails, tmdbAlias, bangumiDetails, shortdramaDetails,
   loadingMovieDetails, loadingBangumiDetails, currentSource, videoDoubanId, hasBg }: any) {
 
   const showDetails = currentSource !== 'shortdrama' && videoDoubanId !== 0
@@ -264,6 +272,13 @@ function OverviewTab({ detail, year, movieDetails, bangumiDetails, shortdramaDet
         <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
           {movieDetails?.plot_summary || bangumiDetails?.summary || shortdramaDetails?.desc || detail?.desc}
         </p>
+      )}
+
+      {tmdbAlias && (
+        <div>
+          <span className="font-semibold text-gray-700 dark:text-gray-300">TMDB 别名: </span>
+          <span className="text-gray-600 dark:text-gray-400">{tmdbAlias}</span>
+        </div>
       )}
 
       {/* 加载中 */}

@@ -4207,6 +4207,7 @@ function PlayPageClient() {
           backdropUrl={tmdbData?.backdrop || (movieDetails?.backdrop ? `/api/image-proxy?url=${encodeURIComponent(movieDetails.backdrop)}` : null)}
           tmdbPoster={tmdbData?.poster}
           tmdbOverview={tmdbData?.overview}
+          tmdbTitle={tmdbData?.title}
           tmdbRating={tmdbData?.rating}
           tmdbLogo={tmdbData?.logo}
           tmdbNumberOfSeasons={tmdbData?.numberOfSeasons}
