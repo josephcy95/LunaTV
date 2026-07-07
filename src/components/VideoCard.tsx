@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,react-hooks/exhaustive-deps,@typescript-eslint/no-empty-function */
 
 import { ExternalLink, Heart, Link, PlayCircleIcon, Radio, Star, Trash2, Sparkles, Bell, BellRing } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, {
@@ -35,7 +36,10 @@ import { processImageUrl, isSeriesCompleted } from '@/lib/utils';
 
 import { ImagePlaceholder } from '@/components/ImagePlaceholder';
 import MobileActionSheet from '@/components/MobileActionSheet';
-import AIRecommendModal from '@/components/AIRecommendModal';
+
+const AIRecommendModal = dynamic(() => import('@/components/AIRecommendModal'), {
+  loading: () => null,
+});
 
 export interface VideoCardProps {
   id?: string;

@@ -1,16 +1,21 @@
 'use client';
 
 import { Sparkles } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { isAIRecommendFeatureDisabled } from '@/lib/ai-recommend.client';
 
-import AIRecommendModal from './AIRecommendModal';
 import ModernNav from './ModernNav';
 import { useSite } from './SiteProvider';
 import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
+
+const AIRecommendModal = dynamic(() => import('./AIRecommendModal'), {
+  ssr: false,
+  loading: () => null,
+});
 
 // 不需要导航栏的独立路由
 const STANDALONE_ROUTES = [
@@ -81,10 +86,12 @@ export default function NavigationShell() {
       </div>
 
       {/* AI 推荐弹窗 */}
-      <AIRecommendModal
-        isOpen={showAIRecommendModal}
-        onClose={() => setShowAIRecommendModal(false)}
-      />
+      {showAIRecommendModal && (
+        <AIRecommendModal
+          isOpen={showAIRecommendModal}
+          onClose={() => setShowAIRecommendModal(false)}
+        />
+      )}
     </>
   );
 }

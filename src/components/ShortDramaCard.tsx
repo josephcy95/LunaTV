@@ -3,6 +3,7 @@
 'use client';
 
 import { Play, Star, Heart, ExternalLink, PlayCircle, Sparkles } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { memo, useEffect, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -26,8 +27,11 @@ import {
 import { loadedImageUrls } from '@/lib/imageCache';
 import { ShortDramaItem } from '@/lib/types';
 
-import AIRecommendModal from '@/components/AIRecommendModal';
 import MobileActionSheet from '@/components/MobileActionSheet';
+
+const AIRecommendModal = dynamic(() => import('@/components/AIRecommendModal'), {
+  loading: () => null,
+});
 
 interface ShortDramaCardProps {
   drama: ShortDramaItem;
