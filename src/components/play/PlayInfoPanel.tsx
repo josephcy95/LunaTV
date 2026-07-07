@@ -46,7 +46,7 @@ interface PlayInfoPanelProps {
 export default function PlayInfoPanel(props: PlayInfoPanelProps) {
   const {
     title, year, cover, sourceName, totalEpisodes, currentEpisodeIndex,
-    episodeName, backdropUrl, tmdbRating, tmdbLogo, tmdbNumberOfSeasons,
+    episodeName, backdropUrl, tmdbRating, tmdbNumberOfSeasons,
     favorited, onToggleFavorite,
     detail, movieDetails, bangumiDetails, shortdramaDetails,
     movieComments, commentsError, loadingMovieDetails, loadingBangumiDetails,
@@ -149,20 +149,9 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
               )}
             </div>
 
-            <div className="flex items-center gap-3">
-              {tmdbLogo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={tmdbLogo}
-                  alt={title}
-                  className="max-h-10 w-auto max-w-[220px] object-contain dark:drop-shadow"
-                />
-              ) : (
-                <h2 className="truncate text-lg font-semibold leading-tight text-gray-950 dark:text-gray-50 sm:text-xl">
-                  {title}
-                </h2>
-              )}
-            </div>
+            <h2 className="truncate text-lg font-semibold leading-tight text-gray-950 dark:text-gray-50 sm:text-xl">
+              {title}
+            </h2>
           </div>
 
           <button
