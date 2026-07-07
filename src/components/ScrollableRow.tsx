@@ -235,7 +235,7 @@ function ScrollableRow({
               marginLeft: 'calc(50% - 50vw)',
               marginRight: 'calc(50% - 50vw)',
               paddingLeft: 'calc(50vw - 50%)',
-              paddingRight: 'calc(50vw - 50%)',
+              paddingRight: 0,
             }
           : undefined
       }
@@ -248,7 +248,9 @@ function ScrollableRow({
     >
       <div
         ref={containerRef}
-        className={`flex space-x-6 overflow-x-auto scrollbar-hide pt-3 pb-12 sm:pt-4 sm:pb-14 px-4 sm:px-6 ${
+        className={`flex space-x-6 overflow-x-auto scrollbar-hide pt-3 pb-12 sm:pt-4 sm:pb-14 ${
+          edgeBleed ? 'pl-4 pr-0 sm:pl-6 sm:pr-0' : 'px-4 sm:px-6'
+        } ${
           isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'
         }`}
         onScroll={checkScroll}
