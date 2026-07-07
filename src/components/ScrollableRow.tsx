@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Children, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { MouseEvent, PointerEvent } from 'react';
 
 import AnimatedCardGrid from '@/components/AnimatedCardGrid';
 
@@ -8,6 +9,8 @@ interface ScrollableRowProps {
   scrollDistance?: number;
   enableAnimation?: boolean;
   enableVirtualization?: boolean; // 启用虚拟化（仅当子元素很多时）
+  edgeBleed?: boolean;
+  showControls?: boolean;
 }
 
 function ScrollableRow({
@@ -15,12 +18,22 @@ function ScrollableRow({
   scrollDistance = 1000,
   enableAnimation = false,
   enableVirtualization = false,
+  edgeBleed = false,
+  showControls = true,
 }: ScrollableRowProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showLeftScroll, setShowLeftScroll] = useState(false);
   const [showRightScroll, setShowRightScroll] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const checkScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dragStateRef = useRef({
+    active: false,
+    pointerId: -1,
+    startX: 0,
+    scrollLeft: 0,
+    moved: false,
+  });
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
 
   // 使用 useMemo 缓存 children 数量，减少不必要的 effect 触发
@@ -162,9 +175,70 @@ function ScrollableRow({
     }
   }, [scrollDistance]);
 
+  const handlePointerDown = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== 'mouse' || event.button !== 0 || !containerRef.current) {
+      return;
+    }
+
+    dragStateRef.current = {
+      active: true,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      scrollLeft: containerRef.current.scrollLeft,
+      moved: false,
+    };
+    setIsDragging(true);
+    containerRef.current.setPointerCapture(event.pointerId);
+  }, []);
+
+  const handlePointerMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    const drag = dragStateRef.current;
+    if (!drag.active || drag.pointerId !== event.pointerId || !containerRef.current) {
+      return;
+    }
+
+    const delta = event.clientX - drag.startX;
+    if (Math.abs(delta) > 4) {
+      drag.moved = true;
+    }
+    containerRef.current.scrollLeft = drag.scrollLeft - delta;
+    event.preventDefault();
+  }, []);
+
+  const endDrag = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    const drag = dragStateRef.current;
+    if (!drag.active || drag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    if (containerRef.current?.hasPointerCapture(event.pointerId)) {
+      containerRef.current.releasePointerCapture(event.pointerId);
+    }
+    drag.active = false;
+    setIsDragging(false);
+  }, []);
+
+  const handleClickCapture = useCallback((event: MouseEvent<HTMLDivElement>) => {
+    if (dragStateRef.current.moved) {
+      event.preventDefault();
+      event.stopPropagation();
+      dragStateRef.current.moved = false;
+    }
+  }, []);
+
   return (
     <div
       className='relative'
+      style={
+        edgeBleed
+          ? {
+              marginLeft: 'calc(50% - 50vw)',
+              marginRight: 'calc(50% - 50vw)',
+              paddingLeft: 'calc(50vw - 50%)',
+              paddingRight: 'calc(50vw - 50%)',
+            }
+          : undefined
+      }
       onMouseEnter={() => {
         setIsHovered(true);
         // 当鼠标进入时重新检查一次
@@ -174,8 +248,15 @@ function ScrollableRow({
     >
       <div
         ref={containerRef}
-        className='flex space-x-6 overflow-x-auto scrollbar-hide pt-3 pb-12 sm:pt-4 sm:pb-14 px-4 sm:px-6'
+        className={`flex space-x-6 overflow-x-auto scrollbar-hide pt-3 pb-12 sm:pt-4 sm:pb-14 px-4 sm:px-6 ${
+          isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'
+        }`}
         onScroll={checkScroll}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onClickCapture={handleClickCapture}
         style={{
           WebkitOverflowScrolling: 'touch', // iOS 惯性滚动
           willChange: 'scroll-position', // 提示浏览器优化滚动
@@ -190,7 +271,7 @@ function ScrollableRow({
           visibleChildren
         )}
       </div>
-      {showLeftScroll && (
+      {showControls && showLeftScroll && (
         <div
           className={`hidden sm:flex absolute left-0 top-0 bottom-0 w-16 items-center justify-center z-600 transition-opacity duration-200 ${
             isHovered ? 'opacity-100' : 'opacity-0'
@@ -219,7 +300,7 @@ function ScrollableRow({
         </div>
       )}
 
-      {showRightScroll && (
+      {showControls && showRightScroll && (
         <div
           className={`hidden sm:flex absolute right-0 top-0 bottom-0 w-16 items-center justify-center z-600 transition-opacity duration-200 ${
             isHovered ? 'opacity-100' : 'opacity-0'

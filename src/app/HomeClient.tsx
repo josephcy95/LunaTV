@@ -154,7 +154,7 @@ function HomeSection({
   children: ReactNode;
 }) {
   return (
-    <section className='rounded-lg border border-white/70 bg-white/82 py-5 shadow-[0_10px_34px_rgba(15,23,42,0.07)] backdrop-blur-xl dark:border-white/10 dark:bg-gray-950/62 dark:shadow-[0_18px_50px_rgba(0,0,0,0.28)]'>
+    <section className='py-2'>
       <div className='mb-1 flex items-end justify-between gap-4 px-4 sm:px-6'>
         <div className='min-w-0'>
           <SectionTitle title={title} icon={icon} iconColor={iconColor} />
@@ -1351,7 +1351,7 @@ function HomeClient({ initialConfig }: {
                     ))}
                   </div>
 
-                  <ScrollableRow enableVirtualization={true}>
+                  <ScrollableRow edgeBleed showControls={false}>
                     {upcomingReleases
                       .filter(release => upcomingFilter === 'all' || release.type === upcomingFilter)
                       .map((release, index) => {
@@ -1413,7 +1413,7 @@ function HomeClient({ initialConfig }: {
                 iconColor='text-red-500'
                 href='/douban?type=movie'
               >
-                <ScrollableRow enableVirtualization={true}>
+                <ScrollableRow edgeBleed showControls={false}>
                   {loading
                     ? // 加载状态显示灰色占位数据
                     Array.from({ length: 8 }).map((_, index) => (
@@ -1451,7 +1451,7 @@ function HomeClient({ initialConfig }: {
                 iconColor='text-blue-500'
                 href='/douban?type=tv'
               >
-                <ScrollableRow enableVirtualization={true}>
+                <ScrollableRow edgeBleed showControls={false}>
                   {loading
                     ? // 加载状态显示灰色占位数据
                     Array.from({ length: 8 }).map((_, index) => (
@@ -1489,7 +1489,7 @@ function HomeClient({ initialConfig }: {
                 iconColor='text-purple-500'
                 href='/douban?type=anime'
               >
-                <ScrollableRow enableVirtualization={true}>
+                <ScrollableRow edgeBleed showControls={false}>
                   {loading
                     ? // 加载状态显示灰色占位数据
                     Array.from({ length: 8 }).map((_, index) => (
@@ -1534,7 +1534,7 @@ function HomeClient({ initialConfig }: {
                 iconColor='text-pink-500'
                 href='/douban?type=show'
               >
-                <ScrollableRow enableVirtualization={true}>
+                <ScrollableRow edgeBleed showControls={false}>
                   {loading
                     ? // 加载状态显示灰色占位数据
                     Array.from({ length: 8 }).map((_, index) => (
@@ -1572,7 +1572,7 @@ function HomeClient({ initialConfig }: {
                 iconColor='text-orange-500'
                 href='/shortdrama'
               >
-                <ScrollableRow enableVirtualization={true}>
+                <ScrollableRow edgeBleed showControls={false}>
                   {loading
                     ? // 加载状态显示灰色占位数据
                     Array.from({ length: 8 }).map((_, index) => (
