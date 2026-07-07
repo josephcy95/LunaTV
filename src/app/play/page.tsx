@@ -23,7 +23,6 @@ import DownloadButtons from '@/components/play/DownloadButtons';
 import FavoriteButton from '@/components/play/FavoriteButton';
 import NetDiskButton from '@/components/play/NetDiskButton';
 import BackToTopButton from '@/components/play/BackToTopButton';
-import LoadingScreen from '@/components/play/LoadingScreen';
 import PlayInfoPanel from '@/components/play/PlayInfoPanel';
 import VideoLoadingOverlay from '@/components/play/VideoLoadingOverlay';
 import WatchRoomSyncBanner from '@/components/play/WatchRoomSyncBanner';
@@ -2672,11 +2671,7 @@ function PlayPageClient() {
 
       setLoadingStage('ready');
       setLoadingMessage('✨ 准备就绪，即将开始播放...');
-
-      // 短暂延迟让用户看到完成状态
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
+      setLoading(false);
     };
 
     initAll();
@@ -4369,16 +4364,6 @@ function PlayPageClient() {
       document.body.scrollTop = 0;
     }
   };
-
-  if (loading) {
-    return (
-      <LoadingScreen
-        loadingStage={loadingStage}
-        loadingMessage={loadingMessage}
-        speedTestProgress={speedTestProgress}
-      />
-    );
-  }
 
   if (error) {
     return (
