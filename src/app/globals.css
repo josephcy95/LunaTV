@@ -1,10 +1,4 @@
 @import 'tailwindcss';
-@import '../styles/artplayer-hints.css';
-@import '../styles/artplayer-controls.css';
-@import '../styles/artplayer-mobile.css';
-@import '../styles/artplayer-liquid-glass.css';
-@import '../styles/artplayer-range-slider.css';
-@import '../styles/artplayer-fullscreen-title.css';
 
 /* Tailwind 4 Dark Mode Configuration - 使用 class 选择器而非媒体查询 */
 @custom-variant dark (&:where(.dark, .dark *));
@@ -291,53 +285,6 @@ div[data-media-provider] video {
 /* 状态过渡动画 */
 .smooth-transition {
   transition: all 0.3s ease-in-out;
-}
-
-/* 移动端隐藏弹幕配置按钮 - 使用设置面板简化配置 */
-/* 桌面端保留完整配置按钮 - 提供更多高级选项 */
-@media (max-width: 1080px), (hover: none) {
-  .artplayer-plugin-danmuku .apd-config {
-    display: none !important;
-  }
-}
-
-/* 修复桌面端弹幕配置弹窗hover不稳定问题 */
-@media (min-width: 1081px) and (hover: hover) {
-  /* 扩大按钮的实际hover区域，但不影响视觉 */
-  .artplayer-plugin-danmuku .apd-config {
-    position: relative;
-    padding: 3px; /* 增加一点内边距扩大hover区域 */
-  }
-
-  /* 按钮或面板hover时都显示面板 */
-  .artplayer-plugin-danmuku .apd-config:hover .apd-config-panel,
-  .artplayer-plugin-danmuku .apd-config .apd-config-panel:hover {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    visibility: visible !important;
-    transition: opacity 0.15s ease 0.1s !important; /* 添加0.1s显示延迟 */
-  }
-
-  /* 确保面板默认状态是隐藏的，隐藏时有延迟 */
-  .artplayer-plugin-danmuku .apd-config-panel {
-    opacity: 0;
-    pointer-events: none;
-    visibility: hidden;
-    transition: opacity 0.15s ease 0.3s, visibility 0s ease 0.45s; /* 0.3s隐藏延迟 */
-  }
-
-  /* 面板内部元素在显示时可交互 */
-  .artplayer-plugin-danmuku .apd-config-panel * {
-    pointer-events: auto;
-  }
-
-  /* 防止进度条拖拽时弹窗干扰 */
-  .artplayer[data-dragging="true"] .artplayer-plugin-danmuku .apd-config-panel {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    visibility: hidden !important;
-    transition: none !important;
-  }
 }
 
 /* 亮色模式文字颜色强制覆盖 - 修复 Tailwind 4 OKLCH 灰色过淡问题 */
