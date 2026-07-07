@@ -58,15 +58,22 @@ export default function artplayerPluginSeekButtons(option = {}) {
     const forwardIcon = generateForwardIcon(currentSeekTime);
 
     // 快进/快退功能
+    const setCurrentTime = (time) => {
+      art.currentTime = time;
+      if (art.video) {
+        art.video.currentTime = time;
+      }
+    };
+
     const seekBackward = () => {
       const newTime = Math.max(0, art.currentTime - currentSeekTime);
-      art.seek = newTime;
+      setCurrentTime(newTime);
       art.notice.show = `⏪ 后退 ${currentSeekTime} 秒`;
     };
 
     const seekForward = () => {
       const newTime = Math.min(art.duration, art.currentTime + currentSeekTime);
-      art.seek = newTime;
+      setCurrentTime(newTime);
       art.notice.show = `⏩ 前进 ${currentSeekTime} 秒`;
     };
 

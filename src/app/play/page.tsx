@@ -3557,6 +3557,7 @@ function PlayPageClient() {
     try {
       // 使用动态导入的 Artplayer
       const Artplayer = (window as any).DynamicArtplayer;
+      const artplayerPluginSeekButtons = (window as any).DynamicArtplayerSeekButtons;
 
       artPlayerRef.current = new Artplayer({
         container: artRef.current,
@@ -3586,6 +3587,14 @@ function PlayPageClient() {
         airplay: true,
         theme: '#23ade5',
         lang: navigator.language.toLowerCase(),
+        plugins: artplayerPluginSeekButtons
+          ? [
+              artplayerPluginSeekButtons({
+                seekTime: 10,
+                mobileLayout: 'both',
+              }),
+            ]
+          : [],
         moreVideoAttr: {
           crossOrigin: 'anonymous',
         },
@@ -3983,10 +3992,17 @@ function PlayPageClient() {
     // 动态导入 ArtPlayer 并初始化
     const loadAndInit = async () => {
       try {
-        const { default: Artplayer } = await import('artplayer');
+        const [
+          { default: Artplayer },
+          { default: artplayerPluginSeekButtons },
+        ] = await Promise.all([
+          import('artplayer'),
+          import('@/lib/artplayer-plugin-seek-buttons'),
+        ]);
 
         // 将导入的模块设置为全局变量供 initPlayer 使用
         (window as any).DynamicArtplayer = Artplayer;
+        (window as any).DynamicArtplayerSeekButtons = artplayerPluginSeekButtons;
         
         await initPlayer();
       } catch (error) {
