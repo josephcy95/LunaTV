@@ -1382,7 +1382,7 @@ function HomeClient({ initialConfig }: {
                       return (
                         <div
                           key={`${release.id}-${index}`}
-                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                          className='min-w-[108px] w-[108px] sm:min-w-[204px] sm:w-[204px]'
                         >
                           <VideoCard
                             source='upcoming_release'
@@ -1423,7 +1423,7 @@ function HomeClient({ initialConfig }: {
                     hotMovies.map((movie, index) => (
                       <div
                         key={index}
-                        className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                        className='min-w-[108px] w-[108px] sm:min-w-[204px] sm:w-[204px]'
                       >
                         <VideoCard
                           from='douban'
@@ -1461,7 +1461,7 @@ function HomeClient({ initialConfig }: {
                     hotTvShows.map((show, index) => (
                       <div
                         key={index}
-                        className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                        className='min-w-[108px] w-[108px] sm:min-w-[204px] sm:w-[204px]'
                       >
                         <VideoCard
                           from='douban'
@@ -1499,7 +1499,7 @@ function HomeClient({ initialConfig }: {
                     todayAnimes.map((anime, index) => (
                         <div
                           key={`${anime.id}-${index}`}
-                          className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                          className='min-w-[108px] w-[108px] sm:min-w-[204px] sm:w-[204px]'
                         >
                           <VideoCard
                             from='douban'
@@ -1544,7 +1544,7 @@ function HomeClient({ initialConfig }: {
                     hotVarietyShows.map((show, index) => (
                       <div
                         key={index}
-                        className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                        className='min-w-[108px] w-[108px] sm:min-w-[204px] sm:w-[204px]'
                       >
                         <VideoCard
                           from='douban'
@@ -1583,7 +1583,7 @@ function HomeClient({ initialConfig }: {
                       <ShortDramaCard
                         key={index}
                         drama={drama}
-                        className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                        className='min-w-[108px] w-[108px] sm:min-w-[204px] sm:w-[204px]'
                       />
                     ))}
                 </ScrollableRow>

@@ -146,7 +146,7 @@ function ContinueWatching({ className }: ContinueWatchingProps) {
             Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={index}
-                className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'
+                className='min-w-[108px] w-[108px] sm:min-w-[204px] sm:w-[204px]'
               >
                 <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'>
                   <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700'></div>
@@ -165,7 +165,7 @@ function ContinueWatching({ className }: ContinueWatchingProps) {
               return (
                 <div
                   key={record.key}
-                  className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44 relative group/card'
+                  className='min-w-[108px] w-[108px] sm:min-w-[204px] sm:w-[204px] relative group/card'
                 >
                   <div className='relative group-hover/card:z-5 transition-all duration-300'>
                     <VideoCard

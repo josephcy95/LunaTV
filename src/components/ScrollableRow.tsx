@@ -219,8 +219,6 @@ function ScrollableRow({
       scrollLeft: containerRef.current.scrollLeft,
       moved: false,
     };
-    setIsDragging(true);
-    containerRef.current.setPointerCapture(event.pointerId);
   }, []);
 
   const handlePointerMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
@@ -230,11 +228,17 @@ function ScrollableRow({
     }
 
     const delta = event.clientX - drag.startX;
-    if (Math.abs(delta) > 4) {
+    if (!drag.moved && Math.abs(delta) > 6) {
       drag.moved = true;
+      setIsDragging(true);
+      containerRef.current.setPointerCapture(event.pointerId);
     }
-    containerRef.current.scrollLeft = drag.scrollLeft - delta;
-    event.preventDefault();
+
+    if (drag.moved) {
+      containerRef.current.scrollLeft = drag.scrollLeft - delta;
+      event.preventDefault();
+      return;
+    }
   }, []);
 
   const endDrag = useCallback((event: PointerEvent<HTMLDivElement>) => {
@@ -248,6 +252,11 @@ function ScrollableRow({
     }
     drag.active = false;
     setIsDragging(false);
+    if (drag.moved) {
+      window.setTimeout(() => {
+        dragStateRef.current.moved = false;
+      }, 0);
+    }
   }, []);
 
   const handleClickCapture = useCallback((event: MouseEvent<HTMLDivElement>) => {
