@@ -46,7 +46,7 @@ interface PlayInfoPanelProps {
 export default function PlayInfoPanel(props: PlayInfoPanelProps) {
   const {
     title, year, cover, sourceName, totalEpisodes, currentEpisodeIndex,
-    episodeName, backdropUrl, tmdbPoster, tmdbOverview, tmdbRating, tmdbLogo, tmdbNumberOfSeasons,
+    episodeName, backdropUrl, tmdbRating, tmdbLogo, tmdbNumberOfSeasons,
     favorited, onToggleFavorite,
     detail, movieDetails, bangumiDetails, shortdramaDetails,
     movieComments, commentsError, loadingMovieDetails, loadingBangumiDetails,
@@ -59,10 +59,6 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
   const [indicator, setIndicator] = useState({ x: 0, width: 0, ready: false });
 
   const bgUrl = backdropUrl || (cover ? processImageUrl(cover) : null);
-  // TMDB poster 优先，没有则用封面
-  const posterUrl = tmdbPoster || (cover ? processImageUrl(cover) : null);
-  // 简介：TMDB 优先
-  const overview = tmdbOverview || movieDetails?.plot_summary || bangumiDetails?.summary || shortdramaDetails?.desc || detail?.desc;
   // 评分：TMDB 优先
   const displayRating = tmdbRating || (movieDetails?.rate ? parseFloat(movieDetails.rate) : null) || (bangumiDetails?.rating?.score ? parseFloat(bangumiDetails.rating.score) : null);
 
@@ -101,99 +97,88 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
   const episodeText = totalEpisodes > 1 ? (episodeName || `第 ${currentEpisodeIndex + 1} 集`) : null;
 
   return (
-    <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700/50">
+    <div className="overflow-hidden rounded-lg border border-gray-200/80 bg-white/70 shadow-sm backdrop-blur dark:border-gray-700/60 dark:bg-gray-900/50">
 
-      {/* ── Hero 背景图 ── */}
-      {bgUrl && (
-        <section className="relative overflow-hidden rounded-t-xl min-h-[360px] sm:min-h-[420px] md:min-h-[520px] lg:min-h-[620px]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={bgUrl} alt={title}
-            className="absolute inset-0 w-full h-full object-cover object-top" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/92 via-black/70 to-black/30" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent" />
+      {/* ── 紧凑观看信息栏 ── */}
+      <section className="relative overflow-hidden">
+        {bgUrl && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={bgUrl}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full object-cover object-center opacity-20 blur-xl scale-105 dark:opacity-25"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-white/80 dark:from-gray-950 dark:via-gray-950/92 dark:to-gray-950/75" />
+          </>
+        )}
 
-          {/* 右下角竖版海报 */}
-          {posterUrl && (
-            <div className="hidden lg:block absolute bottom-4 right-5 w-24 xl:w-28 overflow-hidden rounded-lg border border-white/20 shadow-2xl z-10">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={posterUrl} alt={title} className="w-full aspect-[2/3] object-cover" />
-            </div>
-          )}
-
-          {/* 内容区 — 右边留出海报宽度 */}
-          <div className="absolute inset-0 z-10 flex flex-col justify-end gap-2.5 p-4 sm:p-6 lg:pr-36 xl:pr-40">
-
-            {/* 标签行 */}
+        <div className="relative flex flex-col gap-3 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0 flex-1 space-y-2">
             <div className="flex flex-wrap items-center gap-1.5">
               {sourceName && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/15 text-white/90 border border-white/20">
+                <span className="rounded-md border border-gray-300/70 bg-white/70 px-2 py-0.5 text-[11px] font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-200">
                   {sourceName}
                 </span>
               )}
+              {episodeText && (
+                <span className="rounded-md border border-green-500/30 bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700 dark:bg-green-500/15 dark:text-green-300">
+                  {episodeText}
+                </span>
+              )}
               {(detail?.year || year) && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/15 text-white/90 border border-white/20">
+                <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                   {detail?.year || year}
                 </span>
               )}
               {displayRating && displayRating > 0 && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/80 text-white font-medium">
+                <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
                   ★ {displayRating.toFixed(1)}
                 </span>
               )}
-              {bangumiDetails?.rating?.score && !tmdbRating && parseFloat(bangumiDetails.rating.score) > 0 && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-pink-500/80 text-white font-medium">
-                  ★ {parseFloat(bangumiDetails.rating.score).toFixed(1)}
-                </span>
-              )}
               {detail?.class && String(detail.class) !== '0' && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-green-500/80 text-white font-medium">
+                <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                   {detail.class}
                 </span>
               )}
-              {episodeText && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/15 text-white/90 border border-white/20">
-                  {episodeText}
-                </span>
-              )}
               {tmdbNumberOfSeasons && tmdbNumberOfSeasons > 1 && (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/15 text-white/90 border border-white/20">
+                <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                   共 {tmdbNumberOfSeasons} 季
                 </span>
               )}
             </div>
 
-            {/* 标题 — 有 TMDB logo 就显示图片，没有就显示文字 */}
-            {tmdbLogo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={tmdbLogo} alt={title}
-                className="max-h-16 sm:max-h-20 md:max-h-28 w-auto max-w-[60%] object-contain drop-shadow-lg" />
-            ) : (
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-tight line-clamp-2">
-                {title}
-              </h1>
-            )}
-
-            {/* 简介 — TMDB 优先 */}
-            {overview && (
-              <p className="text-sm text-white/80 leading-relaxed line-clamp-2 md:line-clamp-3 max-w-2xl">
-                {overview}
-              </p>
-            )}
-
-            {/* 按钮行 — 收藏 */}
-            <div className="flex flex-wrap gap-2.5">
-              <button
-                onClick={onToggleFavorite}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/35 bg-white/12 text-white font-medium text-sm hover:bg-white/20 transition-colors"
-                aria-label={favorited ? '取消收藏' : '加入收藏'}
-              >
-                <Heart className={`size-4 transition-colors ${favorited ? 'fill-rose-500 text-rose-500' : ''}`} />
-                {favorited ? '已加入收藏' : '加入收藏'}
-              </button>
+            <div className="flex items-center gap-3">
+              {tmdbLogo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={tmdbLogo}
+                  alt={title}
+                  className="max-h-10 w-auto max-w-[220px] object-contain dark:drop-shadow"
+                />
+              ) : (
+                <h2 className="truncate text-lg font-semibold leading-tight text-gray-950 dark:text-gray-50 sm:text-xl">
+                  {title}
+                </h2>
+              )}
             </div>
           </div>
-        </section>
-      )}
+
+          <button
+            onClick={onToggleFavorite}
+            className={`inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors ${
+              favorited
+                ? 'border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-500/40 dark:bg-rose-500/15 dark:text-rose-300'
+                : 'border-gray-300 bg-white/85 text-gray-800 hover:border-green-400 hover:bg-green-50 hover:text-green-700 dark:border-gray-600 dark:bg-gray-800/85 dark:text-gray-100 dark:hover:border-green-500/60 dark:hover:bg-green-500/15 dark:hover:text-green-300'
+            }`}
+            aria-label={favorited ? '取消收藏' : '加入收藏'}
+          >
+            <Heart className={`size-4 transition-colors ${favorited ? 'fill-rose-500 text-rose-500' : ''}`} />
+            {favorited ? '已收藏' : '加入收藏'}
+          </button>
+        </div>
+      </section>
 
       {/* ── Tab 导航 ── */}
       {visibleTabs.length > 1 && (
