@@ -65,15 +65,23 @@ export default function artplayerPluginSeekButtons(option = {}) {
       }
     };
 
+    const keepControlsVisible = () => {
+      if (art.controls) {
+        art.controls.show = true;
+      }
+    };
+
     const seekBackward = () => {
       const newTime = Math.max(0, art.currentTime - currentSeekTime);
       setCurrentTime(newTime);
+      keepControlsVisible();
       art.notice.show = `⏪ 后退 ${currentSeekTime} 秒`;
     };
 
     const seekForward = () => {
       const newTime = Math.min(art.duration, art.currentTime + currentSeekTime);
       setCurrentTime(newTime);
+      keepControlsVisible();
       art.notice.show = `⏩ 前进 ${currentSeekTime} 秒`;
     };
 
@@ -90,6 +98,8 @@ export default function artplayerPluginSeekButtons(option = {}) {
 
           // 点击事件：上半边快退，下半边快进
           button.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             const rect = button.getBoundingClientRect();
             const clickY = e.clientY - rect.top;
             const isTopHalf = clickY < rect.height / 2;
@@ -103,7 +113,15 @@ export default function artplayerPluginSeekButtons(option = {}) {
           // 双侧模式：显示单向箭头
           const icon = side === 'left' ? generateBackwardIcon(currentSeekTime) : generateForwardIcon(currentSeekTime);
           button.innerHTML = icon;
-          button.onclick = side === 'left' ? seekBackward : seekForward;
+          button.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (side === 'left') {
+              seekBackward();
+            } else {
+              seekForward();
+            }
+          };
         }
 
         return button;
@@ -376,6 +394,8 @@ export default function artplayerPluginSeekButtons(option = {}) {
                 // 单侧模式：显示双向箭头（竖向排列）
                 button.innerHTML = generateDualSeekIcon(currentSeekTime);
                 button.onclick = (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   const rect = button.getBoundingClientRect();
                   const clickY = e.clientY - rect.top;
                   const isTopHalf = clickY < rect.height / 2;
@@ -389,7 +409,15 @@ export default function artplayerPluginSeekButtons(option = {}) {
                 // 双侧模式：显示单向箭头
                 const icon = side === 'left' ? generateBackwardIcon(currentSeekTime) : generateForwardIcon(currentSeekTime);
                 button.innerHTML = icon;
-                button.onclick = side === 'left' ? seekBackward : seekForward;
+                button.onclick = (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (side === 'left') {
+                    seekBackward();
+                  } else {
+                    seekForward();
+                  }
+                };
               }
               return button;
             };

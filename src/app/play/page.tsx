@@ -2898,6 +2898,16 @@ function PlayPageClient() {
       }
     };
 
+    const isMobilePointerEvent = (event: PointerEvent) =>
+      isMobileGlobal || event.pointerType === 'touch' || window.innerWidth < 768;
+
+    const keepControlsVisible = () => {
+      const controls = artPlayerRef.current?.controls;
+      if (controls) {
+        controls.show = true;
+      }
+    };
+
     const getEdgeSeekDirection = (clientX: number) => {
       const rect = playerElement.getBoundingClientRect();
       const ratio = (clientX - rect.left) / rect.width;
@@ -2963,6 +2973,8 @@ function PlayPageClient() {
 
       const tapDuration = Date.now() - pointerStartedAt;
       const seekDirection = getEdgeSeekDirection(event.clientX);
+      const isMobileTap = isMobilePointerEvent(event);
+      const controlsWereVisible = Boolean(artPlayerRef.current?.controls?.show);
 
       if (!pointerMoved && tapDuration < 260 && seekDirection) {
         const lastTap = lastPlayerTapRef.current;
@@ -2976,6 +2988,7 @@ function PlayPageClient() {
         if (doubleTap) {
           clearPendingEdgeTapTimer();
           suppressClickUntil = Date.now() + 350;
+          keepControlsVisible();
           seekBySeconds(seekDirection);
           lastPlayerTapRef.current = null;
           pointerId = null;
@@ -2991,11 +3004,19 @@ function PlayPageClient() {
         };
         clearPendingEdgeTapTimer();
         suppressClickUntil = Date.now() + 350;
-        pendingEdgeTapTimer = setTimeout(() => {
-          artPlayerRef.current?.toggle();
-          lastPlayerTapRef.current = null;
-          pendingEdgeTapTimer = null;
-        }, 280);
+        if (isMobileTap && !controlsWereVisible) {
+          keepControlsVisible();
+          pendingEdgeTapTimer = setTimeout(() => {
+            lastPlayerTapRef.current = null;
+            pendingEdgeTapTimer = null;
+          }, 280);
+        } else {
+          pendingEdgeTapTimer = setTimeout(() => {
+            artPlayerRef.current?.toggle();
+            lastPlayerTapRef.current = null;
+            pendingEdgeTapTimer = null;
+          }, 280);
+        }
         event.preventDefault();
         event.stopPropagation();
         pointerId = null;
@@ -3006,7 +3027,11 @@ function PlayPageClient() {
         clearPendingEdgeTapTimer();
         lastPlayerTapRef.current = null;
         suppressClickUntil = Date.now() + 350;
-        artPlayerRef.current?.toggle();
+        if (isMobileTap && !controlsWereVisible) {
+          keepControlsVisible();
+        } else {
+          artPlayerRef.current?.toggle();
+        }
         event.preventDefault();
         event.stopPropagation();
       }
@@ -3045,7 +3070,7 @@ function PlayPageClient() {
       playerElement.removeEventListener('pointerleave', handlePointerCancel);
       playerElement.removeEventListener('click', handleClickCapture, true);
     };
-  }, [loading, videoUrl]);
+  }, [loading, videoUrl, isMobileGlobal]);
 
   // 🚀 组件卸载时清理所有定时器和状态
   useEffect(() => {
