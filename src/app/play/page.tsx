@@ -127,10 +127,10 @@ function savePreferredAudioLang(rawLang?: string) {
 
 const PLAYBACK_RATE_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 const NEXT_EPISODE_CONTROL_HTML = `
-  <span class="art-next-episode-control" aria-hidden="true">
-    <svg viewBox="0 0 24 24" focusable="false">
-      <path d="M5 5v14l10-7L5 5z" fill="currentColor"></path>
-      <path d="M18 5h2v14h-2V5z" fill="currentColor"></path>
+  <span class="art-icon art-next-episode-control" aria-hidden="true">
+    <svg viewBox="0 0 24 24" focusable="false" role="img">
+      <path class="art-next-episode-play" d="M6.5 5.75v12.5L16 12 6.5 5.75z"></path>
+      <path class="art-next-episode-bar" d="M18 5.5h2v13h-2z"></path>
     </svg>
   </span>
 `;
