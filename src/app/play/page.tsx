@@ -125,6 +125,8 @@ function savePreferredAudioLang(rawLang?: string) {
   }
 }
 
+const PLAYBACK_RATE_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
 function appendAudioStreamIndex(url: string, audioStreamIndex: number): string {
   if (!url) return url;
 
@@ -2906,7 +2908,11 @@ function PlayPageClient() {
 
     const handlePointerDown = (event: PointerEvent) => {
       if (event.pointerType === 'mouse' && event.button !== 0) return;
-      if (isPlayerChromeTarget(event.target)) return;
+      if (isPlayerChromeTarget(event.target)) {
+        pointerId = null;
+        clearPlayerPointerTimer();
+        return;
+      }
 
       pointerId = event.pointerId;
       pointerStartX = event.clientX;
@@ -2934,6 +2940,14 @@ function PlayPageClient() {
     };
 
     const handlePointerUp = (event: PointerEvent) => {
+      if (isPlayerChromeTarget(event.target)) {
+        clearPlayerPointerTimer();
+        stopTemporaryFastForward();
+        playerLongPressActiveRef.current = false;
+        pointerId = null;
+        return;
+      }
+
       if (pointerId !== event.pointerId) return;
       clearPlayerPointerTimer();
 
@@ -3200,7 +3214,28 @@ function PlayPageClient() {
     const element = target as HTMLElement | null;
     return Boolean(
       element?.closest(
-        '.art-controls, .art-setting, .art-volume-panel, .art-contextmenus, button, input, textarea, select, a'
+        [
+          '.art-bottom',
+          '.art-progress',
+          '.art-control-progress',
+          '.art-controls',
+          '.art-control',
+          '.art-settings',
+          '.art-setting',
+          '.art-selector-list',
+          '.art-selector-item',
+          '.art-volume-panel',
+          '.art-contextmenus',
+          '.art-info',
+          '.art-layer',
+          '.art-seek-floating-left',
+          '.art-seek-floating-right',
+          'button',
+          'input',
+          'textarea',
+          'select',
+          'a',
+        ].join(', ')
       )
     );
   };
@@ -3861,10 +3896,10 @@ function PlayPageClient() {
         setting: true,
         loop: true,
         flip: true,
-        playbackRate: true,
+        playbackRate: false,
         aspectRatio: true,
         fullscreen: true,
-        fullscreenWeb: true,
+        fullscreenWeb: false,
         subtitleOffset: true,
         miniProgressBar: true,
         hotkey: false,
@@ -3875,6 +3910,28 @@ function PlayPageClient() {
         airplay: true,
         theme: '#23ade5',
         lang: navigator.language.toLowerCase(),
+        controls: [
+          {
+            name: 'playback-rate',
+            position: 'right',
+            index: 35,
+            html: '1x',
+            tooltip: '播放速度',
+            selector: PLAYBACK_RATE_OPTIONS.map((rate) => ({
+              html: rate === 1 ? 'Normal' : `${rate}x`,
+              value: rate,
+              default: rate === 1,
+            })),
+            onSelect: function (this: any, item: any) {
+              const rate = Number(item.value) || 1;
+              this.playbackRate = rate;
+              if (this.video) {
+                this.video.playbackRate = rate;
+              }
+              return `${rate}x`;
+            },
+          },
+        ],
         plugins: artplayerPluginSeekButtons
           ? [
               artplayerPluginSeekButtons({
