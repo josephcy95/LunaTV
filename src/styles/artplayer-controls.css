@@ -53,9 +53,45 @@
   display: none !important;
 }
 
+/* ===== Next Episode Control ===== */
+.art-control-next-episode .art-next-episode-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.art-control-next-episode .art-next-episode-control svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.art-control-next-episode-disabled {
+  cursor: default !important;
+  opacity: 0.45 !important;
+}
+
+.art-control-next-episode-disabled:hover {
+  color: inherit !important;
+}
+
 /* ===== Danmaku System Mobile Optimization ===== */
 /* 弹幕面板在不同挂载位置的定位处理 */
 @media (max-width: 768px) {
+  .art-control-next-episode .art-next-episode-control span {
+    display: none;
+  }
+
+  .art-control-next-episode .art-next-episode-control svg {
+    width: 20px;
+    height: 20px;
+  }
+
   /* 当弹幕插件挂载到控制栏中心时（横屏，宽度>=512px） */
   .art-controls-center .artplayer-plugin-danmuku .apd-config-panel,
   .art-controls-center .artplayer-plugin-danmuku .apd-style-panel {

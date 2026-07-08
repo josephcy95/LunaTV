@@ -126,6 +126,15 @@ function savePreferredAudioLang(rawLang?: string) {
 }
 
 const PLAYBACK_RATE_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+const NEXT_EPISODE_CONTROL_HTML = `
+  <span class="art-next-episode-control" aria-hidden="true">
+    <svg viewBox="0 0 24 24" focusable="false">
+      <path d="M5 5v14l10-7L5 5z" fill="currentColor"></path>
+      <path d="M18 5h2v14h-2V5z" fill="currentColor"></path>
+    </svg>
+    <span>下一集</span>
+  </span>
+`;
 
 function appendAudioStreamIndex(url: string, audioStreamIndex: number): string {
   if (!url) return url;
@@ -3936,6 +3945,40 @@ function PlayPageClient() {
         theme: '#23ade5',
         lang: navigator.language.toLowerCase(),
         controls: [
+          {
+            name: 'next-episode',
+            position: 'right',
+            index: 34,
+            html: NEXT_EPISODE_CONTROL_HTML,
+            tooltip: '下一集',
+            disable: totalEpisodes <= 1,
+            mounted: function (this: any, element: HTMLElement) {
+              const updateState = () => {
+                const d = detailRef.current;
+                const idx = currentEpisodeIndexRef.current;
+                const hasNext = Boolean(d?.episodes && idx < d.episodes.length - 1);
+
+                element.classList.toggle('art-control-next-episode-disabled', !hasNext);
+                element.setAttribute('aria-disabled', String(!hasNext));
+                element.setAttribute('title', hasNext ? '下一集' : '已经是最后一集');
+              };
+
+              updateState();
+              this.on('video:canplay', updateState);
+              this.on('video:ended', updateState);
+            },
+            click: function (this: any) {
+              const d = detailRef.current;
+              const idx = currentEpisodeIndexRef.current;
+
+              if (!d?.episodes || idx >= d.episodes.length - 1) {
+                this.notice.show = '已经是最后一集';
+                return;
+              }
+
+              handleNextEpisode();
+            },
+          },
           {
             name: 'playback-rate',
             position: 'right',

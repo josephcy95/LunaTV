@@ -121,6 +121,10 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
     totalEpisodes > 1 ? 'episodes' : 'sources'
   );
 
+  useEffect(() => {
+    setActiveTab(totalEpisodes > 1 ? 'episodes' : 'sources');
+  }, [currentSource, currentId, totalEpisodes]);
+
   // 当前分页索引（0 开始）
   const initialPage = Math.floor((value - 1) / episodesPerPage);
   const [currentPage, setCurrentPage] = useState<number>(initialPage);
