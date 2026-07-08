@@ -132,7 +132,6 @@ const NEXT_EPISODE_CONTROL_HTML = `
       <path d="M5 5v14l10-7L5 5z" fill="currentColor"></path>
       <path d="M18 5h2v14h-2V5z" fill="currentColor"></path>
     </svg>
-    <span>下一集</span>
   </span>
 `;
 

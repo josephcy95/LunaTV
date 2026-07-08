@@ -57,17 +57,15 @@
 .art-control-next-episode .art-next-episode-control {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  width: 100%;
   height: 100%;
-  white-space: nowrap;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1;
+  line-height: 0;
 }
 
 .art-control-next-episode .art-next-episode-control svg {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   flex: 0 0 auto;
 }
 
@@ -83,15 +81,6 @@
 /* ===== Danmaku System Mobile Optimization ===== */
 /* 弹幕面板在不同挂载位置的定位处理 */
 @media (max-width: 768px) {
-  .art-control-next-episode .art-next-episode-control span {
-    display: none;
-  }
-
-  .art-control-next-episode .art-next-episode-control svg {
-    width: 20px;
-    height: 20px;
-  }
-
   /* 当弹幕插件挂载到控制栏中心时（横屏，宽度>=512px） */
   .art-controls-center .artplayer-plugin-danmuku .apd-config-panel,
   .art-controls-center .artplayer-plugin-danmuku .apd-style-panel {
