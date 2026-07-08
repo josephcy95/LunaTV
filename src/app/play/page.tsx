@@ -3283,24 +3283,6 @@ function PlayPageClient() {
     if (isTextInputTarget(e.target))
       return;
 
-    const isArtPlayerNativeHotkey =
-      Boolean(artPlayerRef.current?.isFocus) &&
-      !e.altKey &&
-      !e.ctrlKey &&
-      !e.metaKey &&
-      !e.shiftKey &&
-      [
-        'ArrowLeft',
-        'ArrowRight',
-        'ArrowUp',
-        'ArrowDown',
-        'Escape',
-      ].includes(e.code);
-
-    if (isArtPlayerNativeHotkey) {
-      return;
-    }
-
     // Alt + 左箭头 = 上一集
     if (e.altKey && e.key === 'ArrowLeft') {
       if (detailRef.current && currentEpisodeIndexRef.current > 0) {
@@ -3321,7 +3303,7 @@ function PlayPageClient() {
 
     // 左箭头 = 快退
     if (!e.altKey && e.key === 'ArrowLeft') {
-      if (artPlayerRef.current && artPlayerRef.current.currentTime > 5) {
+      if (artPlayerRef.current) {
         seekBySeconds(-10);
         e.preventDefault();
       }
@@ -3329,10 +3311,7 @@ function PlayPageClient() {
 
     // 右箭头 = 快进
     if (!e.altKey && e.key === 'ArrowRight') {
-      if (
-        artPlayerRef.current &&
-        artPlayerRef.current.currentTime < artPlayerRef.current.duration - 5
-      ) {
+      if (artPlayerRef.current) {
         seekBySeconds(10);
         e.preventDefault();
       }
@@ -3340,9 +3319,11 @@ function PlayPageClient() {
 
     // 上箭头 = 音量+
     if (e.key === 'ArrowUp') {
-      if (artPlayerRef.current && artPlayerRef.current.volume < 1) {
-        artPlayerRef.current.volume =
-          Math.round((artPlayerRef.current.volume + 0.1) * 10) / 10;
+      if (artPlayerRef.current) {
+        artPlayerRef.current.volume = Math.min(
+          1,
+          Math.round((artPlayerRef.current.volume + 0.1) * 10) / 10
+        );
         artPlayerRef.current.notice.show = `音量: ${Math.round(
           artPlayerRef.current.volume * 100
         )}`;
@@ -3352,9 +3333,11 @@ function PlayPageClient() {
 
     // 下箭头 = 音量-
     if (e.key === 'ArrowDown') {
-      if (artPlayerRef.current && artPlayerRef.current.volume > 0) {
-        artPlayerRef.current.volume =
-          Math.round((artPlayerRef.current.volume - 0.1) * 10) / 10;
+      if (artPlayerRef.current) {
+        artPlayerRef.current.volume = Math.max(
+          0,
+          Math.round((artPlayerRef.current.volume - 0.1) * 10) / 10
+        );
         artPlayerRef.current.notice.show = `音量: ${Math.round(
           artPlayerRef.current.volume * 100
         )}`;
