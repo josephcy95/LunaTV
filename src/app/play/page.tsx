@@ -28,9 +28,12 @@ import VideoLoadingOverlay from '@/components/play/VideoLoadingOverlay';
 import WatchRoomSyncBanner from '@/components/play/WatchRoomSyncBanner';
 import SourceSwitchDialog from '@/components/play/SourceSwitchDialog';
 import OwnerChangeDialog from '@/components/play/OwnerChangeDialog';
-import VideoCoverDisplay from '@/components/play/VideoCoverDisplay';
 import PlayErrorDisplay from '@/components/play/PlayErrorDisplay';
 import { ClientCache } from '@/lib/client-cache';
+import { getPlayerDeviceInfo } from '@/lib/player/device';
+import { attachFullscreenOrientation } from '@/lib/player/orientation';
+import { attachPlayerGestures } from '@/lib/player/gestures';
+import '@/styles/artplayer-theme.css';
 import {
   deleteFavorite,
   deletePlayRecord,
@@ -257,13 +260,6 @@ function PlayPageClient() {
 
   // 下载功能启用状态
   const [downloadEnabled, setDownloadEnabled] = useState(true);
-
-  // 进度条拖拽状态管理
-  const isDraggingProgressRef = useRef(false);
-  const seekResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // resize事件防抖管理
-  const resizeResetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 去广告开关（从 localStorage 继承，默认 true）
   const [blockAdEnabled, setBlockAdEnabled] = useState<boolean>(() => {
@@ -509,9 +505,6 @@ function PlayPageClient() {
   // ArtPlayer ref
   const artPlayerRef = useRef<any>(null);
   const artRef = useRef<HTMLDivElement | null>(null);
-  const playerPointerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastPlayerTapRef = useRef<{ time: number; x: number; y: number } | null>(null);
-  const playerLongPressActiveRef = useRef(false);
   const spacePressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const spaceLongPressConsumedRef = useRef(false);
   const fastForwardActiveRef = useRef(false);
@@ -764,6 +757,8 @@ function PlayPageClient() {
   const isSourceChangingRef = useRef<boolean>(false); // 标记是否正在换源
   const isEpisodeChangingRef = useRef<boolean>(false); // 标记是否正在切换集数
   const videoEndedHandledRef = useRef<boolean>(false); // 🔥 标记当前视频的 video:ended 事件是否已经被处理过（防止多个监听器重复触发）
+  const autoNextTimeoutRef = useRef<NodeJS.Timeout | null>(null); // 自动连播延迟定时器
+  const initialSeekAppliedRef = useRef<boolean>(false); // URL ?t= 初始定位只应用一次（防止播放器重建时回跳）
 
   // 🚀 新增：连续切换源防抖和资源管理
   const sourceSwitchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -1304,8 +1299,6 @@ function PlayPageClient() {
     console.log('按权重排序后的源:', weightedSources.map(s => `${s.source_name}(${weights[s.source] ?? 50})`));
 
     // 使用全局统一的设备检测结果
-    const _isIPad = /iPad/i.test(userAgent) || (userAgent.includes('Macintosh') && typeof navigator !== 'undefined' && navigator.maxTouchPoints >= 1);
-    const _isIOS = isIOSGlobal;
     const isIOS13 = isIOS13Global;
     const isMobile = isMobileGlobal;
 
@@ -1990,11 +1983,12 @@ function PlayPageClient() {
     }
   };
 
-  // 检测移动设备（在组件层级定义）- 参考ArtPlayer compatibility.js
-  const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-  const isIOSGlobal = /iPad|iPhone|iPod/i.test(userAgent) && !(window as any).MSStream;
-  const isIOS13Global = isIOSGlobal || (userAgent.includes('Macintosh') && typeof navigator !== 'undefined' && navigator.maxTouchPoints >= 1);
-  const isMobileGlobal = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent) || isIOS13Global;
+  // 检测移动设备（SSR 安全、模块级缓存，见 src/lib/player/device.ts）
+  const {
+    isIOS: isIOSGlobal,
+    isIOS13: isIOS13Global,
+    isMobile: isMobileGlobal,
+  } = getPlayerDeviceInfo();
 
   // 内存压力检测和清理（针对移动设备）
   const checkMemoryPressure = async () => {
@@ -2880,205 +2874,27 @@ function PlayPageClient() {
     };
   }, []);
 
+  // 手势层：单击控制栏显隐 / 双击播放暂停与快进快退 / 长按倍速 / 鼠标双击全屏
+  // （实现见 src/lib/player/gestures.ts，替代旧的内联 pointer 事件大杂烩）
   useEffect(() => {
     if (loading || !artRef.current) return;
 
-    const playerElement = artRef.current;
-    let pointerStartX = 0;
-    let pointerStartY = 0;
-    let pointerStartedAt = 0;
-    let pointerMoved = false;
-    let pointerId: number | null = null;
-    let suppressClickUntil = 0;
-    let pendingEdgeTapTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const clearPlayerPointerTimer = () => {
-      if (playerPointerTimerRef.current) {
-        clearTimeout(playerPointerTimerRef.current);
-        playerPointerTimerRef.current = null;
-      }
-    };
-
-    const clearPendingEdgeTapTimer = () => {
-      if (pendingEdgeTapTimer) {
-        clearTimeout(pendingEdgeTapTimer);
-        pendingEdgeTapTimer = null;
-      }
-    };
-
-    const isMobilePointerEvent = (event: PointerEvent) =>
-      isMobileGlobal || event.pointerType === 'touch' || window.innerWidth < 768;
-
-    const keepControlsVisible = () => {
-      const controls = artPlayerRef.current?.controls;
-      if (controls) {
-        controls.show = true;
-      }
-    };
-
-    const getEdgeSeekDirection = (clientX: number) => {
-      const rect = playerElement.getBoundingClientRect();
-      const ratio = (clientX - rect.left) / rect.width;
-      if (ratio <= 0.2) return -10;
-      if (ratio >= 0.8) return 10;
-      return 0;
-    };
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (event.pointerType === 'mouse' && event.button !== 0) return;
-      if (isPlayerChromeTarget(event.target)) {
-        pointerId = null;
-        clearPlayerPointerTimer();
-        return;
-      }
-
-      pointerId = event.pointerId;
-      pointerStartX = event.clientX;
-      pointerStartY = event.clientY;
-      pointerStartedAt = Date.now();
-      pointerMoved = false;
-      playerLongPressActiveRef.current = false;
-      clearPlayerPointerTimer();
-
-      playerPointerTimerRef.current = setTimeout(() => {
-        playerLongPressActiveRef.current = true;
-        startTemporaryFastForward();
-      }, 380);
-    };
-
-    const handlePointerMove = (event: PointerEvent) => {
-      if (pointerId !== event.pointerId) return;
-      if (
-        Math.abs(event.clientX - pointerStartX) > 8 ||
-        Math.abs(event.clientY - pointerStartY) > 8
-      ) {
-        pointerMoved = true;
-        clearPlayerPointerTimer();
-      }
-    };
-
-    const handlePointerUp = (event: PointerEvent) => {
-      if (isPlayerChromeTarget(event.target)) {
-        clearPlayerPointerTimer();
-        stopTemporaryFastForward();
-        playerLongPressActiveRef.current = false;
-        pointerId = null;
-        return;
-      }
-
-      if (pointerId !== event.pointerId) return;
-      clearPlayerPointerTimer();
-
-      if (playerLongPressActiveRef.current) {
-        stopTemporaryFastForward();
-        playerLongPressActiveRef.current = false;
-        pointerId = null;
-        suppressClickUntil = Date.now() + 350;
-        event.preventDefault();
-        event.stopPropagation();
-        return;
-      }
-
-      const tapDuration = Date.now() - pointerStartedAt;
-      const seekDirection = getEdgeSeekDirection(event.clientX);
-      const isMobileTap = isMobilePointerEvent(event);
-      const controlsWereVisible = Boolean(artPlayerRef.current?.controls?.show);
-
-      if (!pointerMoved && tapDuration < 260 && seekDirection) {
-        const lastTap = lastPlayerTapRef.current;
-        const now = Date.now();
-        const doubleTap =
-          lastTap &&
-          now - lastTap.time < 280 &&
-          Math.abs(lastTap.x - event.clientX) < 48 &&
-          Math.abs(lastTap.y - event.clientY) < 48;
-
-        if (doubleTap) {
-          clearPendingEdgeTapTimer();
-          suppressClickUntil = Date.now() + 350;
-          keepControlsVisible();
-          seekBySeconds(seekDirection);
-          lastPlayerTapRef.current = null;
-          pointerId = null;
-          event.preventDefault();
-          event.stopPropagation();
-          return;
+    const detachGestures = attachPlayerGestures(artRef.current, {
+      getArt: () => artPlayerRef.current,
+      seekBy: (seconds) => seekBySeconds(seconds),
+      togglePlay: () => artPlayerRef.current?.toggle(),
+      toggleFullscreen: () => {
+        if (artPlayerRef.current) {
+          artPlayerRef.current.fullscreen = !artPlayerRef.current.fullscreen;
         }
+      },
+      startFastForward: () => startTemporaryFastForward(),
+      stopFastForward: () => stopTemporaryFastForward(),
+      isChromeTarget: (target) => isPlayerChromeTarget(target),
+    });
 
-        lastPlayerTapRef.current = {
-          time: now,
-          x: event.clientX,
-          y: event.clientY,
-        };
-        clearPendingEdgeTapTimer();
-        suppressClickUntil = Date.now() + 350;
-        if (isMobileTap && !controlsWereVisible) {
-          keepControlsVisible();
-          pendingEdgeTapTimer = setTimeout(() => {
-            lastPlayerTapRef.current = null;
-            pendingEdgeTapTimer = null;
-          }, 280);
-        } else {
-          pendingEdgeTapTimer = setTimeout(() => {
-            artPlayerRef.current?.toggle();
-            lastPlayerTapRef.current = null;
-            pendingEdgeTapTimer = null;
-          }, 280);
-        }
-        event.preventDefault();
-        event.stopPropagation();
-        pointerId = null;
-        return;
-      }
-
-      if (!pointerMoved && tapDuration < 260) {
-        clearPendingEdgeTapTimer();
-        lastPlayerTapRef.current = null;
-        suppressClickUntil = Date.now() + 350;
-        if (isMobileTap && !controlsWereVisible) {
-          keepControlsVisible();
-        } else {
-          artPlayerRef.current?.toggle();
-        }
-        event.preventDefault();
-        event.stopPropagation();
-      }
-
-      pointerId = null;
-    };
-
-    const handleClickCapture = (event: MouseEvent) => {
-      if (Date.now() > suppressClickUntil) return;
-      event.preventDefault();
-      event.stopPropagation();
-    };
-
-    const handlePointerCancel = () => {
-      clearPlayerPointerTimer();
-      stopTemporaryFastForward();
-      playerLongPressActiveRef.current = false;
-      pointerId = null;
-    };
-
-    playerElement.addEventListener('pointerdown', handlePointerDown);
-    playerElement.addEventListener('pointermove', handlePointerMove);
-    playerElement.addEventListener('pointerup', handlePointerUp);
-    playerElement.addEventListener('pointercancel', handlePointerCancel);
-    playerElement.addEventListener('pointerleave', handlePointerCancel);
-    playerElement.addEventListener('click', handleClickCapture, true);
-
-    return () => {
-      clearPlayerPointerTimer();
-      clearPendingEdgeTapTimer();
-      stopTemporaryFastForward();
-      playerElement.removeEventListener('pointerdown', handlePointerDown);
-      playerElement.removeEventListener('pointermove', handlePointerMove);
-      playerElement.removeEventListener('pointerup', handlePointerUp);
-      playerElement.removeEventListener('pointercancel', handlePointerCancel);
-      playerElement.removeEventListener('pointerleave', handlePointerCancel);
-      playerElement.removeEventListener('click', handleClickCapture, true);
-    };
-  }, [loading, videoUrl, isMobileGlobal]);
+    return detachGestures;
+  }, [loading]);
 
   // 🚀 组件卸载时清理所有定时器和状态
   useEffect(() => {
@@ -3103,11 +2919,11 @@ function PlayPageClient() {
   // ---------------------------------------------------------------------------
   // 处理集数切换
   const handleEpisodeChange = async (episodeNumber: number) => {
-    if (episodeNumber >= 0 && episodeNumber < totalEpisodes) {
-      // 在更换集数前保存当前播放进度
-      if (artPlayerRef.current && artPlayerRef.current.paused) {
-        saveCurrentPlayProgress();
-      }
+    // 从播放器事件回调调用时 totalEpisodes 闭包可能过期，以 ref 为准
+    const episodeCount = detailRef.current?.episodes?.length ?? totalEpisodes;
+    if (episodeNumber >= 0 && episodeNumber < episodeCount) {
+      // 在更换集数前保存当前播放进度（saveCurrentPlayProgress 内部会跳过无效进度）
+      saveCurrentPlayProgress();
 
       // 🔥 优化：检查目标集数是否有历史播放记录
       try {
@@ -3141,14 +2957,13 @@ function PlayPageClient() {
     }
   };
 
+  // 上一集 / 下一集统一走 handleEpisodeChange：
+  // 保证保存进度、恢复目标集历史进度、同步 URL ?index= 三件事行为一致
   const handlePreviousEpisode = () => {
     const d = detailRef.current;
     const idx = currentEpisodeIndexRef.current;
     if (d && d.episodes && idx > 0) {
-      if (artPlayerRef.current && !artPlayerRef.current.paused) {
-        saveCurrentPlayProgress();
-      }
-      setCurrentEpisodeIndex(idx - 1);
+      handleEpisodeChange(idx - 1);
     }
   };
 
@@ -3156,10 +2971,7 @@ function PlayPageClient() {
     const d = detailRef.current;
     const idx = currentEpisodeIndexRef.current;
     if (d && d.episodes && idx < d.episodes.length - 1) {
-      if (artPlayerRef.current && !artPlayerRef.current.paused) {
-        saveCurrentPlayProgress();
-      }
-      setCurrentEpisodeIndex(idx + 1);
+      handleEpisodeChange(idx + 1);
     }
   };
 
@@ -3177,7 +2989,9 @@ function PlayPageClient() {
     if (player.video) {
       player.video.currentTime = nextTime;
     }
-    player.notice.show = seconds < 0 ? '⏪ 后退 10 秒' : '⏩ 前进 10 秒';
+    const amount = Math.abs(seconds);
+    player.notice.show =
+      seconds < 0 ? `⏪ 后退 ${amount} 秒` : `⏩ 前进 ${amount} 秒`;
   };
 
   const startTemporaryFastForward = () => {
@@ -3243,6 +3057,16 @@ function PlayPageClient() {
     );
   };
 
+  // 焦点在按钮/链接等可交互元素上时，不拦截空格/回车/方向键，
+  // 避免全局快捷键破坏键盘可访问性（如空格激活聚焦的按钮）
+  const isInteractiveTarget = (target: EventTarget | null) => {
+    const element = target as HTMLElement | null;
+    if (!element?.closest) return false;
+    return Boolean(
+      element.closest('button, [role="button"], select, a, summary')
+    );
+  };
+
   const isPlayerChromeTarget = (target: EventTarget | null) => {
     const element = target as HTMLElement | null;
     return Boolean(
@@ -3278,8 +3102,8 @@ function PlayPageClient() {
   // ---------------------------------------------------------------------------
   // 处理全局快捷键
   const handleKeyboardShortcuts = (e: KeyboardEvent) => {
-    // 忽略输入框中的按键事件
-    if (isTextInputTarget(e.target))
+    // 忽略输入框以及聚焦在可交互元素上的按键事件
+    if (isTextInputTarget(e.target) || isInteractiveTarget(e.target))
       return;
 
     // Alt + 左箭头 = 上一集
@@ -3368,7 +3192,7 @@ function PlayPageClient() {
   };
 
   const handleKeyboardShortcutKeyUp = (e: KeyboardEvent) => {
-    if (isTextInputTarget(e.target)) return;
+    if (isTextInputTarget(e.target) || isInteractiveTarget(e.target)) return;
     if (e.key !== ' ') return;
 
     if (spacePressTimerRef.current) {
@@ -3755,45 +3579,11 @@ function PlayPageClient() {
       setError('视频地址无效');
       return;
     }
-    console.log(videoUrl);
 
-    // 检测移动设备和浏览器类型 - 使用统一的全局检测结果
-    const isSafari = /^(?:(?!chrome|android).)*safari/i.test(userAgent);
+    // 统一的全局设备检测结果
     const isIOS = isIOSGlobal;
     const isIOS13 = isIOS13Global;
     const isMobile = isMobileGlobal;
-    const isWebKit = isSafari || isIOS;
-    // Chrome浏览器检测 - 只有真正的Chrome才支持Chromecast
-    // 排除各种厂商浏览器，即使它们的UA包含Chrome字样
-    const isChrome = /Chrome/i.test(userAgent) && 
-                    !/Edg/i.test(userAgent) &&      // 排除Edge
-                    !/OPR/i.test(userAgent) &&      // 排除Opera
-                    !/SamsungBrowser/i.test(userAgent) && // 排除三星浏览器
-                    !/OPPO/i.test(userAgent) &&     // 排除OPPO浏览器
-                    !/OppoBrowser/i.test(userAgent) && // 排除OppoBrowser
-                    !/HeyTapBrowser/i.test(userAgent) && // 排除HeyTapBrowser (OPPO新版浏览器)
-                    !/OnePlus/i.test(userAgent) &&  // 排除OnePlus浏览器
-                    !/Xiaomi/i.test(userAgent) &&   // 排除小米浏览器
-                    !/MIUI/i.test(userAgent) &&     // 排除MIUI浏览器
-                    !/Huawei/i.test(userAgent) &&   // 排除华为浏览器
-                    !/Vivo/i.test(userAgent) &&     // 排除Vivo浏览器
-                    !/UCBrowser/i.test(userAgent) && // 排除UC浏览器
-                    !/QQBrowser/i.test(userAgent) && // 排除QQ浏览器
-                    !/Baidu/i.test(userAgent) &&    // 排除百度浏览器
-                    !/SogouMobileBrowser/i.test(userAgent); // 排除搜狗浏览器
-
-    // 调试信息：输出设备检测结果和投屏策略
-    console.log('🔍 设备检测结果:', {
-      userAgent,
-      isIOS,
-      isSafari,
-      isMobile,
-      isWebKit,
-      isChrome,
-      'AirPlay按钮': isIOS || isSafari ? '✅ 显示' : '❌ 隐藏',
-      'Chromecast按钮': isChrome && !isIOS ? '✅ 显示' : '❌ 隐藏',
-      '投屏策略': isIOS || isSafari ? '🍎 AirPlay (WebKit)' : isChrome ? '📺 Chromecast (Cast API)' : '❌ 不支持投屏'
-    });
 
     // 🚀 优化连续切换：防抖机制 + 资源管理
     if (artPlayerRef.current && !loading) {
@@ -3836,10 +3626,11 @@ function PlayPageClient() {
 
             // 🔥 重置集数切换标识
             if (isEpisodeChange) {
-              // 切换集数后显式重置播放时间为 0
+              // 切换集数后显式重置播放时间为 0（若有历史进度，video:canplay 会再恢复）
               artPlayerRef.current.currentTime = 0;
-              console.log('🎯 集数切换完成，重置播放时间为 0');
               isEpisodeChangingRef.current = false;
+              // 切集后自动接续播放（上一集自然播完时播放器处于暂停态）
+              artPlayerRef.current.play?.()?.catch?.(() => undefined);
             } else if (currentTime > 1) {
               const duration = artPlayerRef.current.duration || 0;
               const targetTime =
@@ -3897,11 +3688,14 @@ function PlayPageClient() {
       const Artplayer = (window as any).DynamicArtplayer;
       const artplayerPluginSeekButtons = (window as any).DynamicArtplayerSeekButtons;
 
+      // 网页全屏挂到 body 下，避免被 sticky/transform 祖先创建的层叠上下文困住
+      Artplayer.FULLSCREEN_WEB_IN_BODY = true;
+
       artPlayerRef.current = new Artplayer({
         container: artRef.current,
         url: videoUrl,
         poster: videoCover,
-        volume: 0.5,
+        volume: 0.7,
         isLive: false,
         muted: false,
         autoplay: false,
@@ -3910,12 +3704,21 @@ function PlayPageClient() {
         autoMini: true,
         screenshot: true,
         setting: true,
-        loop: true,
+        // 关键修复：loop 会阻止 video:ended 触发，导致自动连播失效
+        loop: false,
         flip: true,
         playbackRate: false,
         aspectRatio: true,
         fullscreen: true,
-        fullscreenWeb: false,
+        // 桌面提供网页全屏（剧场模式），移动端由 CSS 隐藏该按钮
+        fullscreenWeb: true,
+        // 移动端全屏时根据视频画幅自动旋转/锁定方向（配合
+        // attachFullscreenOrientation 处理原生全屏的 screen.orientation.lock）
+        autoOrientation: true,
+        // 移动端锁定按钮：防误触
+        lock: true,
+        // 长按倍速由手势层统一实现，关闭内建行为避免叠加
+        fastForward: false,
         subtitleOffset: true,
         miniProgressBar: true,
         hotkey: false,
@@ -3924,7 +3727,7 @@ function PlayPageClient() {
         playsInline: true,
         autoPlayback: true,
         airplay: true,
-        theme: '#23ade5',
+        theme: '#22c55e',
         lang: navigator.language.toLowerCase(),
         controls: [
           {
@@ -4221,17 +4024,21 @@ function PlayPageClient() {
         },
       });
 
+      // 移动端进入原生全屏时自动横屏（竖屏视频除外），退出时解锁
+      attachFullscreenOrientation(artPlayerRef.current);
+
       // 监听播放器事件
-      artPlayerRef.current.on('ready', async () => {
+      artPlayerRef.current.on('ready', () => {
         setError(null);
         setPlayerReady(true); // 标记播放器已就绪，启用观影室同步
 
-        // 观影室时间同步：从URL参数读取初始播放时间
+        // 观影室时间同步：从URL参数读取初始播放时间。
+        // 只在本次挂载的第一次 ready 应用，避免播放器重建时把用户拉回旧时间点
         const timeParam = searchParams.get('t') || searchParams.get('time');
-        if (timeParam && artPlayerRef.current) {
+        if (timeParam && !initialSeekAppliedRef.current && artPlayerRef.current) {
           const seekTime = parseFloat(timeParam);
           if (!isNaN(seekTime) && seekTime > 0) {
-            console.log('[WatchRoom] Seeking to synced time:', seekTime);
+            initialSeekAppliedRef.current = true;
             setTimeout(() => {
               if (artPlayerRef.current) {
                 artPlayerRef.current.currentTime = seekTime;
@@ -4239,10 +4046,9 @@ function PlayPageClient() {
             }, 500); // 延迟确保播放器完全就绪
           }
         }
-
       });
 
-      // 监听播放状态变化，控制 Wake Lock
+      // 播放状态变化：Wake Lock（保存进度统一放在 pause 处理器中，只注册一次）
       artPlayerRef.current.on('play', () => {
         requestWakeLock();
       });
@@ -4258,10 +4064,6 @@ function PlayPageClient() {
         if (!isNearEnd) {
           saveCurrentPlayProgress();
         }
-      });
-
-      artPlayerRef.current.on('video:ended', () => {
-        releaseWakeLock();
       });
 
       // 如果播放器初始化时已经在播放状态，则请求 Wake Lock
@@ -4283,7 +4085,6 @@ function PlayPageClient() {
               target = Math.max(0, duration - 5);
             }
             artPlayerRef.current.currentTime = target;
-            console.log('成功恢复播放进度到:', resumeTimeRef.current);
           } catch (err) {
             console.warn('恢复播放进度失败:', err);
           }
@@ -4298,26 +4099,33 @@ function PlayPageClient() {
         // 隐藏换源加载状态
         setIsVideoLoading(false);
 
-        // 🔥 重置集数切换标识（播放器成功创建后）
+        // 集数切换：重置标识，并接续播放（用户已交互，play() 不会被策略拦截）
         if (isEpisodeChangingRef.current) {
           isEpisodeChangingRef.current = false;
-          console.log('🎯 播放器创建完成，重置集数切换标识');
+          artPlayerRef.current?.play?.()?.catch?.(() => {
+            // 自动播放被浏览器拒绝时静默失败，由用户手动点击
+          });
         }
       });
 
-      // 监听播放器错误
+      // 播放器错误：给出可见反馈（此前是空处理器，出错只有黑屏）
       artPlayerRef.current.on('error', (err: any) => {
         console.error('播放器错误:', err);
-        if (artPlayerRef.current.currentTime > 0) {
+        const player = artPlayerRef.current;
+        if (!player) return;
+        if ((player.currentTime || 0) > 0.5) {
+          // 播放中途出错：提示换源，不打断页面
+          player.notice.show = '播放出错，可尝试切换播放源';
           return;
         }
+        setError('视频播放失败，请尝试切换其他播放源');
       });
 
-      // 监听视频播放结束事件，自动播放下一集
+      // 视频播放结束：释放 Wake Lock 并自动播放下一集
       artPlayerRef.current.on('video:ended', () => {
-        const idx = currentEpisodeIndexRef.current;
+        releaseWakeLock();
 
-        // 🔥 关键修复：首先检查这个 video:ended 事件是否已经被处理过
+        const idx = currentEpisodeIndexRef.current;
         if (videoEndedHandledRef.current) {
           return;
         }
@@ -4325,25 +4133,33 @@ function PlayPageClient() {
         const d = detailRef.current;
         if (d && d.episodes && idx < d.episodes.length - 1) {
           videoEndedHandledRef.current = true;
-          setTimeout(() => {
-            setCurrentEpisodeIndex(idx + 1);
+          if (autoNextTimeoutRef.current) {
+            clearTimeout(autoNextTimeoutRef.current);
+          }
+          autoNextTimeoutRef.current = setTimeout(() => {
+            autoNextTimeoutRef.current = null;
+            handleEpisodeChange(idx + 1);
           }, 1000);
         }
       });
 
       // 合并的timeupdate监听器 - 更新播放时间并保存进度
+      let lastUiSecond = -1;
       artPlayerRef.current.on('video:timeupdate', () => {
         const currentTime = artPlayerRef.current.currentTime || 0;
         const duration = artPlayerRef.current.duration || 0;
-        const now = performance.now(); // 使用performance.now()更精确
 
-        // 更新播放时间信息
-        setCurrentPlayTime(currentTime);
-        setVideoDuration(duration);
+        // 播放时间状态按秒粒度更新（timeupdate 每秒触发约 4 次，
+        // 不节流会导致整个页面每秒重渲染 4 次）
+        const second = Math.floor(currentTime);
+        if (second !== lastUiSecond) {
+          lastUiSecond = second;
+          setCurrentPlayTime(currentTime);
+          setVideoDuration(duration);
+        }
 
         // 保存播放进度逻辑 - 优化保存间隔以减少网络开销
         const saveNow = Date.now();
-        // 🔧 优化：增加播放中的保存间隔，依赖暂停时保存作为主要保存时机
         // upstash: 60秒兜底保存，其他存储: 30秒兜底保存
         // 用户暂停、切换集数、页面卸载时会立即保存，因此较长间隔不影响体验
         const interval = process.env.NEXT_PUBLIC_STORAGE_TYPE === 'upstash' ? 60000 : 30000;
@@ -4355,18 +4171,6 @@ function PlayPageClient() {
         if (saveNow - lastSaveTimeRef.current > interval && !isNearEnd) {
           saveCurrentPlayProgress();
           lastSaveTimeRef.current = saveNow;
-        }
-      });
-
-      artPlayerRef.current.on('pause', () => {
-        // 暂停时如果已经接近结尾，不覆盖用户的历史进度
-        const currentTime = artPlayerRef.current?.currentTime || 0;
-        const duration = artPlayerRef.current?.duration || 0;
-        const remainingTime = duration - currentTime;
-        const isNearEnd = duration > 0 && remainingTime < 180; // 最后3分钟
-
-        if (!isNearEnd) {
-          saveCurrentPlayProgress();
         }
       });
 
@@ -4417,14 +4221,9 @@ function PlayPageClient() {
         clearInterval(saveIntervalRef.current);
       }
 
-      // 清理重置定时器
-      if (seekResetTimeoutRef.current) {
-        clearTimeout(seekResetTimeoutRef.current);
-      }
-
-      // 清理resize防抖定时器
-      if (resizeResetTimeoutRef.current) {
-        clearTimeout(resizeResetTimeoutRef.current);
+      // 清理自动连播定时器
+      if (autoNextTimeoutRef.current) {
+        clearTimeout(autoNextTimeoutRef.current);
       }
 
       // 释放 Wake Lock
@@ -4435,56 +4234,37 @@ function PlayPageClient() {
     };
   }, []);
 
-  // 当 URL 参数变化时清理旧的播放器实例
+  // 当 URL source/id 变化时清理旧的播放器实例
   useEffect(() => {
-    const currentSource = searchParams.get('source');
-    const currentId = searchParams.get('id');
-    const currentKey = `${currentSource}_${currentId}`;
-
-    // 如果视频源或ID变化，清理旧播放器
     return () => {
       if (artPlayerRef.current) {
-        console.log('[Play] URL参数变化，清理旧播放器');
         cleanupPlayer();
       }
     };
   }, [searchParams.get('source'), searchParams.get('id')]);
 
-  // 返回顶部功能相关
+  // 返回顶部按钮显隐（此前是常驻 requestAnimationFrame 轮询，改为纯事件驱动）
   useEffect(() => {
-    // 获取滚动位置的函数 - 专门针对 body 滚动
-    const getScrollTop = () => {
-      return document.body.scrollTop || 0;
-    };
+    // 应用的滚动容器是 document.body，同时监听 window 以兼容布局变化
+    const getScrollTop = () =>
+      document.body.scrollTop || document.documentElement.scrollTop || 0;
 
-    // 使用 requestAnimationFrame 持续检测滚动位置
-    let isRunning = false;
-    const checkScrollPosition = () => {
-      if (!isRunning) return;
-
-      const scrollTop = getScrollTop();
-      const shouldShow = scrollTop > 300;
-      setShowBackToTop(shouldShow);
-
-      requestAnimationFrame(checkScrollPosition);
-    };
-
-    // 启动持续检测
-    isRunning = true;
-    checkScrollPosition();
-
-    // 监听 body 元素的滚动事件
+    let lastVisible = false;
     const handleScroll = () => {
-      const scrollTop = getScrollTop();
-      setShowBackToTop(scrollTop > 300);
+      const visible = getScrollTop() > 300;
+      if (visible !== lastVisible) {
+        lastVisible = visible;
+        setShowBackToTop(visible);
+      }
     };
 
+    handleScroll();
     document.body.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      isRunning = false; // 停止 requestAnimationFrame 循环
-      // 移除 body 滚动事件监听器
       document.body.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
@@ -4513,35 +4293,22 @@ function PlayPageClient() {
   return (
     <>
       <PageLayout activePath='/play'>
-      <div className='-mx-4 flex flex-col gap-2 -mt-18 px-[max(0.5rem,env(safe-area-inset-left))] pb-28 sm:mx-0 sm:px-5 md:mt-0 md:gap-3 md:pt-1 md:pb-safe-bottom lg:px-[3rem] 2xl:px-20'>
-        {/* 第一行：影片标题（小屏幕用，大屏幕在 PlayInfoPanel 里） */}
-        <div className='min-w-0 py-0.5 lg:hidden'>
-          <h1 className='truncate text-base font-semibold leading-snug text-gray-900 dark:text-gray-100 sm:text-xl'>
-            <span className='align-baseline'>{videoTitle || '影片标题'}</span>
-            {totalEpisodes > 1 && (
-              <span className='align-baseline text-gray-500 dark:text-gray-400'>
-                {` > ${detail?.episodes_titles?.[currentEpisodeIndex] || `第 ${currentEpisodeIndex + 1} 集`}`}
-              </span>
-            )}
-          </h1>
-        </div>
-        {/* 第二行：播放器和选集 */}
-        <div className='space-y-2'>
-          <div
-            className={`grid gap-2 md:gap-4 lg:h-[500px] xl:h-[650px] 2xl:h-[750px] transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
-              ? 'grid-cols-1 lg:grid-cols-[minmax(0,1fr)_56px]'
-              : 'grid-cols-1 md:grid-cols-4'
-              }`}
-          >
-            {/* 播放器 */}
-            <div
-              className={`h-full transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed ? 'col-span-1' : 'md:col-span-3'
-                }`}
-            >
-              <div className='relative aspect-video w-full overflow-hidden rounded-lg border border-gray-200/80 shadow-sm dark:border-gray-700/60 lg:h-full lg:aspect-auto'>
+      <div className='flex flex-col gap-3 -mt-20 pb-28 md:mt-0 md:gap-4 md:pt-1 md:pb-safe-bottom'>
+        {/* 播放区：播放器 + 选集面板 */}
+        <div
+          className={`grid grid-cols-1 items-start gap-3 transition-[grid-template-columns] duration-300 ease-in-out lg:gap-4 ${
+            isEpisodeSelectorCollapsed
+              ? 'lg:grid-cols-[minmax(0,1fr)_52px]'
+              : 'lg:grid-cols-[minmax(0,1fr)_minmax(300px,340px)] 2xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]'
+          }`}
+        >
+          {/* 播放器：移动端全宽出血并吸顶，桌面端保持 16:9 且不超出视口高度 */}
+          <div className='min-w-0 -mx-4 sm:-mx-6 md:mx-0'>
+            <div className='sticky top-[44px] z-30 md:static'>
+              <div className='relative aspect-video max-h-[calc(100svh-44px)] w-full overflow-hidden bg-black shadow-lg md:rounded-xl md:border md:border-gray-200/60 dark:md:border-gray-800 lg:max-h-[calc(100dvh-10rem)]'>
                 <div
                   ref={artRef}
-                  className='bg-black w-full h-full overflow-hidden'
+                  className='absolute inset-0 h-full w-full overflow-hidden bg-black'
                 ></div>
 
                 {/* 换源加载蒙层 */}
@@ -4552,37 +4319,27 @@ function PlayPageClient() {
               </div>
             </div>
 
-            {/* 选集和换源 - 在移动端始终显示，在 lg 及以上可折叠 */}
+            {/* 移动端标题：紧贴播放器下方（lg 及以上在 PlayInfoPanel 中展示） */}
+            <div className='min-w-0 px-4 pt-2 sm:px-6 md:px-0 lg:hidden'>
+              <h1 className='truncate text-base font-semibold leading-snug text-gray-900 dark:text-gray-100 sm:text-xl'>
+                <span className='align-baseline'>{videoTitle || '影片标题'}</span>
+                {totalEpisodes > 1 && (
+                  <span className='align-baseline text-gray-500 dark:text-gray-400'>
+                    {` · ${detail?.episodes_titles?.[currentEpisodeIndex] || `第 ${currentEpisodeIndex + 1} 集`}`}
+                  </span>
+                )}
+              </h1>
+            </div>
+          </div>
+
+          {/* 选集和换源：移动端固定高度置于播放器下方，lg 起为跟随播放器高度的侧栏（可折叠） */}
+          <div className='relative h-[280px] sm:h-[320px] lg:h-auto lg:self-stretch'>
             <div
-              className={`h-[246px] sm:h-[300px] lg:h-full md:overflow-hidden transition-all duration-300 ease-in-out ${isEpisodeSelectorCollapsed
-                ? 'hidden lg:flex lg:opacity-100 lg:scale-100'
-                : 'md:col-span-1 lg:opacity-100 lg:scale-100'
-                }`}
+              className={`h-full lg:absolute lg:inset-0 ${
+                isEpisodeSelectorCollapsed ? 'lg:hidden' : ''
+              }`}
             >
-              {isEpisodeSelectorCollapsed ? (
-                <button
-                  type='button'
-                  onClick={() => setIsEpisodeSelectorCollapsed(false)}
-                  className='flex h-full w-full items-start justify-center rounded-lg border border-gray-200/80 bg-black/10 pt-4 text-gray-500 shadow-sm transition-colors hover:bg-black/15 hover:text-gray-900 dark:border-gray-700/60 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10'
-                  title='显示选集面板'
-                  aria-label='显示选集面板'
-                >
-                  <svg
-                    className='h-5 w-5 rotate-180'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth='2'
-                      d='M9 5l7 7-7 7'
-                    />
-                  </svg>
-                </button>
-              ) : (
-                <EpisodeSelector
+              <EpisodeSelector
                 totalEpisodes={totalEpisodes}
                 episodes_titles={detail?.episodes_titles || []}
                 value={currentEpisodeIndex + 1}
@@ -4615,9 +4372,33 @@ function PlayPageClient() {
                 precomputedVideoInfo={precomputedVideoInfo}
                 isPanelCollapsed={isEpisodeSelectorCollapsed}
                 onTogglePanelCollapse={() => setIsEpisodeSelectorCollapsed(!isEpisodeSelectorCollapsed)}
-                />
-              )}
+              />
             </div>
+
+            {/* lg 折叠态：显示细长展开条（小屏不允许折叠，面板始终可见） */}
+            {isEpisodeSelectorCollapsed && (
+              <button
+                type='button'
+                onClick={() => setIsEpisodeSelectorCollapsed(false)}
+                className='absolute inset-0 hidden items-start justify-center rounded-xl border border-gray-200/80 bg-black/10 pt-4 text-gray-500 shadow-sm transition-colors hover:bg-black/15 hover:text-gray-900 dark:border-gray-700/60 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10 lg:flex'
+                title='显示选集面板'
+                aria-label='显示选集面板'
+              >
+                <svg
+                  className='h-5 w-5 rotate-180'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth='2'
+                    d='M9 5l7 7-7 7'
+                  />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
 

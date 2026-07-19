@@ -1,0 +1,361 @@
+/**
+ * ArtPlayer 现代皮肤 —— 播放页唯一实际加载的播放器样式。
+ *
+ * 取代此前 src/styles 下六个从未被 import 的 artplayer-*.css 死文件，
+ * 保留其中经过验证的修复（锁屏黑条、移动端控件裁剪、下一集按钮样式、
+ * 设置面板滑块触控热区），并补充现代化视觉与手势反馈层样式。
+ *
+ * 由 src/app/play/page.tsx 引入。
+ */
+
+/* ---------------------------------------------------------------------------
+ * 基础：控制栏尺寸与主题
+ *
+ * ArtPlayer 在运行时把自己的样式（.art-video-player { --art-control-height:
+ * 46px; --art-progress-height: 6px; ... }）注入 <style>，晚于本文件加载，
+ * 同优先级会覆盖这里的规则。因此变量覆盖统一用双类名提升优先级，
+ * 并用 :not() 放行全屏态（ArtPlayer 全屏时会自行放大控制栏/进度条）。
+ * ------------------------------------------------------------------------- */
+.art-video-player.art-video-player:not(.art-fullscreen):not(.art-fullscreen-web) {
+  --art-control-height: 44px;
+  --art-progress-height: 4px;
+}
+
+.art-video-player.art-video-player {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 进度条：默认纤细，指针悬停控制区时增粗（现代播放器通用手法） */
+.art-video-player.art-video-player:not(.art-fullscreen):not(.art-fullscreen-web)
+  .art-bottom:hover {
+  --art-progress-height: 6px;
+}
+
+/* 底部渐变遮罩由 ArtPlayer 自带（linear-gradient + background-size 定位到
+ * 底部条带），不要用 background 简写覆盖——那会把渐变铺满整个画面。 */
+
+/* 控制按钮：更大的可点击区域与柔和的 hover 反馈 */
+.art-video-player .art-controls .art-control {
+  min-width: 36px;
+  padding: 0 6px;
+  opacity: 0.92;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.art-video-player .art-controls .art-control:hover {
+  opacity: 1;
+}
+
+.art-video-player .art-control-time {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+/* ---------------------------------------------------------------------------
+ * 海报：完整显示（contain）配黑色底，避免裁切
+ * ------------------------------------------------------------------------- */
+.art-video-player .art-poster {
+  background-size: contain !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-color: #000 !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 锁定模式：彻底隐藏底栏（历史修复：渐变遮罩会盖住字幕）
+ * ------------------------------------------------------------------------- */
+.art-video-player.art-lock .art-bottom,
+.art-video-player.art-lock .art-controls {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 自定义「下一集」控制按钮
+ * ------------------------------------------------------------------------- */
+.art-video-player .art-control-next-episode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.art-video-player .art-control-next-episode .art-next-episode-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--art-control-icon-size);
+  height: var(--art-control-icon-size);
+  pointer-events: none;
+}
+
+.art-video-player .art-control-next-episode svg {
+  width: 22px;
+  height: 22px;
+}
+
+.art-video-player .art-control-next-episode .art-next-episode-play,
+.art-video-player .art-control-next-episode .art-next-episode-bar {
+  fill: #fff;
+}
+
+.art-video-player .art-control-next-episode.art-control-next-episode-disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ---------------------------------------------------------------------------
+ * 提示气泡（notice）：胶囊样式
+ * ------------------------------------------------------------------------- */
+.art-video-player .art-notice .art-notice-inner {
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------------------------
+ * 设置面板滑块：44px 触控热区（移动端可用性）
+ * ------------------------------------------------------------------------- */
+.art-video-player .art-setting-item-right-input input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  outline: none;
+}
+
+.art-video-player
+  .art-setting-item-right-input
+  input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.art-video-player
+  .art-setting-item-right-input
+  input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------------
+ * 播放器内部滚动条（设置/选择器列表）：纤细样式
+ * （globals.css 的全局滚动条隐藏已正确排除播放器，这里给出可见的细滚动条）
+ * ------------------------------------------------------------------------- */
+.art-video-player .art-settings,
+.art-video-player .art-selector-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.art-video-player .art-settings::-webkit-scrollbar,
+.art-video-player .art-selector-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.art-video-player .art-settings::-webkit-scrollbar-thumb,
+.art-video-player .art-selector-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.art-video-player .art-settings::-webkit-scrollbar-track,
+.art-video-player .art-selector-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------------------------------------------------------------------------
+ * 音量面板：图标与滑块之间加不可见 hover 桥，防止移动指针时面板消失
+ * ------------------------------------------------------------------------- */
+.art-video-player .art-control-volume {
+  position: relative;
+}
+
+.art-video-player .art-control-volume::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  right: -12px;
+  top: -56px;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.art-video-player .art-control-volume:hover::before {
+  pointer-events: auto;
+}
+
+/* ---------------------------------------------------------------------------
+ * 全屏适配：刘海屏安全区 + 网页全屏层级
+ * （.art-bottom 默认 padding 为 0 var(--art-padding)，这里在全屏时叠加安全区）
+ * ------------------------------------------------------------------------- */
+.art-video-player.art-fullscreen .art-bottom,
+.art-video-player.art-fullscreen-web .art-bottom {
+  padding-left: calc(var(--art-padding) + env(safe-area-inset-left, 0px));
+  padding-right: calc(var(--art-padding) + env(safe-area-inset-right, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* 网页全屏：ArtPlayer 自带 fixed 定位与足够高的 z-index
+ * （配合 Artplayer.FULLSCREEN_WEB_IN_BODY = true 挂到 body 下，
+ * 已能盖过站点固定导航，无需在此覆盖层级） */
+
+/* ---------------------------------------------------------------------------
+ * 移动端（<768px）
+ * ------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .art-video-player.art-video-player:not(.art-fullscreen):not(.art-fullscreen-web) {
+    --art-control-height: 40px;
+  }
+
+  /* 手机隐藏网页全屏与音量按钮（音量走硬件键），原生全屏保留 */
+  .art-video-player .art-control-fullscreenWeb,
+  .art-video-player .art-control-volume {
+    display: none !important;
+  }
+
+  .art-video-player .art-controls .art-control {
+    min-width: 32px;
+    padding: 0 4px;
+  }
+
+  .art-video-player .art-control-time {
+    font-size: 12px;
+  }
+}
+
+/* 极窄屏（<380px）进一步压缩，确保全屏按钮不被挤出 */
+@media (max-width: 380px) {
+  .art-video-player .art-controls .art-control {
+    min-width: 28px;
+    padding: 0 3px;
+  }
+
+  .art-video-player .art-control-fullscreen {
+    display: flex !important;
+    min-width: 32px;
+  }
+
+  .art-video-player .art-control-time {
+    font-size: 11px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 手势反馈层（src/lib/player/gestures.ts 注入）
+ * ------------------------------------------------------------------------- */
+.art-gesture-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.art-gesture-ripple {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 34%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  opacity: 0;
+  background: rgba(255, 255, 255, 0.12);
+  transition: opacity 0.25s ease;
+}
+
+.art-gesture-ripple-left {
+  left: 0;
+  border-radius: 0 45% 45% 0 / 0 50% 50% 0;
+}
+
+.art-gesture-ripple-right {
+  right: 0;
+  border-radius: 45% 0 0 45% / 50% 0 0 50%;
+}
+
+.art-gesture-ripple-active {
+  opacity: 1;
+}
+
+.art-gesture-ripple-arrows {
+  font-size: 20px;
+  letter-spacing: 2px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+.art-gesture-ripple-label {
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+.art-gesture-speed {
+  position: absolute;
+  top: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.66);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.art-gesture-speed-active {
+  opacity: 1;
+}
+
+.art-gesture-speed-arrows {
+  animation: art-gesture-speed-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes art-gesture-speed-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .art-video-player .art-control-progress,
+  .art-video-player .art-controls .art-control,
+  .art-gesture-ripple,
+  .art-gesture-speed {
+    transition: none !important;
+  }
+
+  .art-gesture-speed-arrows {
+    animation: none !important;
+  }
+}
