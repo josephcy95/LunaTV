@@ -4011,7 +4011,7 @@ const VideoSourceConfig = ({
               Cloudflare Worker 代理加速
             </h3>
             <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
-              为网页播放启用全球CDN加速，提升视频源API访问速度和稳定性
+              为网页播放启用全球CDN加速，提升视频源API访问速度和稳定性，并加速所有 TMDB 接口和图片请求（演员搜索、首页 Hero 横幅背景图/Logo、播放页背景图等）
             </p>
           </div>
           <label className='relative inline-flex items-center cursor-pointer'>
@@ -5408,6 +5408,7 @@ const SiteConfigComponent = ({ config, refreshConfig }: { config: AdminConfig | 
   const bangumiApiTypeOptions = [
     { value: 'server', label: '服务端转发（默认，访问官方 api.bgm.tv）' },
     { value: 'cmliussss', label: 'Bangumi 反代 By CMLiussss（解决服务器被墙）' },
+    { value: 'corsapi', label: 'Cloudflare Worker 代理 By Smone' },
     { value: 'custom', label: '自定义反代地址' },
   ];
 
@@ -5415,6 +5416,7 @@ const SiteConfigComponent = ({ config, refreshConfig }: { config: AdminConfig | 
   const bangumiImageProxyTypeOptions = [
     { value: 'server', label: '服务器代理（默认，由服务器代理请求）' },
     { value: 'cmliussss', label: 'Bangumi 图片 CDN By CMLiussss' },
+    { value: 'corsapi', label: 'Cloudflare Worker 代理 By Smone' },
     { value: 'direct', label: '直连（浏览器直接请求 lain.bgm.tv）' },
     { value: 'custom', label: '自定义代理' },
   ];
@@ -6356,7 +6358,7 @@ const SiteConfigComponent = ({ config, refreshConfig }: { config: AdminConfig | 
             className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
           />
           <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-            请在 <a href='https://www.themoviedb.org/settings/api' target='_blank' rel='noopener noreferrer' className='text-blue-500 hover:text-blue-600'>TMDB 官网</a> 申请免费的 API Key
+            请在 <a href='https://www.themoviedb.org/settings/api' target='_blank' rel='noopener noreferrer' className='text-blue-500 hover:text-blue-600'>TMDB 官网</a> 申请免费的 API Key。国内直连 TMDB 可能较慢或不稳定，可在「视频源配置」标签下的「Cloudflare Worker 代理加速」中启用后统一走代理转发
           </p>
         </div>
 
