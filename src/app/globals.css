@@ -182,26 +182,23 @@ html:not(.dark) body {
   }
 }
 
-/* 隐藏所有滚动条（兼容 WebKit、Firefox、IE/Edge）- 排除ArtPlayer */
-*:not(.artplayer):not(.artplayer *) {
+/* 隐藏所有滚动条（兼容 WebKit、Firefox、IE/Edge）- 排除 ArtPlayer
+ * 注意：ArtPlayer 的根类名是 .art-video-player（旧写法 .artplayer 匹配不到
+ * 任何元素，导致播放器设置面板内的滚动条也被隐藏） */
+*:not(.art-video-player):not(.art-video-player *) {
   -ms-overflow-style: none; /* IE & Edge */
   scrollbar-width: none; /* Firefox */
 }
 
-*:not(.artplayer):not(.artplayer *)::-webkit-scrollbar {
+*:not(.art-video-player):not(.art-video-player *)::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
 
+/* 播放器海报完整显示（play 页的增强样式见 src/styles/artplayer-theme.css） */
 .art-video-player .art-poster {
   background-position: center center !important;
   background-repeat: no-repeat !important;
   background-size: contain !important;
-}
-
-/* 强制播放器内部的 video 元素高度为 100%，并保持内容完整显示 */
-div[data-media-provider] video {
-  height: 100%;
-  object-fit: contain;
 }
 
 /* VideoCard 光泽扫过动画 - 使用 @property 优化 */

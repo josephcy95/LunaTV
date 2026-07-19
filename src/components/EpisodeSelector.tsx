@@ -129,6 +129,12 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   const initialPage = Math.floor((value - 1) / episodesPerPage);
   const [currentPage, setCurrentPage] = useState<number>(initialPage);
 
+  // 播放集数变化（含自动连播）跨越分页边界时，跟随切换到所在分页
+  useEffect(() => {
+    const pageOfValue = Math.floor((value - 1) / episodesPerPage);
+    setCurrentPage(pageOfValue);
+  }, [value, episodesPerPage]);
+
   // 是否倒序显示
   const [descending, setDescending] = useState<boolean>(false);
 
@@ -778,7 +784,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
             !sourceSearchError &&
             availableSources.length > 0 && (
               <div className='flex-1 space-y-1 overflow-y-auto pb-3 sm:space-y-3 sm:pb-20'>
-                {availableSources
+                {[...availableSources]
                   .sort((a, b) => {
                     const aIsCurrent =
                       a.source?.toString() === currentSource?.toString() &&

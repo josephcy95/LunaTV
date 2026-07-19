@@ -1,6 +1,8 @@
 // artplayer-plugin-liquid-glass
 // 毛玻璃效果控制栏插件
-// 样式已提取到 src/styles/artplayer-liquid-glass.css
+// 注意：当前无任何页面使用本插件；其配套样式文件已随播放器皮肤
+// 整合进 src/styles/artplayer-theme.css 时移除。若要重新启用，
+// 需要为 .art-liquid-glass 结构重新补充样式。
 
 export default function artplayerPluginLiquidGlass(option = {}) {
   return (art) => {
