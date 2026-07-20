@@ -4426,11 +4426,12 @@ function PlayPageClient() {
       }
     };
 
-    // 播放器为异步动态创建，等待其就绪（最多约 10s）。
+    // 播放器为异步动态创建，等待其就绪（最多约 10s）。轮询间隔取较小值，
+    // 让播放器一就绪就尽快拿到，减少字幕出现前的等待。
     const waitForArt = async (): Promise<any> => {
-      for (let i = 0; i < 40 && !cancelled; i += 1) {
+      for (let i = 0; i < 100 && !cancelled; i += 1) {
         if (artPlayerRef.current) return artPlayerRef.current;
-        await new Promise((r) => setTimeout(r, 250));
+        await new Promise((r) => setTimeout(r, 100));
       }
       return artPlayerRef.current;
     };
@@ -4439,22 +4440,17 @@ function PlayPageClient() {
     const media =
       source === 'YOGURT' && videoUrl ? parseYogurtMediaUrl(videoUrl) : null;
 
-    (async () => {
-      const art = await waitForArt();
-      if (cancelled || !art) return;
-      if (!media) {
-        removeControl(art);
-        return;
-      }
-
+    // 字幕拉取 + 校验：立即启动，不等待播放器就绪，从而与播放器初始化并行，
+    // 让播放器 ready 时字幕通常已准备好、可即时应用（这不会拖慢视频本身——
+    // 视频由另一处 initPlayer 独立加载，字幕快慢互不影响）。
+    const tracksPromise: Promise<{ name: string; url: string }[]> = (async () => {
+      if (!media) return [];
       let candidates: { name: string; url: string }[] = [];
       try {
         const res = await fetch(
-          `${media.origin}/media/${encodeURIComponent(
-            media.videoId
-          )}/subtitles`
+          `${media.origin}/media/${encodeURIComponent(media.videoId)}/subtitles`
         );
-        if (res.ok) {
+        if (!cancelled && res.ok) {
           const data = await res.json();
           if (Array.isArray(data?.list)) {
             candidates = data.list
@@ -4462,30 +4458,50 @@ function PlayPageClient() {
               .map((t: any) => ({
                 name: String(t.name || t.lang || '字幕'),
                 url: media.origin + t.vtt,
-              }));
+              }))
+              // 仅保留能看懂的语言（简体 / 繁体 / 英文）：其余语言既不下载校验、
+              // 也不进菜单——省去无用请求让字幕更快出现，同时菜单更清爽。
+              // 随后按优先级（简体 > 繁体 > 英文）排序，同级保持源站原顺序。
+              .filter(
+                (t: { name: string }) => subtitleLangRank(t.name) !== null
+              )
+              .sort(
+                (a: { name: string }, b: { name: string }) =>
+                  (subtitleLangRank(a.name) ?? 99) -
+                  (subtitleLangRank(b.name) ?? 99)
+              );
           }
         }
       } catch {
         // 拉取失败：静默，不显示控件
       }
-      if (cancelled) return;
+      if (cancelled || candidates.length === 0) return [];
 
-      // 逐条校验：只保留真正返回合法 VTT 的轨道，把 provider 无法解密（返回 501/JSON）
-      // 的加密字幕从菜单里剔除，避免出现「有选项但选了不显示」。
-      const tracks: { name: string; url: string }[] = [];
-      for (const t of candidates) {
-        try {
-          const r = await fetch(t.url);
-          if (cancelled) return;
-          if (!r.ok) continue;
-          const txt = await r.text();
-          if (isVttText(txt)) tracks.push(t);
-        } catch {
-          // 跳过取不到的轨道
-        }
-      }
-      if (cancelled) return;
-      if (tracks.length === 0) {
+      // 并行校验所有候选轨道（此前为逐条串行 await，是字幕延迟的主因）：只保留
+      // 真正返回合法 VTT 的轨道，把 provider 无法解密（返回 501/JSON）的加密字幕
+      // 剔除，避免「有选项但选了不显示」。map 保序，结果顺序与候选一致。
+      const checked = await Promise.all(
+        candidates.map(async (t) => {
+          try {
+            const r = await fetch(t.url);
+            if (!r.ok) return null;
+            const txt = await r.text();
+            return isVttText(txt) ? t : null;
+          } catch {
+            return null;
+          }
+        })
+      );
+      return checked.filter(
+        (t): t is { name: string; url: string } => t !== null
+      );
+    })();
+
+    (async () => {
+      // 播放器就绪与字幕校验并行推进，二者都完成后再应用字幕。
+      const [art, tracks] = await Promise.all([waitForArt(), tracksPromise]);
+      if (cancelled || !art) return;
+      if (!media || tracks.length === 0) {
         removeControl(art);
         return;
       }
