@@ -1,2 +1,15 @@
 .env
 .env*.local
+.git
+.github
+.husky
+.next
+.opencode
+node_modules
+*.md
+docs
+coverage
+.vscode
+tmp
+**/*.log
+.DS_Store
