@@ -609,7 +609,7 @@ export default function WatchRoomPage() {
                 {currentRoom ? (
                   <div className="space-y-4">
                     {/* 房间信息卡片 */}
-                    <div className="bg-linear-to-r from-green-500 to-teal-600 rounded-xl p-6 text-white">
+                    <div className="bg-linear-to-r from-green-500 to-green-600 rounded-xl p-6 text-white">
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <h3 className="text-2xl font-bold mb-1">{currentRoom.name}</h3>
@@ -735,7 +735,7 @@ export default function WatchRoomPage() {
                             className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg p-3"
                           >
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-linear-to-r from-green-400 to-teal-500 flex items-center justify-center text-white font-bold">
+                              <div className="w-10 h-10 rounded-full bg-linear-to-r from-green-400 to-green-500 flex items-center justify-center text-white font-bold">
                                 {member.name.charAt(0).toUpperCase()}
                               </div>
                               <span className="font-medium text-gray-900 dark:text-gray-100">

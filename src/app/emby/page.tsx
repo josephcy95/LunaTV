@@ -340,7 +340,7 @@ export default function PrivateLibraryPage() {
               className={`group relative overflow-hidden flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-300 transform hover:scale-105
                 ${isRefreshing
                   ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-                  : 'bg-linear-to-r from-emerald-500 via-green-500 to-teal-500 text-white shadow-lg shadow-green-500/30 hover:shadow-green-500/50'
+                  : 'bg-linear-to-r from-emerald-500 via-green-500 to-green-500 text-white shadow-lg shadow-green-500/30 hover:shadow-green-500/50'
                 }`}
             >
               {!isRefreshing && (
@@ -416,7 +416,7 @@ export default function PrivateLibraryPage() {
           {/* 排序选择 */}
           <div className="mb-6">
             <div className="flex items-center space-x-2.5 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-linear-to-br from-green-500 via-emerald-600 to-teal-500 flex items-center justify-center shadow-lg shadow-green-500/30">
+              <div className="w-9 h-9 rounded-xl bg-linear-to-br from-green-500 via-emerald-600 to-green-500 flex items-center justify-center shadow-lg shadow-green-500/30">
                 <ArrowUpNarrowWide className="h-4 w-4 text-white" />
               </div>
               <span className="text-base font-bold text-gray-900 dark:text-gray-100">
@@ -432,7 +432,7 @@ export default function PrivateLibraryPage() {
                     onClick={() => { setSortBy(option.value); localStorage.setItem('emby_sortBy', option.value); }}
                     className={`group relative overflow-hidden rounded-xl px-5 py-2.5 text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                       sortBy === option.value
-                        ? 'bg-linear-to-r from-green-500 via-emerald-600 to-teal-500 text-white shadow-lg shadow-green-500/40'
+                        ? 'bg-linear-to-r from-green-500 via-emerald-600 to-green-500 text-white shadow-lg shadow-green-500/40'
                         : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600 hover:shadow-md'
                     }`}
                     style={{
@@ -551,7 +551,7 @@ export default function PrivateLibraryPage() {
         {isSearchMode && !isSearching && searchResults.length === 0 && (
           <div className='flex justify-center py-16'>
             <div className='relative px-12 py-10 rounded-3xl bg-linear-to-br from-gray-50 via-slate-50 to-gray-100 dark:from-gray-800/40 dark:via-slate-800/40 dark:to-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 shadow-xl backdrop-blur-sm overflow-hidden max-w-md'>
-              <div className='absolute top-0 left-0 w-32 h-32 bg-linear-to-br from-green-200/20 to-teal-200/20 rounded-full blur-3xl'></div>
+              <div className='absolute top-0 left-0 w-32 h-32 bg-linear-to-br from-green-200/20 to-green-200/20 rounded-full blur-3xl'></div>
               <div className='absolute bottom-0 right-0 w-32 h-32 bg-linear-to-br from-blue-200/20 to-green-200/20 rounded-full blur-3xl'></div>
               <div className='relative flex flex-col items-center gap-4'>
                 <div className='relative'>
@@ -573,7 +573,7 @@ export default function PrivateLibraryPage() {
                 </div>
                 <button
                   onClick={() => setSearchKeyword('')}
-                  className='mt-2 px-6 py-2.5 bg-linear-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105'
+                  className='mt-2 px-6 py-2.5 bg-linear-to-r from-green-500 to-green-500 hover:from-green-600 hover:to-green-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105'
                 >
                   清除搜索条件
                 </button>

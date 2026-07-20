@@ -21,7 +21,7 @@ const manifestTemplate = {
   start_url: '/',
   scope: '/',
   display: 'standalone',
-  background_color: '#000000',
+  background_color: '#05070d',
   icons: [
     {
       src: '/icons/icon-192x192.png',

@@ -493,7 +493,7 @@ function HeroBanner({
           {/* 元数据 */}
           <div className="flex items-center gap-3 sm:gap-4 text-sm sm:text-base md:text-lg flex-wrap">
             {currentItem.rate && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-yellow-500/90 backdrop-blur-sm rounded">
+              <div className="flex items-center gap-1.5 rounded-md border border-green-300/60 bg-linear-to-b from-green-300 to-green-500 px-2.5 py-1 font-mono shadow-[0_2px_10px_rgba(209,159,48,0.4)] backdrop-blur-sm">
                 <span className="text-white font-bold">★</span>
                 <span className="text-white font-bold">{currentItem.rate}</span>
               </div>
@@ -504,7 +504,7 @@ function HeroBanner({
               </span>
             )}
             {currentItem.type && (
-              <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded text-white/90 font-medium border border-white/30">
+              <span className="rounded-md border border-white/25 bg-black/35 px-3 py-1 font-mono text-white/90 backdrop-blur-sm">
                 {currentItem.type === 'movie' ? '电影' :
                  currentItem.type === 'tv' ? '剧集' :
                  currentItem.type === 'variety' ? '综艺' :
@@ -529,7 +529,7 @@ function HeroBanner({
                   ? `/play?title=${encodeURIComponent(currentItem.title)}&shortdrama_id=${currentItem.id}`
                   : `/play?title=${encodeURIComponent(currentItem.title)}${currentItem.year ? `&year=${currentItem.year}` : ''}${currentItem.douban_id ? `&douban_id=${currentItem.douban_id}` : ''}${currentItem.type ? `&stype=${currentItem.type}` : ''}`
               }
-              className="flex items-center gap-2 px-6 sm:px-8 md:px-10 py-2.5 sm:py-3 md:py-4 bg-white text-black font-bold rounded hover:bg-white/90 transition-all transform hover:scale-105 active:scale-95 shadow-xl text-base sm:text-lg md:text-xl"
+              className="flex items-center gap-2 rounded-lg border border-green-700/40 bg-linear-to-b from-green-300 to-green-500 px-6 py-2.5 text-base font-bold text-green-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_6px_24px_rgba(209,159,48,0.45)] transition-all transform hover:scale-105 hover:brightness-105 active:scale-95 sm:px-8 sm:py-3 sm:text-lg md:px-10 md:py-4 md:text-xl"
             >
               <Play className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" fill="currentColor" />
               <span>播放</span>
@@ -542,7 +542,7 @@ function HeroBanner({
                       currentItem.type === 'variety' ? 'show' : (currentItem.type || 'movie')
                     }`
               }
-              className="flex items-center gap-2 px-6 sm:px-8 md:px-10 py-2.5 sm:py-3 md:py-4 bg-white/30 backdrop-blur-md text-white font-bold rounded hover:bg-white/40 transition-all transform hover:scale-105 active:scale-95 shadow-xl text-base sm:text-lg md:text-xl border border-white/50"
+              className="flex items-center gap-2 rounded-lg border border-white/30 bg-black/35 px-6 py-2.5 text-base font-bold text-white backdrop-blur-md transition-all transform hover:scale-105 hover:border-green-300/60 hover:bg-black/45 active:scale-95 sm:px-8 sm:py-3 sm:text-lg md:px-10 md:py-4 md:text-xl"
             >
               <Info className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
               <span>更多信息</span>
@@ -595,8 +595,8 @@ function HeroBanner({
               onClick={() => handleIndicatorClick(index)}
               className={`h-1 rounded-full transition-all duration-300 ${
                 index === currentIndex
-                  ? 'w-8 sm:w-10 bg-white shadow-lg'
-                  : 'w-2 bg-white/50 hover:bg-white/75'
+                  ? 'w-8 sm:w-10 bg-linear-to-r from-green-300 to-green-500 shadow-[0_0_10px_rgba(230,185,74,0.7)]'
+                  : 'w-2 bg-white/40 hover:bg-white/70'
               }`}
               aria-label={`跳转到第 ${index + 1} 张`}
             />

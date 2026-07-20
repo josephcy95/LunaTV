@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 
 import { isAIRecommendFeatureDisabled } from '@/lib/ai-recommend.client';
 
+import BrandMark from './BrandMark';
 import ModernNav from './ModernNav';
 import { useSite } from './SiteProvider';
 import { ThemeToggle } from './ThemeToggle';
@@ -61,22 +62,20 @@ export default function NavigationShell() {
       />
 
       {/* 移动端头部 - Logo和用户菜单 */}
-      <div className='md:hidden fixed top-0 left-0 right-0 z-40 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm'>
+      <div className='md:hidden fixed top-0 left-0 right-0 z-40 border-b border-gray-900/8 bg-white/78 backdrop-blur-xl backdrop-saturate-150 dark:border-white/8 dark:bg-gray-950/72'>
         <div className='flex items-center justify-between h-11 px-4'>
           {/* Logo */}
-          <div className='text-base font-bold bg-linear-to-r from-green-600 via-emerald-600 to-teal-600 dark:from-green-400 dark:via-emerald-400 dark:to-teal-400 bg-clip-text text-transparent'>
-            {siteName}
-          </div>
+          <BrandMark name={siteName} size='sm' />
 
           {/* AI Button, Theme Toggle & User Menu */}
           <div className='flex items-center gap-1.5'>
             {aiEnabled && (
               <button
                 onClick={() => setShowAIRecommendModal(true)}
-                className='relative p-1.5 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 active:scale-95 transition-all duration-200 shadow-lg shadow-blue-500/30 group'
+                className='rounded-full border border-purple-400/35 p-1.5 text-purple-600 transition-all duration-200 active:scale-95 hover:border-purple-400/70 hover:bg-purple-500/10 dark:text-purple-300'
                 aria-label='AI 推荐'
               >
-                <Sparkles className='h-4 w-4 group-hover:scale-110 transition-transform duration-300' />
+                <Sparkles className='h-4 w-4' />
               </button>
             )}
             <ThemeToggle />

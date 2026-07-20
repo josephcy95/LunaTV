@@ -2,37 +2,36 @@ export default function SkeletonCard() {
   return (
     <div className='min-w-[96px] w-24 sm:min-w-[180px] sm:w-44'>
       {/* 海报骨架 */}
-      <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-200 dark:bg-gray-800'>
-        {/* Shimmer 效果 */}
+      <div className='relative aspect-[2/3] w-full overflow-hidden rounded-xl border border-gray-200/70 bg-gray-100 dark:border-white/5 dark:bg-gray-800'>
+        {/* 月光扫过 */}
         <div
-          className='absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/20 to-transparent'
+          className='absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-green-200/25 to-transparent dark:via-green-400/10'
           style={{
-            animationDuration: '1.5s',
+            animationDuration: '1.6s',
             animationIterationCount: 'infinite',
           }}
         />
-        <div className='absolute inset-0 bg-gray-300 dark:bg-gray-700'></div>
       </div>
 
       {/* 标题骨架 */}
-      <div className='mt-2 space-y-2'>
-        <div className='h-4 bg-gray-200 dark:bg-gray-800 rounded overflow-hidden relative'>
+      <div className='mt-2.5 space-y-2'>
+        <div className='relative mx-auto h-3.5 w-4/5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800'>
           <div
-            className='absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/20 to-transparent'
+            className='absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-green-200/25 to-transparent dark:via-green-400/10'
             style={{
-              animationDuration: '1.5s',
+              animationDuration: '1.6s',
               animationIterationCount: 'infinite',
-              animationDelay: '0.1s',
+              animationDelay: '0.12s',
             }}
           />
         </div>
-        <div className='h-3 w-3/4 bg-gray-200 dark:bg-gray-800 rounded overflow-hidden relative'>
+        <div className='relative mx-auto h-3 w-1/2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800'>
           <div
-            className='absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/20 to-transparent'
+            className='absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-green-200/25 to-transparent dark:via-green-400/10'
             style={{
-              animationDuration: '1.5s',
+              animationDuration: '1.6s',
               animationIterationCount: 'infinite',
-              animationDelay: '0.2s',
+              animationDelay: '0.24s',
             }}
           />
         </div>

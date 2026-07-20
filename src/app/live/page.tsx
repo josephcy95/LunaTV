@@ -2150,7 +2150,7 @@ function LivePageClient() {
           playsInline: true,
           autoPlayback: false,
           airplay: true,
-          theme: '#22c55e',
+          theme: '#e6b94a',
           lang: 'zh-cn',
           hotkey: false,
           fastForward: false, // 直播不需要快进
@@ -2858,7 +2858,7 @@ function LivePageClient() {
                                       userSelect: 'none',
                                     },
                                     '& .MuiTabs-indicator': {
-                                      backgroundColor: '#22c55e', // green-500
+                                      backgroundColor: '#e6b94a', // green-500
                                     },
                                     '& .MuiTab-root': {
                                       color: 'rgb(var(--tw-text-gray-700))',
@@ -2867,7 +2867,7 @@ function LivePageClient() {
                                       fontWeight: 500,
                                       textTransform: 'none',
                                       '&.Mui-selected': {
-                                        color: '#22c55e', // green-500
+                                        color: '#e6b94a', // green-500
                                       },
                                       '&.Mui-disabled': {
                                         color: 'rgb(var(--tw-text-gray-400))',

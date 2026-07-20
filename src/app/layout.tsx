@@ -27,7 +27,11 @@ import ChatFloatingWindow from '../components/watch-room/ChatFloatingWindow';
 import QueryProvider from '../components/QueryProvider';
 import RouteWarmup from '../components/RouteWarmup';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 export const dynamic = 'force-dynamic';
 
 // 动态生成 metadata，支持配置更新后的标题变化
@@ -143,6 +147,16 @@ export default async function RootLayout({
           content='width=device-width, initial-scale=1.0, viewport-fit=cover'
         />
         <meta name='color-scheme' content='light dark' />
+        <meta
+          name='theme-color'
+          media='(prefers-color-scheme: light)'
+          content='#f6f5f1'
+        />
+        <meta
+          name='theme-color'
+          media='(prefers-color-scheme: dark)'
+          content='#05070d'
+        />
         <meta name='google' content='notranslate' />
         {/* iOS PWA 沉浸式状态栏：manifest.json 里的同名字段对 Safari 无效，必须通过 meta 标签设置 */}
         <meta name='apple-mobile-web-app-capable' content='yes' />
@@ -158,7 +172,7 @@ export default async function RootLayout({
       </head>
       <body
         translate='no'
-        className={`${inter.className} min-h-screen bg-white text-gray-900 dark:bg-black dark:text-gray-200`}
+        className={`${inter.variable} font-primary min-h-screen bg-transparent text-gray-900 dark:text-gray-200`}
       >
         {/*
           iOS 沉浸式状态栏（black-translucent）下，状态栏图标固定为白色，

@@ -420,7 +420,7 @@ const WatchRoomConfig = ({ config, refreshConfig }: WatchRoomConfigProps) => {
                     {stats.totalRooms}
                   </div>
                 </div>
-                <div className='bg-linear-to-br from-green-50 to-teal-50 dark:from-green-900/20 dark:to-teal-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4'>
+                <div className='bg-linear-to-br from-green-50 to-green-50 dark:from-green-900/20 dark:to-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4'>
                   <div className='text-sm font-medium text-green-700 dark:text-green-300 mb-1'>
                     在线用户数
                   </div>

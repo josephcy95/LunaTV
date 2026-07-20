@@ -89,7 +89,7 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
       icon: Cat,
       label: '动漫',
       href: '/douban?type=anime',
-      activeGradient: 'bg-gradient-to-r from-emerald-400 to-teal-500',
+      activeGradient: 'bg-gradient-to-r from-emerald-400 to-green-500',
       activeTextColor: 'text-white',
       hoverBg: 'hover:bg-emerald-500/20',
     },

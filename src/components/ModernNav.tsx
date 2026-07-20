@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useQuery, queryOptions } from '@tanstack/react-query';
 
+import BrandMark from './BrandMark';
 import { FastLink } from './FastLink';
 import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
@@ -16,8 +17,6 @@ interface NavItem {
   icon: any;
   label: string;
   href: string;
-  color: string;
-  gradient: string;
 }
 
 interface ModernNavProps {
@@ -58,62 +57,14 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   const [menuItems, setMenuItems] = useState<NavItem[]>([
-    {
-      icon: Home,
-      label: '首页',
-      href: '/',
-      color: 'text-green-500',
-      gradient: 'from-green-500 to-emerald-500',
-    },
-    {
-      icon: Search,
-      label: '搜索',
-      href: '/search',
-      color: 'text-blue-500',
-      gradient: 'from-blue-500 to-cyan-500',
-    },
-    {
-      icon: Film,
-      label: '电影',
-      href: '/douban?type=movie',
-      color: 'text-red-500',
-      gradient: 'from-red-500 to-pink-500',
-    },
-    {
-      icon: Tv,
-      label: '剧集',
-      href: '/douban?type=tv',
-      color: 'text-blue-600',
-      gradient: 'from-blue-600 to-indigo-600',
-    },
-    {
-      icon: Cat,
-      label: '动漫',
-      href: '/douban?type=anime',
-      color: 'text-pink-500',
-      gradient: 'from-pink-500 to-rose-500',
-    },
-    {
-      icon: Clover,
-      label: '综艺',
-      href: '/douban?type=show',
-      color: 'text-orange-500',
-      gradient: 'from-orange-500 to-amber-500',
-    },
-    {
-      icon: PlaySquare,
-      label: '短剧',
-      href: '/shortdrama',
-      color: 'text-purple-500',
-      gradient: 'from-purple-500 to-violet-500',
-    },
-    {
-      icon: Globe,
-      label: '源浏览器',
-      href: '/source-browser',
-      color: 'text-emerald-500',
-      gradient: 'from-emerald-500 to-green-500',
-    },
+    { icon: Home, label: '首页', href: '/' },
+    { icon: Search, label: '搜索', href: '/search' },
+    { icon: Film, label: '电影', href: '/douban?type=movie' },
+    { icon: Tv, label: '剧集', href: '/douban?type=tv' },
+    { icon: Cat, label: '动漫', href: '/douban?type=anime' },
+    { icon: Clover, label: '综艺', href: '/douban?type=show' },
+    { icon: PlaySquare, label: '短剧', href: '/shortdrama' },
+    { icon: Globe, label: '源浏览器', href: '/source-browser' },
   ]);
 
   // 检查用户是否配置了 Emby
@@ -129,26 +80,14 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
     // 直播 - 根据 ENABLE_WEB_LIVE 动态控制
     const hasLiveInMenu = newItems.some(item => item.href === '/live');
     if (runtimeConfig?.ENABLE_WEB_LIVE && !hasLiveInMenu) {
-      newItems.push({
-        icon: Radio,
-        label: '直播',
-        href: '/live',
-        color: 'text-teal-500',
-        gradient: 'from-teal-500 to-cyan-500',
-      });
+      newItems.push({ icon: Radio, label: '直播', href: '/live' });
     } else if (!runtimeConfig?.ENABLE_WEB_LIVE && hasLiveInMenu) {
       const index = newItems.findIndex(item => item.href === '/live');
       if (index > -1) newItems.splice(index, 1);
     }
 
     if (runtimeConfig?.CUSTOM_CATEGORIES?.length > 0 && !newItems.some(item => item.href === '/douban?type=custom')) {
-      newItems.push({
-        icon: Star,
-        label: '自定义',
-        href: '/douban?type=custom',
-        color: 'text-yellow-500',
-        gradient: 'from-yellow-500 to-amber-500',
-      });
+      newItems.push({ icon: Star, label: '自定义', href: '/douban?type=custom' });
     }
 
     // Emby - 用户有私人源 OR 管理员有公共源，都显示导航
@@ -158,13 +97,7 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
     const hasEmbyInMenu = newItems.some(item => item.href === '/emby');
 
     if (hasEmbyConfig && !hasEmbyInMenu) {
-      newItems.push({
-        icon: FolderOpen,
-        label: 'Emby',
-        href: '/emby',
-        color: 'text-indigo-500',
-        gradient: 'from-indigo-500 to-purple-500',
-      });
+      newItems.push({ icon: FolderOpen, label: 'Emby', href: '/emby' });
     } else if (!hasEmbyConfig && hasEmbyInMenu) {
       // 如果用户删除了所有 Emby 配置，移除导航项
       const index = newItems.findIndex(item => item.href === '/emby');
@@ -199,64 +132,55 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
 
   return (
     <>
-      {/* Desktop Top Navigation - 2025 Disney+ Style */}
-      <nav className='hidden md:block fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50'>
+      {/* ===== 桌面端顶栏 · Nocturne 玻璃檐 ===== */}
+      <nav className='hidden md:block fixed top-0 left-0 right-0 z-50 border-b border-gray-900/8 bg-white/72 backdrop-blur-xl backdrop-saturate-150 dark:border-white/8 dark:bg-gray-950/68 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] dark:shadow-[inset_0_1px_0_rgba(215,219,233,0.06)]'>
         <div className='max-w-[2560px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20'>
           <div className='flex items-center justify-between h-16 gap-4'>
             {/* Logo */}
             <FastLink href='/' className='shrink-0'>
-              <div className='text-xl font-bold bg-linear-to-r from-green-600 via-emerald-600 to-teal-600 dark:from-green-400 dark:via-emerald-400 dark:to-teal-400 bg-clip-text text-transparent'>
-                {siteName}
-              </div>
+              <BrandMark name={siteName} size='md' />
             </FastLink>
 
-            {/* Navigation Items */}
-            <div className='flex items-center justify-center gap-1 lg:gap-2 overflow-x-auto scrollbar-hide flex-1 px-4'>
+            {/* 导航项：文字为主，金点指示当前位置 */}
+            <div className='flex items-center justify-center gap-0.5 lg:gap-1 overflow-x-auto scrollbar-hide flex-1 px-4'>
               {menuItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
+                const active = isActive(item.href);
 
-              return (
-                <FastLink
-                  key={item.label}
-                  href={item.href}
-                  useTransitionNav
-                  onClick={() => setActive(item.href)}
-                  className='group relative flex items-center gap-2 px-3 lg:px-4 py-2 rounded-full transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50 whitespace-nowrap shrink-0'
-                >
-                  {/* Icon */}
-                  <Icon
-                    className={`w-5 h-5 transition-colors ${
+                return (
+                  <FastLink
+                    key={item.label}
+                    href={item.href}
+                    useTransitionNav
+                    onClick={() => setActive(item.href)}
+                    className={`group relative flex items-center whitespace-nowrap shrink-0 rounded-full px-3.5 lg:px-4 py-2 text-sm transition-colors duration-200 ${
                       active
-                        ? item.color
-                        : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200'
-                    }`}
-                  />
-
-                  {/* Label */}
-                  <span
-                    className={`text-sm font-medium transition-colors ${
-                      active
-                        ? `${item.color} font-semibold`
-                        : 'text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100'
+                        ? 'font-bold text-green-700 dark:text-green-300'
+                        : 'font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-900/4 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-white/5'
                     }`}
                   >
                     {item.label}
-                  </span>
-                </FastLink>
-              );
-            })}
+                    {/* 当前位置的金色月点 */}
+                    <span
+                      aria-hidden='true'
+                      className={`absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-green-500 shadow-[0_0_6px_rgba(230,185,74,0.9)] transition-all duration-300 dark:bg-green-400 ${
+                        active ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
+                      }`}
+                    />
+                  </FastLink>
+                );
+              })}
             </div>
 
-            {/* Right Side Actions - ✨ AI Button, Theme Toggle & User Menu */}
-            <div className='flex items-center gap-2 shrink-0'>
+            {/* 右侧操作区 */}
+            <div className='flex items-center gap-1.5 shrink-0'>
               {showAIButton && onAIButtonClick && (
                 <button
                   onClick={onAIButtonClick}
-                  className='relative p-2 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-colors shadow-lg shadow-blue-500/30 group'
+                  className='group flex items-center gap-1.5 rounded-full border border-purple-400/35 px-3 py-1.5 text-xs font-semibold text-purple-600 transition-all duration-200 hover:border-purple-400/70 hover:bg-purple-500/10 dark:text-purple-300'
                   aria-label='AI 推荐'
                 >
-                  <Sparkles className='h-5 w-5' />
+                  <Sparkles className='h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-12' />
+                  <span className='hidden lg:inline'>AI 推荐</span>
                 </button>
               )}
               <ThemeToggle />
@@ -266,30 +190,34 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
         </div>
       </nav>
 
-      {/* More Menu Modal - Render outside nav to avoid z-index issues */}
+      {/* ===== 移动端「全部分类」抽屉 ===== */}
       {showMoreMenu && (
         <div
-          className='md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm'
+          className='md:hidden fixed inset-0 bg-black/55 backdrop-blur-sm animate-fadeIn'
           style={{ zIndex: 2147483647 }}
           onClick={() => setShowMoreMenu(false)}
         >
           <div
-            className='absolute bottom-20 left-2 right-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-3xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-800/30 overflow-hidden'
+            className='glass-panel absolute bottom-24 left-3 right-3 overflow-hidden rounded-3xl animate-scaleIn'
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className='flex items-center justify-between px-6 py-4 border-b border-gray-200/50 dark:border-gray-700/50'>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>全部分类</h3>
+            <div className='flex items-center justify-between px-6 pt-5 pb-3'>
+              <div>
+                <div className='eyebrow mb-0.5'>Collections</div>
+                <h3 className='text-lg font-extrabold tracking-tight text-gray-900 dark:text-gray-100'>全部分类</h3>
+              </div>
               <button
                 onClick={() => setShowMoreMenu(false)}
-                className='p-2 rounded-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 transition-colors'
+                className='rounded-full border border-gray-900/10 p-2 text-gray-500 transition-colors hover:text-gray-900 dark:border-white/10 dark:text-gray-400 dark:hover:text-gray-100'
+                aria-label='关闭'
               >
-                <X className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+                <X className='w-4 h-4' />
               </button>
             </div>
 
             {/* All menu items in grid */}
-            <div className='grid grid-cols-4 gap-4 p-4'>
+            <div className='grid grid-cols-4 gap-3 p-4 pt-1'>
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
@@ -303,28 +231,28 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
                       setActive(item.href);
                       setShowMoreMenu(false);
                     }}
-                    className='flex flex-col items-center gap-2 p-3 rounded-2xl transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50'
+                    className='flex flex-col items-center gap-2 rounded-2xl p-3 transition-colors active:bg-gray-900/5 dark:active:bg-white/5'
                   >
                     <div
-                      className={`flex items-center justify-center w-12 h-12 rounded-2xl ${
+                      className={`flex h-12 w-12 items-center justify-center rounded-2xl border transition-all duration-200 ${
                         active
-                          ? `bg-linear-to-br ${item.gradient}`
-                          : 'bg-gray-100 dark:bg-gray-800'
+                          ? 'border-green-500/60 bg-linear-to-b from-green-300 to-green-500 shadow-[0_2px_12px_rgba(209,159,48,0.45)]'
+                          : 'border-gray-900/8 bg-gray-900/4 dark:border-white/8 dark:bg-white/5'
                       }`}
                     >
                       <Icon
-                        className={`w-6 h-6 ${
+                        className={`h-5.5 w-5.5 ${
                           active
-                            ? 'text-white'
-                            : 'text-gray-600 dark:text-gray-400'
+                            ? 'text-green-950'
+                            : 'text-gray-600 dark:text-gray-300'
                         }`}
                       />
                     </div>
                     <span
-                      className={`text-xs font-medium ${
+                      className={`text-xs ${
                         active
-                          ? item.color
-                          : 'text-gray-700 dark:text-gray-300'
+                          ? 'font-bold text-green-700 dark:text-green-300'
+                          : 'font-medium text-gray-600 dark:text-gray-300'
                       }`}
                     >
                       {item.label}
@@ -337,15 +265,14 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
         </div>
       )}
 
-      {/* Mobile Bottom Navigation - Netflix Full-Width Style with Light Mode Support */}
+      {/* ===== 移动端浮岛 Dock ===== */}
       <nav
-        className='md:hidden fixed left-0 right-0 z-40 bg-white/80 dark:bg-black/95 backdrop-blur-lg border-t border-black/5 dark:border-white/5 shadow-xl shadow-black/5 dark:shadow-2xl dark:shadow-black/40'
+        className='md:hidden fixed left-3 right-3 z-40 glass-panel rounded-2xl'
         style={{
-          bottom: 0,
-          paddingBottom: 'env(safe-area-inset-bottom)',
+          bottom: 'max(0.75rem, env(safe-area-inset-bottom))',
         }}
       >
-        <div className='flex items-center justify-around px-2 py-2'>
+        <div className='flex items-center justify-around px-1.5 py-1.5'>
           {/* Show first 4 items + More button */}
           {menuItems.slice(0, 4).map((item) => {
             const Icon = item.icon;
@@ -357,16 +284,20 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
                 href={item.href}
                 useTransitionNav
                 onClick={() => setActive(item.href)}
-                className='flex flex-col items-center justify-center min-w-[60px] flex-1 py-2 px-1 transition-colors'
+                className='relative flex min-w-[56px] flex-1 flex-col items-center justify-center rounded-xl px-1 py-1.5 transition-colors'
               >
                 <Icon
-                  className={`w-6 h-6 mb-1 transition-colors ${
-                    active ? item.color : 'text-gray-600 dark:text-gray-400'
+                  className={`mb-0.5 h-5.5 w-5.5 transition-all duration-200 ${
+                    active
+                      ? 'text-green-600 drop-shadow-[0_0_5px_rgba(230,185,74,0.55)] dark:text-green-400'
+                      : 'text-gray-500 dark:text-gray-400'
                   }`}
                 />
                 <span
-                  className={`text-[10px] font-medium transition-colors ${
-                    active ? item.color : 'text-gray-600 dark:text-gray-400'
+                  className={`text-[10px] leading-tight transition-colors ${
+                    active
+                      ? 'font-bold text-green-700 dark:text-green-300'
+                      : 'font-medium text-gray-500 dark:text-gray-400'
                   }`}
                 >
                   {item.label}
@@ -378,17 +309,18 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
           {/* More button */}
           <button
             onClick={() => setShowMoreMenu(true)}
-            className='flex flex-col items-center justify-center min-w-[60px] flex-1 py-2 px-1 transition-colors'
+            className='relative flex min-w-[56px] flex-1 flex-col items-center justify-center rounded-xl px-1 py-1.5 transition-colors'
+            aria-label='更多分类'
           >
-            <MoreHorizontal className='w-6 h-6 mb-1 text-gray-600 dark:text-gray-400' />
-            <span className='text-[10px] font-medium text-gray-600 dark:text-gray-400'>更多</span>
+            <MoreHorizontal className='mb-0.5 h-5.5 w-5.5 text-gray-500 dark:text-gray-400' />
+            <span className='text-[10px] font-medium leading-tight text-gray-500 dark:text-gray-400'>更多</span>
           </button>
         </div>
       </nav>
 
       {/* Spacer for fixed navigation */}
       <div className='hidden md:block h-16' />
-      <div className='md:hidden h-20' />
+      <div className='md:hidden h-24' />
     </>
   );
 }

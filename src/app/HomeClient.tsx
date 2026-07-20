@@ -2,15 +2,7 @@
 
 'use client';
 
-import {
-  Calendar,
-  ChevronRight,
-  Film,
-  Play,
-  Sparkles,
-  Trash2,
-  Tv,
-} from 'lucide-react';
+import { ChevronRight, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Suspense, useEffect, useState, useRef, useMemo, useReducer, useTransition } from 'react';
@@ -142,14 +134,12 @@ const allRemindersOptions = () => remindersQueryOptions;
 
 function HomeSection({
   title,
-  icon,
-  iconColor,
+  eyebrow,
   href,
   children,
 }: {
   title: string;
-  icon: typeof Film;
-  iconColor: string;
+  eyebrow?: string;
   href?: string;
   children: ReactNode;
 }) {
@@ -157,15 +147,15 @@ function HomeSection({
     <section className='py-2'>
       <div className='mb-1 flex items-end justify-between gap-4 px-4 sm:px-6'>
         <div className='min-w-0'>
-          <SectionTitle title={title} icon={icon} iconColor={iconColor} />
+          <SectionTitle title={title} eyebrow={eyebrow} />
         </div>
         {href && (
           <Link
             href={href}
-            className='inline-flex shrink-0 items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-green-300 hover:text-green-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:border-green-500/60 dark:hover:text-green-300'
+            className='group inline-flex shrink-0 items-center gap-1 rounded-full border border-gray-900/10 px-3.5 py-1.5 text-xs font-semibold text-gray-500 transition-colors hover:border-green-500/50 hover:text-green-700 dark:border-white/12 dark:text-gray-400 dark:hover:border-green-400/40 dark:hover:text-green-300'
           >
             查看更多
-            <ChevronRight className='h-4 w-4' />
+            <ChevronRight className='h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5' />
           </Link>
         )}
       </div>
@@ -864,9 +854,7 @@ function HomeClient({ initialConfig }: {
             // 想看视图
             <section className='mb-8'>
               <div className='mb-6 flex items-center justify-between'>
-                <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                  我想看
-                </h2>
+                <SectionTitle title='我想看' eyebrow='Watchlist' />
                 {reminderItems.length > 0 && (
                   <button
                     className='flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-500 border border-red-300 dark:border-red-700 hover:border-red-600 dark:hover:border-red-500 rounded-lg transition-colors'
@@ -896,10 +884,10 @@ function HomeClient({ initialConfig }: {
                     <button
                       key={key}
                       onClick={() => setReminderFilter(key)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-all duration-200 ${
                         reminderFilter === key
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          ? 'bg-linear-to-b from-green-300 to-green-500 text-green-950 shadow-[0_2px_10px_rgba(209,159,48,0.35)]'
+                          : 'border border-gray-900/10 text-gray-600 hover:border-green-500/40 hover:text-green-700 dark:border-white/12 dark:text-gray-300 dark:hover:border-green-400/40 dark:hover:text-green-300'
                       }`}
                     >
                       {label}
@@ -1025,9 +1013,7 @@ function HomeClient({ initialConfig }: {
             // 收藏夹视图
             <section className='mb-8'>
               <div className='mb-6 flex items-center justify-between'>
-                <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                  我的收藏
-                </h2>
+                <SectionTitle title='我的收藏' eyebrow='My Collection' />
                 {favoriteItems.length > 0 && (
                   <button
                     className='flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-500 border border-red-300 dark:border-red-700 hover:border-red-600 dark:hover:border-red-500 rounded-lg transition-colors'
@@ -1102,10 +1088,10 @@ function HomeClient({ initialConfig }: {
                     <button
                       key={key}
                       onClick={() => setFavoriteFilter(key)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-all duration-200 ${
                         favoriteFilter === key
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          ? 'bg-linear-to-b from-green-300 to-green-500 text-green-950 shadow-[0_2px_10px_rgba(209,159,48,0.35)]'
+                          : 'border border-gray-900/10 text-gray-600 hover:border-green-500/40 hover:text-green-700 dark:border-white/12 dark:text-gray-300 dark:hover:border-green-400/40 dark:hover:text-green-300'
                       }`}
                     >
                       {label}
@@ -1126,10 +1112,10 @@ function HomeClient({ initialConfig }: {
                       <button
                         key={key}
                         onClick={() => setFavoriteSortBy(key)}
-                        className={`px-3 py-1 rounded-md transition-colors ${
+                        className={`rounded-full px-3 py-1 font-medium transition-all duration-200 ${
                           favoriteSortBy === key
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            ? 'bg-linear-to-b from-green-300 to-green-500 font-semibold text-green-950 shadow-[0_2px_10px_rgba(209,159,48,0.35)]'
+                            : 'border border-gray-900/10 text-gray-600 hover:border-green-500/40 hover:text-green-700 dark:border-white/12 dark:text-gray-300 dark:hover:border-green-400/40 dark:hover:text-green-300'
                         }`}
                       >
                         {label}
@@ -1291,8 +1277,8 @@ function HomeClient({ initialConfig }: {
             <>
               <div className='mx-auto w-full max-w-[1800px] space-y-8 px-0 sm:px-2'>
                 {state.homePageConfig.showHeroBanner && heroBannerItemsWithLogos.length > 0 && (
-                  <section className='overflow-hidden rounded-lg border border-white/70 bg-white/80 p-2 shadow-[0_18px_60px_rgba(15,23,42,0.10)] backdrop-blur-xl dark:border-white/10 dark:bg-gray-950/62 dark:shadow-[0_26px_80px_rgba(0,0,0,0.34)] sm:p-3'>
-                    <div className='overflow-hidden rounded-lg bg-black'>
+                  <section className='glass-panel overflow-hidden rounded-2xl p-1.5 sm:p-2'>
+                    <div className='overflow-hidden rounded-xl bg-black'>
                       <HeroBanner
                         items={heroBannerItemsWithLogos}
                         autoPlayInterval={8000}
@@ -1316,8 +1302,7 @@ function HomeClient({ initialConfig }: {
               {state.homePageConfig.showUpcomingReleases && upcomingReleases.length > 0 && (
                 <HomeSection
                   title='即将上映'
-                  icon={Calendar}
-                  iconColor='text-orange-500'
+                  eyebrow='Coming Soon'
                   href='/release-calendar'
                 >
 
@@ -1331,17 +1316,17 @@ function HomeClient({ initialConfig }: {
                       <button
                         key={key}
                         onClick={() => setUpcomingFilter(key as 'all' | 'movie' | 'tv')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-all duration-200 ${
                           upcomingFilter === key
-                            ? 'bg-orange-500 text-white shadow-md'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            ? 'bg-linear-to-b from-green-300 to-green-500 text-green-950 shadow-[0_2px_10px_rgba(209,159,48,0.35)]'
+                            : 'border border-gray-900/10 text-gray-600 hover:border-green-500/40 hover:text-green-700 dark:border-white/12 dark:text-gray-300 dark:hover:border-green-400/40 dark:hover:text-green-300'
                         }`}
                       >
                         {label}
                         {count > 0 && (
-                          <span className={`ml-1.5 text-xs ${
+                          <span className={`ml-1.5 font-mono text-xs ${
                             upcomingFilter === key
-                              ? 'text-white/80'
+                              ? 'text-green-900/70'
                               : 'text-gray-500 dark:text-gray-400'
                           }`}>
                             ({count})
@@ -1409,8 +1394,7 @@ function HomeClient({ initialConfig }: {
               {state.homePageConfig.showHotMovies && (
               <HomeSection
                 title='热门电影'
-                icon={Film}
-                iconColor='text-red-500'
+                eyebrow='Trending Films'
                 href='/douban?type=movie'
               >
                 <ScrollableRow edgeBleed showControls={false} compact>
@@ -1447,8 +1431,7 @@ function HomeClient({ initialConfig }: {
               {state.homePageConfig.showHotTvShows && (
               <HomeSection
                 title='热门剧集'
-                icon={Tv}
-                iconColor='text-blue-500'
+                eyebrow='Trending Series'
                 href='/douban?type=tv'
               >
                 <ScrollableRow edgeBleed showControls={false} compact>
@@ -1485,8 +1468,7 @@ function HomeClient({ initialConfig }: {
               {state.homePageConfig.showNewAnime && (
               <HomeSection
                 title='新番放送'
-                icon={Calendar}
-                iconColor='text-purple-500'
+                eyebrow='Anime On Air'
                 href='/douban?type=anime'
               >
                 <ScrollableRow edgeBleed showControls={false} compact>
@@ -1530,8 +1512,7 @@ function HomeClient({ initialConfig }: {
               {state.homePageConfig.showHotVariety && (
               <HomeSection
                 title='热门综艺'
-                icon={Sparkles}
-                iconColor='text-pink-500'
+                eyebrow='Variety Shows'
                 href='/douban?type=show'
               >
                 <ScrollableRow edgeBleed showControls={false} compact>
@@ -1568,8 +1549,7 @@ function HomeClient({ initialConfig }: {
               {state.homePageConfig.showHotShortDramas && (
               <HomeSection
                 title='热门短剧'
-                icon={Play}
-                iconColor='text-orange-500'
+                eyebrow='Short Dramas'
                 href='/shortdrama'
               >
                 <ScrollableRow edgeBleed showControls={false} compact>
@@ -1622,7 +1602,7 @@ function HomeClient({ initialConfig }: {
           }}
         >
           <div
-            className='w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900 transform transition-all duration-300 hover:shadow-2xl'
+            className='glass-panel w-full max-w-md rounded-2xl p-6 transform transition-all duration-300 animate-scaleIn'
             onTouchMove={(e) => {
               // 允许公告内容区域正常滚动，阻止事件冒泡到外层
               e.stopPropagation();
@@ -1632,21 +1612,22 @@ function HomeClient({ initialConfig }: {
             }}
           >
             <div className='mb-4'>
-              <h3 className='text-2xl font-bold tracking-tight text-gray-800 dark:text-white border-b border-green-500 pb-1'>
-                提示
+              <div className='eyebrow mb-1'>Notice</div>
+              <h3 className='text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white'>
+                公告
               </h3>
             </div>
             <div className='mb-6'>
-              <div className='relative overflow-hidden rounded-lg mb-4 bg-green-50 dark:bg-green-900/20'>
-                <div className='absolute inset-y-0 left-0 w-1.5 bg-green-500 dark:bg-green-400'></div>
-                <p className='ml-4 text-gray-600 dark:text-gray-300 leading-relaxed'>
+              <div className='relative mb-4 overflow-hidden rounded-lg border border-green-500/25 bg-green-50/70 py-3 dark:bg-green-400/8'>
+                <div className='absolute inset-y-0 left-0 w-1 bg-linear-to-b from-green-300 to-green-600'></div>
+                <p className='px-4 leading-relaxed text-gray-700 dark:text-gray-300'>
                   {announcement}
                 </p>
               </div>
             </div>
             <button
               onClick={() => handleCloseAnnouncement(announcement)}
-              className='w-full rounded-lg bg-linear-to-r from-green-600 to-green-700 px-4 py-3 text-white font-medium shadow-md hover:shadow-lg hover:from-green-700 hover:to-green-800 dark:from-green-600 dark:to-green-700 dark:hover:from-green-700 dark:hover:to-green-800 transition-all duration-300 transform hover:-translate-y-0.5'
+              className='btn-gold w-full px-4 py-3'
             >
               我知道了
             </button>

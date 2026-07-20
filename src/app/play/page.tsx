@@ -3817,7 +3817,7 @@ function PlayPageClient() {
         playsInline: true,
         autoPlayback: true,
         airplay: true,
-        theme: '#22c55e',
+        theme: '#e6b94a',
         lang: navigator.language.toLowerCase(),
         controls: [
           {

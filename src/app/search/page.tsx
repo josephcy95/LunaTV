@@ -1933,18 +1933,18 @@ function SearchPageClient() {
                           styles={{
                             control: (base, state) => ({
                               ...base,
-                              borderColor: state.isFocused ? '#ef4444' : '#d1d5db',
-                              boxShadow: state.isFocused ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : 'none',
+                              borderColor: state.isFocused ? '#d19f30' : '#d7dbe9',
+                              boxShadow: state.isFocused ? '0 0 0 2px rgba(209, 159, 48, 0.25)' : 'none',
                               '&:hover': {
-                                borderColor: '#ef4444'
+                                borderColor: '#d19f30'
                               }
                             }),
                             option: (base, state) => ({
                               ...base,
-                              backgroundColor: state.isSelected ? '#ef4444' : state.isFocused ? '#fee2e2' : 'white',
+                              backgroundColor: state.isSelected ? '#d19f30' : state.isFocused ? '#f9eecd' : 'white',
                               color: state.isSelected ? 'white' : '#1f2937',
                               '&:active': {
-                                backgroundColor: '#ef4444'
+                                backgroundColor: '#c08c22'
                               }
                             })
                           }}

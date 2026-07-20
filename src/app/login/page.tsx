@@ -10,6 +10,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 
+import BrandMark from '@/components/BrandMark';
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { OIDCProviderLogo, detectProvider, getProviderButtonStyle, getProviderButtonText } from '@/components/OIDCProviderLogos';
@@ -195,18 +196,28 @@ function LoginPageClient() {
   };
 
   return (
-    <div translate="no" className='fixed inset-0 z-50 flex items-center justify-center px-3 sm:px-4 py-8 sm:py-0 bg-gray-50 dark:bg-gray-950'>
+    <div translate="no" className='fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-3 py-8 sm:px-4 sm:py-10'>
+      {/* 月夜背景：大月晕 + 远景星点 */}
+      <div aria-hidden='true' className='pointer-events-none absolute inset-0 overflow-hidden'>
+        <div className='absolute -top-40 left-1/2 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full bg-green-400/14 blur-[110px] dark:bg-green-400/10' />
+        <div className='absolute bottom-[-12rem] right-[-8rem] h-[26rem] w-[26rem] rounded-full bg-blue-500/10 blur-[100px] dark:bg-indigo-500/12' />
+        <span className='animate-moon-pulse absolute left-[16%] top-[22%] h-1 w-1 rounded-full bg-green-400/80 shadow-[0_0_8px_rgba(230,185,74,0.9)]' />
+        <span className='animate-moon-pulse absolute right-[20%] top-[30%] h-0.5 w-0.5 rounded-full bg-gray-300/90' style={{ animationDelay: '0.9s' }} />
+        <span className='animate-moon-pulse absolute left-[30%] bottom-[24%] h-0.5 w-0.5 rounded-full bg-gray-300/70' style={{ animationDelay: '1.6s' }} />
+        <span className='animate-moon-pulse absolute right-[32%] bottom-[16%] h-1 w-1 rounded-full bg-green-300/70 shadow-[0_0_6px_rgba(230,185,74,0.7)]' style={{ animationDelay: '2.2s' }} />
+      </div>
+
       <div className='absolute top-3 right-3 sm:top-4 sm:right-4 z-20'>
         <ThemeToggle />
       </div>
 
-      <div className='relative z-10 w-full max-w-md rounded-xl bg-white dark:bg-gray-900 shadow-lg p-6 sm:p-8 border border-gray-200 dark:border-gray-800'>
+      <div className='glass-panel relative z-10 my-auto w-full max-w-md rounded-3xl p-6 sm:p-8'>
         {/* 标题 */}
-        <div className='text-center mb-6 sm:mb-8'>
-          <h1 className='text-gray-900 dark:text-white text-2xl sm:text-3xl font-bold mb-1'>
-            {siteName}
-          </h1>
-          <p className='text-gray-500 dark:text-gray-400 text-sm'>请登录您的账户</p>
+        <div className='mb-7 text-center sm:mb-9'>
+          <div className='mb-3 flex justify-center'>
+            <BrandMark name={siteName} size='lg' />
+          </div>
+          <p className='eyebrow'>Midnight Cinema · 请登录您的账户</p>
         </div>
 
         <form onSubmit={handleSubmit} className='space-y-4'>
@@ -223,7 +234,7 @@ function LoginPageClient() {
                   id='username'
                   type='text'
                   autoComplete='username'
-                  className='block w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:outline-none text-sm bg-white dark:bg-gray-800'
+                  className='block w-full rounded-xl border border-gray-900/12 bg-white/70 py-2.5 pl-10 pr-3 text-sm text-gray-900 backdrop-blur-sm transition-colors placeholder:text-gray-400 focus:border-green-500/70 focus:outline-none focus:ring-2 focus:ring-green-500/40 dark:border-white/10 dark:bg-gray-900/55 dark:text-gray-100 dark:placeholder:text-gray-500'
                   placeholder='请输入用户名'
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -244,7 +255,7 @@ function LoginPageClient() {
                 id='password'
                 type='password'
                 autoComplete='current-password'
-                className='block w-full pl-10 pr-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:outline-none text-sm bg-white dark:bg-gray-800'
+                className='block w-full rounded-xl border border-gray-900/12 bg-white/70 py-2.5 pl-10 pr-3 text-sm text-gray-900 backdrop-blur-sm transition-colors placeholder:text-gray-400 focus:border-green-500/70 focus:outline-none focus:ring-2 focus:ring-green-500/40 dark:border-white/10 dark:bg-gray-900/55 dark:text-gray-100 dark:placeholder:text-gray-500'
                 placeholder='请输入访问密码'
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -253,7 +264,7 @@ function LoginPageClient() {
           </div>
 
           {error && (
-            <div className='flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50'>
+            <div className='flex items-center gap-2 rounded-xl border border-red-400/35 bg-red-50/80 p-3 dark:bg-red-500/10'>
               <AlertCircle className='h-4 w-4 text-red-600 dark:text-red-400 shrink-0' />
               <p className='text-sm text-red-600 dark:text-red-400'>{error}</p>
             </div>
@@ -263,7 +274,7 @@ function LoginPageClient() {
           <button
             type='submit'
             disabled={!password || loading || (shouldAskUsername && !username)}
-            className='w-full flex justify-center items-center gap-2 rounded-lg bg-green-600 hover:bg-green-700 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+            className='btn-gold w-full py-2.5 text-sm'
           >
             <Lock className='h-4 w-4' />
             {loading ? '登录中...' : '立即登录'}
@@ -278,7 +289,7 @@ function LoginPageClient() {
               <Link
                 href='/register'
                 prefetch={true}
-                className='flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 text-sm font-medium hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors'
+                className='btn-ghost w-full px-4 py-2 text-sm'
               >
                 <UserPlus className='w-4 h-4' />
                 <span>立即注册</span>
@@ -307,7 +318,7 @@ function LoginPageClient() {
                   value={telegramUsername}
                   onChange={(e) => setTelegramUsername(e.target.value)}
                   placeholder='输入您的 Telegram 用户名'
-                  className='block w-full pl-9 pr-3 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white text-sm'
+                  className='block w-full rounded-xl border border-gray-900/12 bg-white/70 py-2.5 pl-9 pr-3 text-sm text-gray-900 backdrop-blur-sm transition-colors placeholder:text-gray-400 focus:border-blue-400/70 focus:outline-none focus:ring-2 focus:ring-blue-400/40 dark:border-white/10 dark:bg-gray-900/55 dark:text-white'
                   disabled={telegramLoading}
                 />
               </div>
@@ -319,7 +330,7 @@ function LoginPageClient() {
             <button
               onClick={handleTelegramLogin}
               disabled={telegramLoading || !telegramUsername.trim()}
-              className='w-full flex justify-center items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+              className='flex w-full items-center justify-center gap-2 rounded-xl border border-blue-400/40 py-2.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-300'
             >
               <Send className='h-4 w-4' />
               {telegramLoading ? '正在打开 Telegram...' : '通过 Telegram 登录'}
@@ -349,7 +360,7 @@ function LoginPageClient() {
                 <div className='w-full border-t border-gray-300 dark:border-gray-600'></div>
               </div>
               <div className='relative flex justify-center text-sm'>
-                <span className='px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400'>或</span>
+                <span className='rounded-full border border-gray-900/10 bg-white/80 px-3 py-0.5 text-xs text-gray-500 backdrop-blur-sm dark:border-white/10 dark:bg-gray-900/80 dark:text-gray-400'>或</span>
               </div>
             </div>
 

@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 'use client';
 
-import { Clock, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useEffect, useState, memo } from 'react';
 
 import type { PlayRecord } from '@/lib/db.client';
@@ -110,7 +110,7 @@ function ContinueWatching({ className }: ContinueWatchingProps) {
   return (
     <section className={`mb-8 ${className || ''}`}>
       <div className='mb-4 flex items-center justify-between'>
-        <SectionTitle title="继续观看" icon={Clock} iconColor="text-green-500" />
+        <SectionTitle title="继续观看" eyebrow="Continue Watching" />
         {!loading && playRecords.length > 0 && (
           <button
             className='flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-500 border border-red-300 dark:border-red-700 hover:border-red-600 dark:hover:border-red-500 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md'

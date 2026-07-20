@@ -76,7 +76,7 @@ export function ConfirmDialog({
       />
 
       {/* 对话框 */}
-      <div className='relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 animate-slide-up'>
+      <div className='glass-panel relative w-full max-w-md rounded-2xl animate-slide-up'>
         {/* 关闭按钮 */}
         <button
           onClick={onCancel}

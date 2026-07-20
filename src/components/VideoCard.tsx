@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,react-hooks/exhaustive-deps,@typescript-eslint/no-empty-function */
 
-import { ExternalLink, Heart, Link, PlayCircleIcon, Radio, Star, Trash2, Sparkles, Bell, BellRing } from 'lucide-react';
+import { ExternalLink, Heart, Link, Play, PlayCircleIcon, Radio, Star, Trash2, Sparkles, Bell, BellRing } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -570,47 +570,35 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
     longPressDelay: 500,
   });
 
-  // 根据评分获取徽章样式 - 使用 useMemo 缓存结果
+  // 根据评分获取徽章样式 - Nocturne 等宽金签分级
   const ratingBadgeStyle = useMemo(() => {
     if (!rate) return null;
 
     const rateNum = parseFloat(rate);
 
     if (rateNum >= 8.5) {
-      // 高分：金色 + 发光
+      // 高分：满月金签
       return {
-        bgColor: 'bg-linear-to-br from-yellow-400 via-amber-500 to-yellow-600',
-        ringColor: 'ring-2 ring-yellow-400/50',
-        shadowColor: 'shadow-lg shadow-yellow-500/50',
-        textColor: 'text-white',
-        glowClass: 'group-hover:shadow-yellow-500/70',
+        chipClass: 'meta-badge meta-badge-gold shadow-[0_0_10px_rgba(230,185,74,0.4)]',
+        starClass: 'text-green-300',
       };
     } else if (rateNum >= 7.0) {
-      // 中高分：蓝色
+      // 中高分：银月
       return {
-        bgColor: 'bg-linear-to-br from-blue-500 via-blue-600 to-blue-700',
-        ringColor: 'ring-2 ring-blue-400/40',
-        shadowColor: 'shadow-md shadow-blue-500/30',
-        textColor: 'text-white',
-        glowClass: 'group-hover:shadow-blue-500/50',
+        chipClass: 'meta-badge',
+        starClass: 'text-green-300',
       };
     } else if (rateNum >= 6.0) {
-      // 中分：绿色
+      // 中分：暗银
       return {
-        bgColor: 'bg-linear-to-br from-green-500 via-green-600 to-green-700',
-        ringColor: 'ring-2 ring-green-400/40',
-        shadowColor: 'shadow-md shadow-green-500/30',
-        textColor: 'text-white',
-        glowClass: 'group-hover:shadow-green-500/50',
+        chipClass: 'meta-badge text-white/75',
+        starClass: 'text-white/60',
       };
     } else {
-      // 低分：灰色
+      // 低分：残月
       return {
-        bgColor: 'bg-linear-to-br from-gray-500 via-gray-600 to-gray-700',
-        ringColor: 'ring-2 ring-gray-400/40',
-        shadowColor: 'shadow-md shadow-gray-500/30',
-        textColor: 'text-white',
-        glowClass: 'group-hover:shadow-gray-500/50',
+        chipClass: 'meta-badge text-white/55',
+        starClass: 'text-white/40',
       };
     }
   }, [rate]);
@@ -877,7 +865,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
   return (
     <>
       <div
-        className='@container group relative w-full rounded-lg bg-transparent cursor-pointer transition-transform hover:scale-[1.02]'
+        className='@container group relative w-full cursor-pointer transition-transform duration-300 ease-out hover:-translate-y-1'
         onClick={handleClick}
         onMouseEnter={handlePrefetch}
         onFocus={handlePrefetch}
@@ -913,7 +901,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
       >
         {/* 海报容器 */}
         <div
-          className={`relative aspect-[2/3] overflow-hidden rounded-lg ${origin === 'live' ? 'ring-1 ring-gray-300/80 dark:ring-gray-600/80' : ''}`}
+          className={`relative aspect-[2/3] overflow-hidden rounded-xl ring-1 ring-gray-900/10 shadow-[0_2px_10px_rgba(7,10,20,0.1)] transition-all duration-300 ease-out group-hover:ring-green-500/60 group-hover:shadow-[0_10px_36px_rgba(209,159,48,0.2)] dark:ring-white/10 dark:shadow-[0_2px_14px_rgba(0,0,0,0.4)] dark:group-hover:ring-green-400/50 dark:group-hover:shadow-[0_10px_40px_rgba(209,159,48,0.16)] ${origin === 'live' ? 'bg-gray-100 dark:bg-gray-900' : ''}`}
           style={{
             WebkitUserSelect: 'none',
             userSelect: 'none',
@@ -932,7 +920,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
             alt={actualTitle}
             fill
             sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, (max-width: 1024px) 20vw, 16vw"
-            className={`${origin === 'live' ? 'object-contain' : 'object-cover'} transition-opacity duration-300 ease-out ${
+            className={`${origin === 'live' ? 'object-contain' : 'object-cover'} transition-[opacity,filter] duration-300 ease-out group-hover:brightness-[1.07] ${
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             referrerPolicy='no-referrer'
@@ -984,7 +972,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
 
           {/* 悬浮遮罩 - 玻璃态效果 */}
           <div
-            className='absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent transition-all duration-300 ease-in-out opacity-0 group-hover:opacity-100 backdrop-blur-[2px]'
+            className='absolute inset-0 bg-linear-to-t from-black/85 via-black/25 to-black/5 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100'
             style={{
               WebkitUserSelect: 'none',
               userSelect: 'none',
@@ -1015,22 +1003,20 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
             >
               {isNavigating ? (
                 // 🔥 加载状态 - 提供即时反馈
-                <div className='flex flex-col items-center gap-2 bg-black/60 backdrop-blur-md px-6 py-4 rounded-xl'>
-                  <div className='w-10 h-10 border-4 border-green-500/30 border-t-green-500 rounded-full animate-spin' />
-                  <span className='text-white font-bold text-sm whitespace-nowrap'>加载中...</span>
+                <div className='flex flex-col items-center gap-2.5 rounded-2xl bg-black/65 px-6 py-4 ring-1 ring-white/10 backdrop-blur-md'>
+                  <div className='moon-loader' />
+                  <span className='font-mono text-xs font-semibold tracking-widest text-white/90 whitespace-nowrap'>LOADING</span>
                 </div>
               ) : isUpcoming ? (
                 // 即将上映 - 显示敬请期待
-                <div className='flex flex-col items-center gap-2 bg-black/60 backdrop-blur-md px-6 py-4 rounded-xl'>
-                  <span className='text-3xl'>📅</span>
-                  <span className='text-white font-bold text-sm whitespace-nowrap'>敬请期待</span>
+                <div className='flex flex-col items-center gap-2 rounded-2xl bg-black/65 px-6 py-4 ring-1 ring-white/10 backdrop-blur-md'>
+                  <span className='animate-moon-pulse text-2xl' aria-hidden='true'>☽</span>
+                  <span className='text-sm font-bold text-white whitespace-nowrap'>敬请期待</span>
                 </div>
               ) : (
-                // 正常内容 - 显示播放按钮
-                <PlayCircleIcon
-                  size={50}
-                  strokeWidth={1.5}
-                  className='text-white fill-transparent transition-all duration-300 ease-out hover:text-green-500 hover:scale-[1.15] drop-shadow-[0_0_8px_rgba(34,197,94,0.6)]'
+                // 正常内容 - 金色播放圆盘
+                <span
+                  className='flex h-12 w-12 scale-90 items-center justify-center rounded-full bg-linear-to-b from-green-300 to-green-500 text-green-950 shadow-[0_4px_20px_rgba(209,159,48,0.5),inset_0_1px_0_rgba(255,255,255,0.5)] ring-1 ring-green-200/60 transition-transform duration-300 ease-out group-hover:scale-100 hover:!scale-110'
                   style={{
                     WebkitUserSelect: 'none',
                     userSelect: 'none',
@@ -1040,7 +1026,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
                     e.preventDefault();
                     return false;
                   }}
-                />
+                >
+                  <Play size={20} strokeWidth={2.5} fill='currentColor' className='ml-0.5' />
+                </span>
               )}
             </div>
           )}
@@ -1185,7 +1173,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
           {/* 收藏页面：过滤掉99集的占位符显示，只显示真实集数 */}
           {actualEpisodes && actualEpisodes > 1 && !isUpcoming && !(from === 'favorite' && actualEpisodes === 99) && (
             <div
-              className='absolute top-2 left-2 flex items-stretch overflow-hidden rounded-md shadow-lg transition-all duration-300 ease-out group-hover:scale-105 z-30'
+              className='absolute top-2 left-2 z-30 transition-transform duration-300 ease-out group-hover:scale-105'
               style={{
                 WebkitUserSelect: 'none',
                 userSelect: 'none',
@@ -1197,21 +1185,14 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
               }}
             >
               {currentEpisode ? (
-                <>
-                  {/* 左侧：当前集 - 品牌色背景（红色） */}
-                  <span className='flex items-center bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white'>
-                    EP {String(currentEpisode).padStart(2, '0')}
-                  </span>
-                  {/* 右侧：总集数 - 半透明黑背景 */}
-                  <span className='flex items-center bg-black/70 backdrop-blur-sm px-1.5 py-0.5 text-[10px] font-medium text-white/60'>
-                    / {actualEpisodes}
-                  </span>
-                </>
+                /* 观看进度：金字等宽计数 */
+                <span className='meta-badge meta-badge-gold'>
+                  EP&nbsp;{String(currentEpisode).padStart(2, '0')}
+                  <span className='opacity-60'>/&nbsp;{actualEpisodes}</span>
+                </span>
               ) : (
                 /* 仅显示总集数 */
-                <span className='flex items-center bg-black/70 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-white/80'>
-                  {actualEpisodes} 集
-                </span>
+                <span className='meta-badge'>{actualEpisodes} 集</span>
               )}
             </div>
           )}
@@ -1219,9 +1200,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
           {/* 年份徽章 - Netflix 风格 - 左上角第二位 */}
           {config.showYear && actualYear && actualYear !== 'unknown' && actualYear.trim() !== '' && (
             <div
-              className={`absolute left-2 flex items-center bg-black/70 backdrop-blur-sm px-2 py-0.5 rounded-md shadow-lg text-white/80 text-[10px] font-medium transition-all duration-300 ease-out group-hover:scale-105 z-30 ${
+              className={`meta-badge absolute left-2 z-30 transition-transform duration-300 ease-out group-hover:scale-105 ${
                 actualEpisodes && actualEpisodes > 1 && !isUpcoming && !(from === 'favorite' && actualEpisodes === 99)
-                  ? 'top-[38px]'  // 有集数徽章时向下偏移
+                  ? 'top-9'  // 有集数徽章时向下偏移
                   : 'top-2'
               }`}
               style={{
@@ -1241,7 +1222,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
           {/* 已完结徽章 - Netflix 风格 - 底部左侧 */}
           {remarks && isSeriesCompleted(remarks) && (
             <div
-              className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/70 backdrop-blur-sm px-2 py-0.5 rounded-md shadow-lg text-white/80 text-[10px] font-medium transition-all duration-300 ease-out group-hover:scale-105 z-30"
+              className="meta-badge absolute bottom-2 left-2 z-30 transition-transform duration-300 ease-out group-hover:scale-105"
               style={{
                 WebkitUserSelect: 'none',
                 userSelect: 'none',
@@ -1252,7 +1233,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
                 return false;
               }}
             >
-              <span className="text-green-400">✓</span>
+              <span className="text-green-300">✓</span>
               <span>已完结</span>
             </div>
           )}
@@ -1271,7 +1252,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
 
             return (
               <div
-                className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/70 backdrop-blur-sm px-2 py-0.5 rounded-md shadow-lg text-[10px] font-medium transition-all duration-300 ease-out group-hover:scale-105 z-30"
+                className="meta-badge absolute bottom-2 left-2 z-30 transition-transform duration-300 ease-out group-hover:scale-105"
                 style={{
                   WebkitUserSelect: 'none',
                   userSelect: 'none',
@@ -1283,7 +1264,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
                 }}
               >
                 <span className={statusColor}>●</span>
-                <span className="text-white/80">{statusText}</span>
+                <span className="text-white/85">{statusText}</span>
               </div>
             );
           })()}
@@ -1291,7 +1272,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
           {/* 评分徽章 - 动态颜色 - 🎯 使用容器查询替代媒体查询 */}
           {config.showRating && rate && ratingBadgeStyle && (
               <div
-                className={`absolute top-2 right-2 ${ratingBadgeStyle.bgColor} ${ratingBadgeStyle.ringColor} ${ratingBadgeStyle.shadowColor} ${ratingBadgeStyle.textColor} ${ratingBadgeStyle.glowClass} text-xs font-bold rounded-full flex flex-col items-center justify-center transition-all duration-300 ease-out group-hover:scale-110 backdrop-blur-sm w-9 h-9 @[180px]:w-10 @[180px]:h-10`}
+                className={`absolute top-2 right-2 z-30 ${ratingBadgeStyle.chipClass} transition-transform duration-300 ease-out group-hover:scale-105`}
                 style={{
                   WebkitUserSelect: 'none',
                   userSelect: 'none',
@@ -1302,8 +1283,8 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
                   return false;
                 }}
               >
-                <Star size={10} className="fill-current mb-0.5" />
-                <span className="text-[10px] @[180px]:text-xs font-extrabold leading-none">{rate}</span>
+                <Star size={9} className={`fill-current ${ratingBadgeStyle.starClass}`} />
+                <span>{rate}</span>
               </div>
           )}
 
@@ -1330,7 +1311,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
               }}
             >
               <div
-                className='bg-green-500 text-white text-xs font-bold w-7 h-7 rounded-full flex items-center justify-center shadow-md hover:bg-green-600 hover:scale-[1.1] transition-all duration-300 ease-out'
+                className='flex h-7 w-7 items-center justify-center rounded-full bg-black/65 text-green-300 ring-1 ring-white/15 backdrop-blur-sm shadow-md transition-all duration-300 ease-out hover:scale-[1.1] hover:text-green-200 hover:ring-green-400/60'
                 style={{
                   WebkitUserSelect: 'none',
                   userSelect: 'none',
@@ -1382,7 +1363,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
                 >
                   {/* 源数量徽章 */}
                   <div
-                    className='bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-lg flex items-center gap-1 hover:scale-105 transition-all duration-300 cursor-pointer'
+                    className='meta-badge cursor-pointer transition-transform duration-300 hover:scale-105'
                     style={{
                       WebkitUserSelect: 'none',
                       userSelect: 'none',
@@ -1393,7 +1374,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
                       return false;
                     }}
                   >
-                    <span>{sourceCount}</span>
+                    <span className='text-green-300'>{sourceCount}</span>
                     <span className='text-white/60'>源</span>
                   </div>
 
@@ -1446,7 +1427,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
                           <div className='space-y-0.5 sm:space-y-1'>
                             {displaySources.map((sourceName, index) => (
                               <div key={index} className='flex items-center gap-1 sm:gap-1.5'>
-                                <div className='w-0.5 h-0.5 sm:w-1 sm:h-1 bg-blue-400 rounded-full shrink-0'></div>
+                                <div className='w-0.5 h-0.5 sm:w-1 sm:h-1 bg-green-400 rounded-full shrink-0'></div>
                                 <span className='truncate text-[10px] sm:text-xs leading-tight' title={sourceName}>
                                   {sourceName}
                                 </span>
@@ -1505,12 +1486,12 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
                   e.preventDefault();
                   setShowAIChat(true);
                 }}
-                className='flex items-center gap-1.5 px-3 py-1.5 rounded-md
+                className='flex items-center gap-1.5 px-3 py-1.5 rounded-full
                   bg-black/70 backdrop-blur-sm
                   shadow-lg text-white/90
-                  hover:bg-black/80 hover:scale-105 hover:shadow-[0_0_12px_rgba(168,85,247,0.4)]
+                  hover:bg-black/80 hover:scale-105 hover:shadow-[0_0_12px_rgba(156,130,204,0.45)]
                   transition-all duration-300 ease-out
-                  border border-white/10'
+                  border border-white/12 hover:border-purple-400/50'
                 aria-label='AI问片'
                 style={{
                   WebkitUserSelect: 'none',
@@ -1518,7 +1499,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
                   WebkitTouchCallout: 'none',
                 } as React.CSSProperties}
               >
-                <Sparkles size={14} className='text-purple-400' />
+                <Sparkles size={14} className='text-purple-300' />
                 <span className='text-xs font-medium whitespace-nowrap'>AI问片</span>
               </button>
             </div>
@@ -1526,9 +1507,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
 
           {/* 进度条 - overlay在海报底部 */}
           {config.showProgress && progress !== undefined && (
-            <div className='absolute bottom-0 left-0 right-0 h-1 bg-black/30 z-20'>
+            <div className='absolute bottom-0 left-0 right-0 h-1 bg-black/45 z-20'>
               <div
-                className='h-full bg-red-500'
+                className='progress-gold'
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -1550,7 +1531,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
         >
           <div className='relative px-1'>
             <span
-              className='block text-xs @[140px]:text-sm font-bold line-clamp-2 text-gray-900 dark:text-gray-100'
+              className='block text-xs @[140px]:text-sm font-semibold tracking-tight line-clamp-2 text-gray-900 transition-colors duration-300 group-hover:text-green-700 dark:text-gray-100 dark:group-hover:text-green-300'
               style={{
                 WebkitUserSelect: 'none',
                 userSelect: 'none',
@@ -1618,29 +1599,20 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
               }
             }
 
-            // 根据主题颜色设置class
-            const colorClasses = {
-              green: 'group-hover:border-green-500/80 group-hover:text-green-600 dark:group-hover:text-green-400 group-hover:shadow-green-500/20',
-              orange: 'group-hover:border-orange-500/80 group-hover:text-orange-600 dark:group-hover:text-orange-400 group-hover:shadow-orange-500/20',
-              yellow: 'group-hover:border-yellow-500/80 group-hover:text-yellow-600 dark:group-hover:text-yellow-400 group-hover:shadow-yellow-500/20',
-            }[themeColor];
-
-            const bgGradient = {
-              green: 'group-hover:via-green-50/80 dark:group-hover:via-green-500/20',
-              orange: 'group-hover:via-orange-50/80 dark:group-hover:via-orange-500/20',
-              yellow: 'group-hover:via-yellow-50/80 dark:group-hover:via-yellow-500/20',
+            // Nocturne：安静的等宽出处签，hover 时按状态点亮
+            const hoverClasses = {
+              green:
+                'group-hover:border-green-500/50 group-hover:text-green-700 dark:group-hover:border-green-400/40 dark:group-hover:text-green-300',
+              orange:
+                'group-hover:border-orange-500/50 group-hover:text-orange-600 dark:group-hover:border-orange-400/40 dark:group-hover:text-orange-300',
+              yellow:
+                'group-hover:border-yellow-500/50 group-hover:text-yellow-700 dark:group-hover:border-yellow-400/40 dark:group-hover:text-yellow-300',
             }[themeColor];
 
             const dotColor = {
-              green: 'group-hover:bg-green-500 dark:group-hover:bg-green-400 group-hover:shadow-[0_0_8px_rgba(16,185,129,0.6)]',
-              orange: 'group-hover:bg-orange-500 dark:group-hover:bg-orange-400 group-hover:shadow-[0_0_8px_rgba(249,115,22,0.6)]',
-              yellow: 'group-hover:bg-yellow-500 dark:group-hover:bg-yellow-400 group-hover:shadow-[0_0_8px_rgba(234,179,8,0.6)]',
-            }[themeColor];
-
-            const iconColor = {
-              green: 'group-hover:text-green-500 dark:group-hover:text-green-400',
-              orange: 'group-hover:text-orange-500 dark:group-hover:text-orange-400',
-              yellow: 'group-hover:text-yellow-500 dark:group-hover:text-yellow-400',
+              green: 'group-hover:bg-green-500 dark:group-hover:bg-green-400',
+              orange: 'group-hover:bg-orange-500 dark:group-hover:bg-orange-400',
+              yellow: 'group-hover:bg-yellow-500 dark:group-hover:bg-yellow-400',
             }[themeColor];
 
             return (
@@ -1657,7 +1629,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
                 }}
               >
                 <span
-                  className={`relative inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full border border-gray-300/60 dark:border-gray-600/60 text-gray-600 dark:text-gray-400 overflow-hidden ${colorClasses}`}
+                  className={`inline-flex items-center gap-1.5 rounded-full border border-gray-900/12 bg-white/55 px-2.5 py-0.5 font-mono text-[10px] font-medium tracking-wide text-gray-500 backdrop-blur-sm transition-colors duration-300 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 ${hoverClasses}`}
                   style={{
                     WebkitUserSelect: 'none',
                     userSelect: 'none',
@@ -1668,20 +1640,15 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
                     return false;
                   }}
                 >
-                  {/* 背景渐变效果 */}
-                  <span className={`absolute inset-0 bg-linear-to-r from-transparent via-green-50/0 to-transparent dark:via-green-500/0 transition-all duration-300 ${bgGradient}`}></span>
-
-                  {/* 左侧装饰点 */}
-                  <span className={`relative w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 transition-all duration-300 ${dotColor}`}></span>
+                  <span
+                    className={`h-1 w-1 rounded-full bg-gray-400 transition-colors duration-300 dark:bg-gray-500 ${dotColor}`}
+                  ></span>
 
                   {origin === 'live' && (
-                    <Radio size={12} className={`relative inline-block transition-all duration-300 ${iconColor}`} />
+                    <Radio size={11} className='inline-block' />
                   )}
 
-                  <span className='relative font-semibold'>{displayText}</span>
-
-                  {/* 右侧装饰点 */}
-                  <span className={`relative w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 transition-all duration-300 ${dotColor}`}></span>
+                  <span>{displayText}</span>
                 </span>
               </div>
             );

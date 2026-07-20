@@ -3,9 +3,19 @@
 /* Tailwind 4 Dark Mode Configuration - 使用 class 选择器而非媒体查询 */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ============================================================
+   LunaTV · NOCTURNE 设计系统
+   ------------------------------------------------------------
+   概念：月光下的放映厅。
+   - 中性色「Ink」：带靛蓝底色的夜空灰，而非普通灰
+   - 品牌色「Moonglow」：香槟金月光（映射到 green-* 供全站继承）
+   - 辅助色全部去饱和、调入夜色（钢蓝 / 紫藤 / 铜红）
+   - 细线描边（hairline）代替厚重阴影；金色辉光作为强调
+   - 等宽字体用于元数据；中英双语编辑排版
+   ============================================================ */
+
 /* ============================================
    @property - 注册自定义属性支持动画
-   这是 Tailwind CSS 4.0 的新特性，提升性能
    ============================================ */
 @property --shimmer-position {
   syntax: '<percentage>';
@@ -15,37 +25,465 @@
 
 /* Tailwind 4 Theme Configuration */
 @theme {
-  /* Font Family */
+  /* ---------- Typography ---------- */
   --font-primary:
-    'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont,
+    'PingFang SC', 'MiSans', 'HarmonyOS Sans SC', 'Segoe UI',
+    'Microsoft YaHei', 'Noto Sans SC', ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+  --font-sans:
+    var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont,
+    'PingFang SC', 'MiSans', 'HarmonyOS Sans SC', 'Segoe UI',
+    'Microsoft YaHei', 'Noto Sans SC', ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+  --font-mono:
+    'SF Mono', 'JetBrains Mono', 'Cascadia Mono', ui-monospace, 'Menlo',
+    'Consolas', 'Liberation Mono', monospace;
 
-  /* Primary Colors */
-  --color-primary-50: #f0f9ff;
-  --color-primary-100: #e0f2fe;
-  --color-primary-200: #bae6fd;
-  --color-primary-300: #7dd3fc;
-  --color-primary-400: #38bdf8;
-  --color-primary-500: #0ea5e9;
-  --color-primary-600: #0284c7;
-  --color-primary-700: #0369a1;
-  --color-primary-800: #075985;
-  --color-primary-900: #0c4a6e;
-  --color-dark: #222222;
+  /* ---------- 基色：纸月白 / 墨夜黑 ---------- */
+  /* 白色带一丝暖纸色，黑色带一丝夜靛色——覆盖层与底色由此获得统一色温 */
+  --color-white: #fdfcf9;
+  --color-black: #05070d;
 
-  /* 修复 Tailwind 4 亮色模式下灰色过淡的问题，恢复高对比度灰色 */
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f3f4f6;
-  --color-gray-200: #e5e7eb;
-  --color-gray-300: #d1d5db;
-  --color-gray-400: #9ca3af;
-  --color-gray-500: #6b7280;
-  --color-gray-600: #4b5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #1f2937;
-  --color-gray-900: #111827;
-  --color-gray-950: #030712;
+  /* ---------- Ink（夜空中性色，映射 gray-*）---------- */
+  --color-gray-50: #f4f5f9;
+  --color-gray-100: #e9ebf3;
+  --color-gray-200: #d7dbe9;
+  --color-gray-300: #b6bdd5;
+  --color-gray-400: #8a92b2;
+  --color-gray-500: #636b8c;
+  --color-gray-600: #464d6b;
+  --color-gray-700: #2e3450;
+  --color-gray-800: #1a1f33;
+  --color-gray-900: #0e1220;
+  --color-gray-950: #070a14;
+
+  /* slate / zinc / neutral / stone 一并折叠进 Ink，保持全站统一 */
+  --color-slate-50: #f4f5f9;
+  --color-slate-100: #e9ebf3;
+  --color-slate-200: #d7dbe9;
+  --color-slate-300: #b6bdd5;
+  --color-slate-400: #8a92b2;
+  --color-slate-500: #636b8c;
+  --color-slate-600: #464d6b;
+  --color-slate-700: #2e3450;
+  --color-slate-800: #1a1f33;
+  --color-slate-900: #0e1220;
+  --color-slate-950: #070a14;
+  --color-zinc-50: #f4f5f9;
+  --color-zinc-100: #e9ebf3;
+  --color-zinc-200: #d7dbe9;
+  --color-zinc-300: #b6bdd5;
+  --color-zinc-400: #8a92b2;
+  --color-zinc-500: #636b8c;
+  --color-zinc-600: #464d6b;
+  --color-zinc-700: #2e3450;
+  --color-zinc-800: #1a1f33;
+  --color-zinc-900: #0e1220;
+  --color-zinc-950: #070a14;
+  --color-neutral-50: #f4f5f9;
+  --color-neutral-100: #e9ebf3;
+  --color-neutral-200: #d7dbe9;
+  --color-neutral-300: #b6bdd5;
+  --color-neutral-400: #8a92b2;
+  --color-neutral-500: #636b8c;
+  --color-neutral-600: #464d6b;
+  --color-neutral-700: #2e3450;
+  --color-neutral-800: #1a1f33;
+  --color-neutral-900: #0e1220;
+  --color-neutral-950: #070a14;
+  --color-stone-50: #f4f5f9;
+  --color-stone-100: #e9ebf3;
+  --color-stone-200: #d7dbe9;
+  --color-stone-300: #b6bdd5;
+  --color-stone-400: #8a92b2;
+  --color-stone-500: #636b8c;
+  --color-stone-600: #464d6b;
+  --color-stone-700: #2e3450;
+  --color-stone-800: #1a1f33;
+  --color-stone-900: #0e1220;
+  --color-stone-950: #070a14;
+
+  /* ---------- Moonglow（香槟金品牌色，映射 green-*）---------- */
+  --color-green-50: #fdf8eb;
+  --color-green-100: #f9eecd;
+  --color-green-200: #f2dc9d;
+  --color-green-300: #ecc96b;
+  --color-green-400: #e6b94a;
+  --color-green-500: #d19f30;
+  --color-green-600: #96690a;
+  --color-green-700: #755106;
+  --color-green-800: #573c08;
+  --color-green-900: #3d2a08;
+  --color-green-950: #221704;
+
+  /* emerald 折叠进金色深阶——旧的 green→emerald 渐变自动变成金色单色渐变 */
+  --color-emerald-50: #fdf8eb;
+  --color-emerald-100: #f9eecd;
+  --color-emerald-200: #f0d795;
+  --color-emerald-300: #e8c364;
+  --color-emerald-400: #ddad3f;
+  --color-emerald-500: #c08c22;
+  --color-emerald-600: #8a5f08;
+  --color-emerald-700: #6b4a05;
+  --color-emerald-800: #513806;
+  --color-emerald-900: #392706;
+  --color-emerald-950: #201503;
+
+  /* ---------- 语义辅助色（全部调入夜色）---------- */
+  /* Steel · 月光钢蓝（信息 / 链接） */
+  --color-blue-50: #f0f3fa;
+  --color-blue-100: #e1e7f5;
+  --color-blue-200: #c5d0ea;
+  --color-blue-300: #9fb0da;
+  --color-blue-400: #7d92c9;
+  --color-blue-500: #6379b6;
+  --color-blue-600: #48598f;
+  --color-blue-700: #384670;
+  --color-blue-800: #283252;
+  --color-blue-900: #1b2238;
+  --color-blue-950: #101425;
+
+  /* Copper · 铜焰红（错误 / 危险 / 直播） */
+  --color-red-50: #fcf0ed;
+  --color-red-100: #f9ded8;
+  --color-red-200: #f2bdb1;
+  --color-red-300: #e99384;
+  --color-red-400: #de6a5c;
+  --color-red-500: #cf4a3e;
+  --color-red-600: #a83428;
+  --color-red-700: #85281e;
+  --color-red-800: #5f1d17;
+  --color-red-900: #421511;
+  --color-red-950: #260b08;
+
+  /* Wisteria · 紫藤（短剧 / AI / 特色功能） */
+  --color-purple-50: #f5f2fb;
+  --color-purple-100: #eae4f6;
+  --color-purple-200: #d5c9ec;
+  --color-purple-300: #b8a5dd;
+  --color-purple-400: #9c82cc;
+  --color-purple-500: #8163b8;
+  --color-purple-600: #654a96;
+  --color-purple-700: #4f3a75;
+  --color-purple-800: #392a54;
+  --color-purple-900: #271d3a;
+  --color-purple-950: #161022;
+  --color-violet-50: #f5f2fb;
+  --color-violet-100: #eae4f6;
+  --color-violet-200: #d5c9ec;
+  --color-violet-300: #b8a5dd;
+  --color-violet-400: #9c82cc;
+  --color-violet-500: #8163b8;
+  --color-violet-600: #654a96;
+  --color-violet-700: #4f3a75;
+  --color-violet-800: #392a54;
+  --color-violet-900: #271d3a;
+  --color-violet-950: #161022;
+  --color-fuchsia-50: #f8f1f9;
+  --color-fuchsia-100: #f1e2f3;
+  --color-fuchsia-200: #e2c3e6;
+  --color-fuchsia-300: #cd9cd3;
+  --color-fuchsia-400: #b678bd;
+  --color-fuchsia-500: #9d58a5;
+  --color-fuchsia-600: #7c4183;
+  --color-fuchsia-700: #603266;
+  --color-fuchsia-800: #452449;
+  --color-fuchsia-900: #2f1932;
+  --color-fuchsia-950: #1a0d1c;
+
+  /* 金橙族（评分 / 提醒 / 状态）——与 Moonglow 同族，梯度可辨 */
+  --color-yellow-50: #fdf9ec;
+  --color-yellow-100: #faf1d0;
+  --color-yellow-200: #f4e2a0;
+  --color-yellow-300: #edd06e;
+  --color-yellow-400: #e7bf4b;
+  --color-yellow-500: #d4a32e;
+  --color-yellow-600: #9d720d;
+  --color-yellow-700: #7a5808;
+  --color-yellow-800: #5a4108;
+  --color-yellow-900: #3f2e08;
+  --color-yellow-950: #231903;
+  --color-amber-50: #fdf8ec;
+  --color-amber-100: #faefcf;
+  --color-amber-200: #f3dd9e;
+  --color-amber-300: #eccb6d;
+  --color-amber-400: #e5b849;
+  --color-amber-500: #d09b2d;
+  --color-amber-600: #9a6c0b;
+  --color-amber-700: #785407;
+  --color-amber-800: #583e08;
+  --color-amber-900: #3e2c07;
+  --color-amber-950: #221803;
+  --color-orange-50: #fcf5ee;
+  --color-orange-100: #f9e8d8;
+  --color-orange-200: #f2cfab;
+  --color-orange-300: #e9b078;
+  --color-orange-400: #e0924d;
+  --color-orange-500: #cd7527;
+  --color-orange-600: #a2560f;
+  --color-orange-700: #7f430c;
+  --color-orange-800: #5c310b;
+  --color-orange-900: #402309;
+  --color-orange-950: #241304;
+
+  /* Selene · 月海青（直播 / 频道） */
+  --color-teal-50: #eef6f6;
+  --color-teal-100: #dcecec;
+  --color-teal-200: #b5d8d9;
+  --color-teal-300: #86bec0;
+  --color-teal-400: #5aa2a6;
+  --color-teal-500: #3f868b;
+  --color-teal-600: #2d666c;
+  --color-teal-700: #245055;
+  --color-teal-800: #1b3b3f;
+  --color-teal-900: #132a2d;
+  --color-teal-950: #0a1719;
+  --color-cyan-50: #eff6f9;
+  --color-cyan-100: #ddecf2;
+  --color-cyan-200: #b8d8e4;
+  --color-cyan-300: #8abdd1;
+  --color-cyan-400: #609fba;
+  --color-cyan-500: #45829e;
+  --color-cyan-600: #32637c;
+  --color-cyan-700: #284d61;
+  --color-cyan-800: #1e3947;
+  --color-cyan-900: #152832;
+  --color-cyan-950: #0c161c;
+  --color-sky-50: #f0f5fa;
+  --color-sky-100: #e0ebf4;
+  --color-sky-200: #c1d6e9;
+  --color-sky-300: #97b9d8;
+  --color-sky-400: #6f9cc5;
+  --color-sky-500: #527fac;
+  --color-sky-600: #3d6187;
+  --color-sky-700: #304c69;
+  --color-sky-800: #23384d;
+  --color-sky-900: #182736;
+  --color-sky-950: #0e151e;
+  --color-indigo-50: #f1f2fa;
+  --color-indigo-100: #e3e6f5;
+  --color-indigo-200: #c8cdea;
+  --color-indigo-300: #a3abdb;
+  --color-indigo-400: #808acb;
+  --color-indigo-500: #6670b8;
+  --color-indigo-600: #4c5494;
+  --color-indigo-700: #3b4274;
+  --color-indigo-800: #2b3054;
+  --color-indigo-900: #1d213a;
+  --color-indigo-950: #101223;
+
+  /* 玫瑰族（收藏红心的柔化） */
+  --color-pink-50: #faf1f5;
+  --color-pink-100: #f5e2ea;
+  --color-pink-200: #eac3d5;
+  --color-pink-300: #db9cba;
+  --color-pink-400: #ca759f;
+  --color-pink-500: #b25683;
+  --color-pink-600: #8e3f66;
+  --color-pink-700: #6e3150;
+  --color-pink-800: #4f243a;
+  --color-pink-900: #371929;
+  --color-pink-950: #1f0d17;
+  --color-rose-50: #fbf0f1;
+  --color-rose-100: #f7e0e2;
+  --color-rose-200: #efbfc4;
+  --color-rose-300: #e3969e;
+  --color-rose-400: #d56e79;
+  --color-rose-500: #c04e5b;
+  --color-rose-600: #9a3844;
+  --color-rose-700: #782b35;
+  --color-rose-800: #562027;
+  --color-rose-900: #3c161b;
+  --color-rose-950: #220b0e;
+  --color-lime-50: #f7f8ec;
+  --color-lime-100: #eef0d5;
+  --color-lime-200: #dce0a9;
+  --color-lime-300: #c3ca77;
+  --color-lime-400: #a8b14d;
+  --color-lime-500: #8a9430;
+  --color-lime-600: #687122;
+  --color-lime-700: #50571d;
+  --color-lime-800: #3a3f18;
+  --color-lime-900: #292c13;
+  --color-lime-950: #16180a;
+
+  /* primary-* 旧类映射到 Moonglow */
+  --color-primary-50: #fdf8eb;
+  --color-primary-100: #f9eecd;
+  --color-primary-200: #f2dc9d;
+  --color-primary-300: #ecc96b;
+  --color-primary-400: #e6b94a;
+  --color-primary-500: #d19f30;
+  --color-primary-600: #96690a;
+  --color-primary-700: #755106;
+  --color-primary-800: #573c08;
+  --color-primary-900: #3d2a08;
+  --color-primary-950: #221704;
+  --color-dark: #0e1220;
+
+  /* ---------- 语义别名（新代码使用，与映射后的调色板同值）---------- */
+  --color-gold-50: #fdf8eb;
+  --color-gold-100: #f9eecd;
+  --color-gold-200: #f2dc9d;
+  --color-gold-300: #ecc96b;
+  --color-gold-400: #e6b94a;
+  --color-gold-500: #d19f30;
+  --color-gold-600: #96690a;
+  --color-gold-700: #755106;
+  --color-gold-800: #573c08;
+  --color-gold-900: #3d2a08;
+  --color-gold-950: #221704;
+  --color-ink-50: #f4f5f9;
+  --color-ink-100: #e9ebf3;
+  --color-ink-200: #d7dbe9;
+  --color-ink-300: #b6bdd5;
+  --color-ink-400: #8a92b2;
+  --color-ink-500: #636b8c;
+  --color-ink-600: #464d6b;
+  --color-ink-700: #2e3450;
+  --color-ink-800: #1a1f33;
+  --color-ink-900: #0e1220;
+  --color-ink-950: #070a14;
+
+  /* ---------- 阴影 ---------- */
+  --shadow-lift:
+    0 2px 6px rgba(5, 7, 13, 0.14), 0 12px 32px rgba(5, 7, 13, 0.22);
+  --shadow-glow-gold:
+    0 0 0 1px rgba(230, 185, 74, 0.32), 0 4px 14px rgba(209, 159, 48, 0.18),
+    0 12px 40px rgba(209, 159, 48, 0.14);
+  --shadow-halo: 0 0 24px rgba(230, 185, 74, 0.35);
 }
+
+/* ============================================================
+   基础层：夜幕与纸月
+   ============================================================ */
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  /* 供内联样式 / 第三方组件取用的语义变量 */
+  --nocturne-bg: #f6f5f1;
+  --nocturne-surface: #fdfcf9;
+  --nocturne-text: #0e1220;
+  --nocturne-gold: #96690a;
+  --skeleton-color: #e9ebf3;
+  --skeleton-highlight: #f4f5f9;
+}
+
+.dark {
+  --nocturne-bg: #05070d;
+  --nocturne-surface: #0e1220;
+  --nocturne-text: #d7dbe9;
+  --nocturne-gold: #e6b94a;
+  --skeleton-color: #131728;
+  --skeleton-highlight: #1d2238;
+}
+
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+  /* 阻止 iOS Safari 拉动回弹 */
+  overscroll-behavior: none;
+  /* iOS Safari 平滑惯性滚动 */
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  font-family: var(--font-primary);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 亮色 · Daybreak porcelain：纸白底 + 淡金晨晕 + 靛银远景 */
+html:not(.dark) body {
+  background-color: #f6f5f1;
+  background-image:
+    radial-gradient(
+      120% 70% at 18% -10%,
+      rgba(230, 185, 74, 0.13) 0%,
+      rgba(230, 185, 74, 0) 55%
+    ),
+    radial-gradient(
+      90% 60% at 100% 0%,
+      rgba(99, 121, 182, 0.1) 0%,
+      rgba(99, 121, 182, 0) 60%
+    ),
+    linear-gradient(180deg, #f8f7f3 0%, #f4f3f0 45%, #eeeef2 100%);
+  background-attachment: fixed;
+}
+
+/* 暗色 · Nocturne：墨夜底 + 月晕 + 深空靛 */
+html.dark body {
+  background-color: #05070d;
+  background-image:
+    radial-gradient(
+      110% 65% at 20% -12%,
+      rgba(230, 185, 74, 0.09) 0%,
+      rgba(230, 185, 74, 0) 52%
+    ),
+    radial-gradient(
+      100% 70% at 100% -5%,
+      rgba(102, 112, 184, 0.12) 0%,
+      rgba(102, 112, 184, 0) 58%
+    ),
+    radial-gradient(
+      140% 90% at 50% 115%,
+      rgba(14, 18, 32, 0.9) 0%,
+      rgba(5, 7, 13, 0) 60%
+    ),
+    linear-gradient(180deg, #070a14 0%, #05070d 100%);
+  background-attachment: fixed;
+}
+
+/* 胶片颗粒：静态 SVG 噪点，几乎零开销 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+html.dark body::before {
+  opacity: 0.05;
+}
+
+/* 文字选区：月光金 */
+::selection {
+  background: rgba(230, 185, 74, 0.32);
+  color: inherit;
+}
+
+/* 键盘焦点：统一金环 */
+:focus-visible {
+  outline: 2px solid rgba(209, 159, 48, 0.85);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 减少动态效果偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   工具类
+   ============================================================ */
 
 @layer utilities {
   .scrollbar-hide {
@@ -66,6 +504,18 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  /* 旧版侧边栏菜单入场 */
+  @keyframes slideInFromLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
     }
   }
 
@@ -98,56 +548,266 @@
   .animate-scaleIn {
     animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
+
+  /* 底部弹层上滑入场（ConfirmDialog / ActionSheet 使用） */
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* 内容入场：上浮 + 淡入（新组件统一使用） */
+  @keyframes nocturne-rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-rise {
+    animation: nocturne-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* 月相呼吸辉光 */
+  @keyframes moon-pulse {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  .animate-moon-pulse {
+    animation: moon-pulse 2.4s ease-in-out infinite;
+  }
 }
 
-:root {
-  --foreground-rgb: 255, 255, 255;
+/* ============================================================
+   组件类：Nocturne 设计语言的构件
+   ============================================================ */
+
+@layer components {
+  /* 编辑式眉题：等宽 + 全大写 + 金色 */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #96690a;
+  }
+
+  .dark .eyebrow {
+    color: rgba(230, 185, 74, 0.92);
+  }
+
+  /* 玻璃面板：夜幕毛玻璃 + 细线描边 + 顶部内光 */
+  .glass-panel {
+    background: rgba(253, 252, 249, 0.72);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid rgba(14, 18, 32, 0.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.65),
+      0 1px 2px rgba(14, 18, 32, 0.04),
+      0 12px 40px rgba(14, 18, 32, 0.06);
+  }
+
+  .dark .glass-panel {
+    background: rgba(10, 13, 24, 0.66);
+    border-color: rgba(215, 219, 233, 0.09);
+    box-shadow:
+      inset 0 1px 0 rgba(215, 219, 233, 0.07),
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      0 16px 48px rgba(0, 0, 0, 0.42);
+  }
+
+  /* 细线卡面：hover 时点亮金边 */
+  .hairline-card {
+    border: 1px solid rgba(14, 18, 32, 0.09);
+    background: rgba(253, 252, 249, 0.82);
+    transition:
+      border-color 0.25s ease,
+      box-shadow 0.25s ease,
+      transform 0.25s ease;
+  }
+
+  .dark .hairline-card {
+    border-color: rgba(215, 219, 233, 0.08);
+    background: rgba(19, 23, 40, 0.55);
+  }
+
+  .hairline-card:hover {
+    border-color: rgba(209, 159, 48, 0.55);
+    box-shadow: 0 6px 24px rgba(209, 159, 48, 0.1);
+  }
+
+  /* 金色主按钮：月光填充 + 墨色文字 */
+  .btn-gold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.625rem;
+    background: linear-gradient(180deg, #eecd75 0%, #e0ac33 100%);
+    color: #221704;
+    font-weight: 700;
+    border: 1px solid rgba(117, 81, 6, 0.35);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      0 2px 8px rgba(150, 105, 10, 0.25);
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.2s ease,
+      filter 0.2s ease;
+  }
+
+  .btn-gold:hover {
+    filter: brightness(1.05);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      0 4px 16px rgba(209, 159, 48, 0.38);
+  }
+
+  .btn-gold:active {
+    transform: scale(0.975);
+  }
+
+  .btn-gold:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: none;
+    transform: none;
+  }
+
+  /* 幽灵按钮：细线 + 银字，hover 点金 */
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.625rem;
+    border: 1px solid rgba(14, 18, 32, 0.16);
+    color: #2e3450;
+    font-weight: 600;
+    background: transparent;
+    transition:
+      border-color 0.2s ease,
+      color 0.2s ease,
+      background-color 0.2s ease,
+      transform 0.15s ease;
+  }
+
+  .dark .btn-ghost {
+    border-color: rgba(215, 219, 233, 0.16);
+    color: #b6bdd5;
+  }
+
+  .btn-ghost:hover {
+    border-color: rgba(209, 159, 48, 0.6);
+    color: #96690a;
+    background: rgba(230, 185, 74, 0.07);
+  }
+
+  .dark .btn-ghost:hover {
+    color: #ecc96b;
+  }
+
+  .btn-ghost:active {
+    transform: scale(0.975);
+  }
+
+  /* 等宽元数据徽章（集数 / 年份 / 评分底座） */
+  .meta-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.375rem;
+    background: rgba(5, 7, 13, 0.68);
+    color: rgba(253, 252, 249, 0.88);
+    border: 1px solid rgba(253, 252, 249, 0.14);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .meta-badge-gold {
+    background: linear-gradient(
+      180deg,
+      rgba(60, 44, 8, 0.82),
+      rgba(34, 23, 4, 0.88)
+    );
+    color: #ecc96b;
+    border-color: rgba(230, 185, 74, 0.45);
+  }
+
+  /* 月牙加载指示器 */
+  .moon-loader {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9999px;
+    border: 3px solid rgba(230, 185, 74, 0.18);
+    border-top-color: #e6b94a;
+    animation: spin 0.9s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* 金色进度条（带光尖） */
+  .progress-gold {
+    position: relative;
+    height: 100%;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #96690a 0%, #d19f30 60%, #ecc96b 100%);
+    box-shadow: 0 0 8px rgba(230, 185, 74, 0.65);
+  }
 }
 
-html,
-body {
-  height: 100%;
-  overflow-x: hidden;
-  /* 阻止 iOS Safari 拉动回弹 */
-  overscroll-behavior: none;
-  /* iOS Safari 平滑惯性滚动 */
-  -webkit-overflow-scrolling: touch;
-}
+/* ============================================================
+   滚动与播放器
+   ============================================================ */
 
-body {
-  color: rgb(var(--foreground-rgb));
-}
-
-html:not(.dark) body {
-  background: linear-gradient(
-    180deg,
-    #e6f3fb 0%,
-    #eaf3f7 18%,
-    #f7f7f3 38%,
-    #e9ecef 60%,
-    #dbe3ea 80%,
-    #d3dde6 100%
-  );
-  background-attachment: fixed;
-}
-
-/* 自定义滚动条样式 */
+/* 自定义滚动条样式（保留给显式启用滚动条的容器） */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(31, 41, 55, 0.1);
+  background: rgba(26, 31, 51, 0.08);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(75, 85, 99, 0.3);
+  background: rgba(99, 107, 140, 0.35);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(107, 114, 128, 0.5);
+  background: rgba(209, 159, 48, 0.5);
 }
 
 /* 视频卡片悬停效果 */
@@ -163,8 +823,8 @@ html:not(.dark) body {
 .gradient-overlay {
   background: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.8) 100%
+    rgba(5, 7, 13, 0) 0%,
+    rgba(5, 7, 13, 0.82) 100%
   );
 }
 
@@ -201,6 +861,10 @@ html:not(.dark) body {
   background-size: contain !important;
 }
 
+/* ============================================================
+   动画（保留旧类名，组件仍在引用）
+   ============================================================ */
+
 /* VideoCard 光泽扫过动画 - 使用 @property 优化 */
 @keyframes card-shimmer {
   to {
@@ -208,7 +872,7 @@ html:not(.dark) body {
   }
 }
 
-/* Netflix风格进度条闪烁动画 */
+/* 进度条闪烁动画 */
 @keyframes shimmer {
   0% {
     transform: translateX(-100%);
@@ -243,137 +907,41 @@ html:not(.dark) body {
   transition: all 0.3s ease-in-out;
 }
 
-/* 亮色模式文字颜色强制覆盖 - 修复 Tailwind 4 OKLCH 灰色过淡问题 */
-html:not(.dark) {
-  /* 覆盖 Tailwind 4 OKLCH 灰色，使用传统高对比度 HEX 值 */
-  --tw-text-opacity: 1;
-}
-
-/* 强制使用深色文字 - 确保亮色模式下可读性 */
-html:not(.dark) .text-gray-900 {
-  color: #111827 !important;
-}
-
-html:not(.dark) .text-gray-800 {
-  color: #1f2937 !important;
-}
-
-html:not(.dark) .text-gray-700 {
-  color: #374151 !important;
-}
-
-html:not(.dark) .text-gray-600 {
-  color: #4b5563 !important;
-}
-
-html:not(.dark) .text-gray-500 {
-  color: #6b7280 !important;
-}
-
-html:not(.dark) .text-slate-900 {
-  color: #0f172a !important;
-}
-
-html:not(.dark) .text-slate-800 {
-  color: #1e293b !important;
-}
-
-html:not(.dark) .text-slate-700 {
-  color: #334155 !important;
-}
-
-html:not(.dark) .text-slate-600 {
-  color: #475569 !important;
-}
-
-html:not(.dark) .text-slate-500 {
-  color: #64748b !important;
-}
-
-/* 亮色模式背景颜色强制覆盖 */
-html:not(.dark) .bg-slate-50 {
-  background-color: #f8fafc !important;
-}
-
-html:not(.dark) .bg-slate-100 {
-  background-color: #f1f5f9 !important;
-}
-
-html:not(.dark) .border-slate-200 {
-  border-color: #e2e8f0 !important;
-}
-
-html:not(.dark) .from-slate-50 {
-  --tw-gradient-from: #f8fafc !important;
-}
-
-html:not(.dark) .to-slate-100 {
-  --tw-gradient-to: #f1f5f9 !important;
-}
-
-html:not(.dark) .hover\:bg-slate-100:hover {
-  background-color: #f1f5f9 !important;
-}
-
-html:not(.dark) .hover\:bg-slate-50:hover {
-  background-color: #f8fafc !important;
-}
-
 /* ============================================
    Backdrop Filter Fallback for Old Browsers
-   修复旧版手机系统（Android <5.0, iOS <9.3）不支持backdrop-filter的问题
-   为不支持的浏览器提供更不透明的纯色背景
+   为不支持 backdrop-filter 的旧浏览器提供更不透明的纯色背景
    ============================================ */
 
-/* 检测不支持backdrop-filter的浏览器，提供fallback背景 */
 @supports not (backdrop-filter: blur(1px)) {
-  /* 白色半透明背景的fallback - 提高不透明度确保可读性 */
   .backdrop-blur,
   .backdrop-blur-sm,
   .backdrop-blur-md,
   .backdrop-blur-lg,
   .backdrop-blur-xl,
   .backdrop-blur-2xl,
-  .backdrop-blur-3xl {
-    background-color: rgba(255, 255, 255, 0.95) !important;
+  .backdrop-blur-3xl,
+  .glass-panel {
+    background-color: rgba(253, 252, 249, 0.96) !important;
   }
 
-  /* 深色模式下的fallback */
   .dark .backdrop-blur,
   .dark .backdrop-blur-sm,
   .dark .backdrop-blur-md,
   .dark .backdrop-blur-lg,
   .dark .backdrop-blur-xl,
   .dark .backdrop-blur-2xl,
-  .dark .backdrop-blur-3xl {
-    background-color: rgba(24, 24, 27, 0.95) !important; /* zinc-900 */
+  .dark .backdrop-blur-3xl,
+  .dark .glass-panel {
+    background-color: rgba(10, 13, 24, 0.96) !important;
   }
 
-  /* 处理带有透明度的背景色 + backdrop-blur组合 */
-  /* 例如: bg-white/80 backdrop-blur */
-  [class*="bg-white/"] {
-    background-color: rgba(255, 255, 255, 0.95) !important;
+  [class*='bg-white/'] {
+    background-color: rgba(253, 252, 249, 0.96) !important;
   }
 
-  [class*="bg-zinc-"][class*="/"] {
-    background-color: rgba(24, 24, 27, 0.95) !important;
-  }
-
-  [class*="bg-gray-"][class*="/"] {
-    background-color: rgba(31, 41, 55, 0.95) !important;
-  }
-
-  /* 渐变背景的fallback - 登录页面主卡片 */
-  .from-white\/95.backdrop-blur-2xl,
-  .from-white\/85.backdrop-blur-2xl,
-  .from-white\/75.backdrop-blur-2xl {
-    background: rgba(255, 255, 255, 0.98) !important;
-  }
-
-  .dark .from-zinc-900\/95.backdrop-blur-2xl,
-  .dark .from-zinc-900\/85.backdrop-blur-2xl,
-  .dark .from-zinc-900\/75.backdrop-blur-2xl {
-    background: rgba(24, 24, 27, 0.98) !important;
+  [class*='bg-zinc-'][class*='/'],
+  [class*='bg-gray-'][class*='/'] {
+    background-color: rgba(14, 18, 32, 0.96) !important;
   }
 }
 

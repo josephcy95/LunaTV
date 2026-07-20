@@ -477,7 +477,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
           >
             {/* 激活态背景光晕 */}
             {activeTab === 'episodes' && (
-              <div className='absolute inset-0 bg-linear-to-r from-green-50 via-emerald-50 to-teal-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-teal-900/20 -z-10'></div>
+              <div className='absolute inset-0 bg-linear-to-r from-green-50 via-emerald-50 to-green-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-green-900/20 -z-10'></div>
             )}
             {/* 非激活态背景 */}
             {activeTab !== 'episodes' && (
@@ -617,13 +617,13 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                   onClick={() => handleEpisodeClick(episodeNumber - 1)}
                   className={`group relative flex min-h-[34px] min-w-[34px] items-center justify-center overflow-hidden rounded-lg px-2 py-1.5 font-mono text-xs font-semibold whitespace-nowrap transition-all duration-150 active:scale-95 sm:min-h-[44px] sm:min-w-[44px] sm:px-3 sm:py-2 sm:text-sm
                     ${isActive
-                      ? 'bg-linear-to-r from-green-500 via-emerald-500 to-teal-500 text-white shadow-lg shadow-green-500/30 dark:from-green-600 dark:via-emerald-600 dark:to-teal-600 dark:shadow-green-500/20 scale-105'
+                      ? 'bg-linear-to-b from-green-300 to-green-500 text-green-950 shadow-lg shadow-green-500/30 scale-105 font-semibold'
                       : 'bg-linear-to-r from-gray-200 to-gray-100 text-gray-700 hover:from-gray-300 hover:to-gray-200 hover:scale-105 hover:shadow-md dark:from-white/10 dark:to-white/5 dark:text-gray-300 dark:hover:from-white/20 dark:hover:to-white/15'
                     }`.trim()}
                 >
                   {/* 激活态光晕效果 */}
                   {isActive && (
-                    <div className='absolute inset-0 bg-linear-to-r from-green-400 via-emerald-400 to-teal-400 opacity-30 blur'></div>
+                    <div className='absolute inset-0 bg-linear-to-r from-green-300 to-green-500 opacity-30 blur'></div>
                   )}
                   {/* 悬浮态闪光效果 */}
                   {!isActive && (
@@ -854,7 +854,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                         }
                         className={`group relative flex items-center gap-2 overflow-hidden rounded-lg px-2 py-1.5 select-none transition-colors duration-150 active:scale-[0.99] sm:items-start sm:gap-3 sm:rounded-xl sm:px-3 sm:py-3
                       ${isCurrentSource
-                            ? 'border border-green-500/50 bg-linear-to-r from-green-50 via-emerald-50 to-teal-50 shadow-sm shadow-green-500/10 dark:border-green-400/50 dark:from-green-900/30 dark:via-emerald-900/30 dark:to-teal-900/30'
+                            ? 'border border-green-500/50 bg-linear-to-r from-green-50 to-green-100 shadow-sm shadow-green-500/10 dark:border-green-400/50 dark:from-green-400/12 dark:to-green-400/6'
                             : 'cursor-pointer border border-gray-200/60 bg-white/55 hover:bg-blue-50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-blue-900/20 sm:bg-linear-to-r sm:from-gray-50 sm:to-gray-100/50 sm:hover:shadow-md dark:sm:from-white/5 dark:sm:to-white/10'
                           }`.trim()}
                       >
@@ -863,7 +863,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                           <div className='absolute right-2 top-1.5 z-10 sm:top-2'>
                             <div className='relative'>
                               <div className='absolute inset-0 rounded-full bg-green-500 opacity-40 blur'></div>
-                              <div className='relative rounded-full bg-linear-to-r from-green-500 to-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white shadow-sm sm:px-2 sm:text-xs'>
+                              <div className='relative rounded-full bg-linear-to-r from-green-400 to-green-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white shadow-sm sm:px-2 sm:text-xs'>
                                 当前源
                               </div>
                             </div>
