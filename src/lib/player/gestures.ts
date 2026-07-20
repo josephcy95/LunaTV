@@ -349,6 +349,20 @@ export function attachPlayerGestures(
     event.stopPropagation();
   };
 
+  // 触屏长按会触发浏览器原生的「保存画面 / 保存视频」菜单，打断长按倍速手势。
+  // 对触屏来源的 contextmenu 一律拦截；鼠标右键仍交给 ArtPlayer 自己的菜单处理。
+  const handleContextMenu = (event: MouseEvent) => {
+    if (cb.isChromeTarget(event.target)) return;
+    if (isTouchLike) {
+      event.preventDefault();
+    }
+  };
+
+  // iOS Safari 的长按「拷贝 / 存储图像」气泡由 -webkit-touch-callout 控制，
+  // contextmenu 拦不到，这里在手势容器上一并关闭。
+  container.style.userSelect = 'none';
+  (container.style as CSSStyleDeclaration & { webkitTouchCallout?: string }).webkitTouchCallout = 'none';
+
   container.addEventListener('pointerdown', handlePointerDown);
   container.addEventListener('pointermove', handlePointerMove);
   container.addEventListener('pointerup', handlePointerUp);
@@ -356,6 +370,7 @@ export function attachPlayerGestures(
   container.addEventListener('pointerleave', handlePointerCancel);
   container.addEventListener('click', handleClickCapture, true);
   container.addEventListener('dblclick', handleDoubleClickCapture, true);
+  container.addEventListener('contextmenu', handleContextMenu);
 
   return () => {
     clearLongPressTimer();
@@ -369,6 +384,7 @@ export function attachPlayerGestures(
     container.removeEventListener('pointerleave', handlePointerCancel);
     container.removeEventListener('click', handleClickCapture, true);
     container.removeEventListener('dblclick', handleDoubleClickCapture, true);
+    container.removeEventListener('contextmenu', handleContextMenu);
     // 反馈层挂在 $player 内，播放器销毁时会随之移除；这里兜底清理
     container
       .querySelectorAll('.art-gesture-layer')

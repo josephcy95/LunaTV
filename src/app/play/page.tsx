@@ -207,29 +207,26 @@ function parseYogurtMediaUrl(
   }
 }
 
-// 拉取并校验一条 VTT 字幕后加载到 ArtPlayer。provider 对加密字幕返回非 VTT 内容
-// （JSON / 501），这里校验开头是否为 WEBVTT，避免把不可用字幕塞进播放器。
-async function loadYogurtSubtitleTrack(
-  art: any,
-  url: string,
-  name: string
-): Promise<boolean> {
+// 判断响应体是否为合法 VTT（去掉可能的 BOM 后开头应为 WEBVTT）。provider 对加密字幕
+// 会返回 JSON / 501，据此在构建菜单时就把不可用的轨道过滤掉。
+function isVttText(text: string): boolean {
+  const head = text.slice(0, 16).replace(/[^\x20-\x7E]/g, '').trimStart();
+  return head.startsWith('WEBVTT');
+}
+
+// 切换到一条已校验过的 VTT 字幕。关键：必须传入以 .vtt 结尾的真实地址而不是 blob，
+// ArtPlayer 依赖 URL 扩展名识别字幕格式，blob 地址没有扩展名会导致解析失败、字幕不显示。
+function switchYogurtSubtitle(art: any, url: string, name: string): void {
   try {
-    const res = await fetch(url);
-    const text = await res.text();
-    // 校验是否为合法 VTT：去掉可能的 BOM 后开头应为 WEBVTT。
-    const head = text.slice(0, 16).replace(/[^\x20-\x7E]/g, '').trimStart();
-    if (!res.ok || !head.startsWith('WEBVTT')) {
-      art.notice.show = '该字幕不可用';
-      return false;
-    }
-    const blobUrl = URL.createObjectURL(new Blob([text], { type: 'text/vtt' }));
-    art.subtitle.switch(blobUrl, { name, type: 'vtt' });
+    const result = art.subtitle.switch(url, { name, type: 'vtt' });
     art.subtitle.show = true;
-    return true;
+    if (result && typeof result.catch === 'function') {
+      result.catch(() => {
+        art.notice.show = '字幕加载失败';
+      });
+    }
   } catch {
     art.notice.show = '字幕加载失败';
-    return false;
   }
 }
 
@@ -382,7 +379,14 @@ function PlayPageClient() {
       return true;
     }
 
-    return normalizeYearForMatch(resultYear) === normalizedRequestedYear;
+    const normalizedResultYear = normalizeYearForMatch(resultYear);
+    // 结果源没有可用年份时不因年份而排除它（很多 YOGURT 条目缺年份，否则会被
+    // 从换源列表里误删）；只有双方都有明确年份且不一致才判为不匹配。
+    if (!normalizedResultYear) {
+      return true;
+    }
+
+    return normalizedResultYear === normalizedRequestedYear;
   };
 
   // 获取 HLS 缓冲配置（根据用户设置的模式）
@@ -3247,8 +3251,9 @@ function PlayPageClient() {
       }
     }
 
-    // f 键 = 切换全屏
-    if (e.key === 'f' || e.key === 'F') {
+    // f 键 = 切换全屏（仅裸按 f；带修饰键如 Ctrl/⌘/Alt 时放行，
+    // 以便浏览器的 Ctrl+F 页面内查找等快捷键正常工作）
+    if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey) {
       if (artPlayerRef.current) {
         artPlayerRef.current.fullscreen = !artPlayerRef.current.fullscreen;
         e.preventDefault();
@@ -4324,7 +4329,7 @@ function PlayPageClient() {
         return;
       }
 
-      let tracks: { name: string; url: string }[] = [];
+      let candidates: { name: string; url: string }[] = [];
       try {
         const res = await fetch(
           `${media.origin}/media/${encodeURIComponent(
@@ -4334,7 +4339,7 @@ function PlayPageClient() {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data?.list)) {
-            tracks = data.list
+            candidates = data.list
               .filter((t: any) => t && t.vtt)
               .map((t: any) => ({
                 name: String(t.name || t.lang || '字幕'),
@@ -4344,6 +4349,22 @@ function PlayPageClient() {
         }
       } catch {
         // 拉取失败：静默，不显示控件
+      }
+      if (cancelled) return;
+
+      // 逐条校验：只保留真正返回合法 VTT 的轨道，把 provider 无法解密（返回 501/JSON）
+      // 的加密字幕从菜单里剔除，避免出现「有选项但选了不显示」。
+      const tracks: { name: string; url: string }[] = [];
+      for (const t of candidates) {
+        try {
+          const r = await fetch(t.url);
+          if (cancelled) return;
+          if (!r.ok) continue;
+          const txt = await r.text();
+          if (isVttText(txt)) tracks.push(t);
+        } catch {
+          // 跳过取不到的轨道
+        }
       }
       if (cancelled) return;
       if (tracks.length === 0) {
@@ -4365,7 +4386,7 @@ function PlayPageClient() {
             this.subtitle.show = false;
             return '字幕';
           }
-          loadYogurtSubtitleTrack(this, item.value, item.html);
+          switchYogurtSubtitle(this, item.value, item.html);
           return item.html;
         },
       };
