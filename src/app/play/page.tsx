@@ -173,6 +173,66 @@ function parseAudioStreamIndexFromUrl(url: string): number {
   }
 }
 
+// 判断结果是否为「电影」（单片）。优先使用源提供的 type_name，缺失时才回退到集数。
+// 修复：YOGURT 等源的搜索结果每条只携带 1 个播放链接，仅按集数判断会把电视剧误判为
+// 电影，导致其在换源匹配阶段被 type 校验丢弃，从而永远不出现在换源列表里。
+function inferIsMovie(typeName: string | undefined, episodeCount: number): boolean {
+  const t = (typeName || '').toLowerCase();
+  if (t) {
+    if (t.includes('电影') || t.includes('movie')) return true;
+    if (
+      t.includes('电视剧') || t.includes('剧集') || t.includes('连续剧') ||
+      t.includes('综艺') || t.includes('variety') ||
+      t.includes('动漫') || t.includes('动画') || t.includes('anime') ||
+      t.includes('纪录') || t.includes('documentary') ||
+      t.includes('series') || t.includes('tv')
+    ) {
+      return false;
+    }
+  }
+  return episodeCount === 1;
+}
+
+// 从 YOGURT 播放地址中解析出 provider 源站与该集的 videoId，用于拉取外挂字幕。
+function parseYogurtMediaUrl(
+  url: string
+): { origin: string; videoId: string } | null {
+  try {
+    const parsed = new URL(url);
+    const m = parsed.pathname.match(/\/media\/([^/]+)\/index\.m3u8/);
+    if (!m) return null;
+    return { origin: parsed.origin, videoId: m[1] };
+  } catch {
+    return null;
+  }
+}
+
+// 拉取并校验一条 VTT 字幕后加载到 ArtPlayer。provider 对加密字幕返回非 VTT 内容
+// （JSON / 501），这里校验开头是否为 WEBVTT，避免把不可用字幕塞进播放器。
+async function loadYogurtSubtitleTrack(
+  art: any,
+  url: string,
+  name: string
+): Promise<boolean> {
+  try {
+    const res = await fetch(url);
+    const text = await res.text();
+    // 校验是否为合法 VTT：去掉可能的 BOM 后开头应为 WEBVTT。
+    const head = text.slice(0, 16).replace(/[^\x20-\x7E]/g, '').trimStart();
+    if (!res.ok || !head.startsWith('WEBVTT')) {
+      art.notice.show = '该字幕不可用';
+      return false;
+    }
+    const blobUrl = URL.createObjectURL(new Blob([text], { type: 'text/vtt' }));
+    art.subtitle.switch(blobUrl, { name, type: 'vtt' });
+    art.subtitle.show = true;
+    return true;
+  } catch {
+    art.notice.show = '字幕加载失败';
+    return false;
+  }
+}
+
 // 扩展 HTMLVideoElement 类型以支持 hls 属性
 declare global {
   interface HTMLVideoElement {
@@ -2351,10 +2411,15 @@ function PlayPageClient() {
                 result.year || '',
                 videoYearRef.current
               );
-              const typeMatch = searchType
-                ? (searchType === 'tv' && result.episodes.length > 1) ||
-                  (searchType === 'movie' && result.episodes.length === 1)
-                : true;
+              // 优先按 type_name 判定 movie/series，回退到集数。避免把每条只带 1 集
+              // 的 YOGURT 剧集当成电影而在换源匹配阶段被丢弃。
+              const resultIsMovie = inferIsMovie(
+                result.type_name,
+                result.episodes.length
+              );
+              const wantMovie = searchType === 'movie';
+              const typeMatch =
+                !searchType || (wantMovie ? resultIsMovie : !resultIsMovie);
               return yearMatch && typeMatch;
             };
 
@@ -3720,6 +3785,8 @@ function PlayPageClient() {
         // 长按倍速由手势层统一实现，关闭内建行为避免叠加
         fastForward: false,
         subtitleOffset: true,
+        // 初始化字幕模块（无默认轨道）。YOGURT 外挂字幕由下方的字幕选择控件按集加载。
+        subtitle: { type: 'vtt', escape: false },
         miniProgressBar: true,
         hotkey: false,
         mutex: true,
@@ -4212,6 +4279,117 @@ function PlayPageClient() {
 
     loadAndInit();
   }, [Hls, videoUrl, loading, blockAdEnabled]);
+
+  // YOGURT 外挂字幕：按集拉取字幕列表，并在播放器上提供「字幕」选择控件。
+  // 仅当当前源为 YOGURT 且播放地址可解析出 videoId 时启用；其他源不受影响。
+  const yogurtSubtitleControlAddedRef = useRef(false);
+  useEffect(() => {
+    let cancelled = false;
+
+    const removeControl = (art: any) => {
+      if (!art) return;
+      if (yogurtSubtitleControlAddedRef.current) {
+        try {
+          art.controls.remove('yogurt-subtitle');
+        } catch {
+          // ignore
+        }
+        yogurtSubtitleControlAddedRef.current = false;
+      }
+      try {
+        art.subtitle.show = false;
+      } catch {
+        // ignore
+      }
+    };
+
+    // 播放器为异步动态创建，等待其就绪（最多约 10s）。
+    const waitForArt = async (): Promise<any> => {
+      for (let i = 0; i < 40 && !cancelled; i += 1) {
+        if (artPlayerRef.current) return artPlayerRef.current;
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      return artPlayerRef.current;
+    };
+
+    const source = currentSourceRef.current || detailRef.current?.source || '';
+    const media =
+      source === 'YOGURT' && videoUrl ? parseYogurtMediaUrl(videoUrl) : null;
+
+    (async () => {
+      const art = await waitForArt();
+      if (cancelled || !art) return;
+      if (!media) {
+        removeControl(art);
+        return;
+      }
+
+      let tracks: { name: string; url: string }[] = [];
+      try {
+        const res = await fetch(
+          `${media.origin}/media/${encodeURIComponent(
+            media.videoId
+          )}/subtitles`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data?.list)) {
+            tracks = data.list
+              .filter((t: any) => t && t.vtt)
+              .map((t: any) => ({
+                name: String(t.name || t.lang || '字幕'),
+                url: media.origin + t.vtt,
+              }));
+          }
+        }
+      } catch {
+        // 拉取失败：静默，不显示控件
+      }
+      if (cancelled) return;
+      if (tracks.length === 0) {
+        removeControl(art);
+        return;
+      }
+
+      const control = {
+        name: 'yogurt-subtitle',
+        position: 'right',
+        html: '字幕',
+        tooltip: '字幕',
+        selector: [
+          { html: '关闭字幕', value: '', default: true },
+          ...tracks.map((t) => ({ html: t.name, value: t.url })),
+        ],
+        onSelect: function (this: any, item: any) {
+          if (!item.value) {
+            this.subtitle.show = false;
+            return '字幕';
+          }
+          loadYogurtSubtitleTrack(this, item.value, item.html);
+          return item.html;
+        },
+      };
+
+      try {
+        // 换集时同名控件已存在，先移除再添加以刷新字幕列表。
+        if (yogurtSubtitleControlAddedRef.current) {
+          try {
+            art.controls.remove('yogurt-subtitle');
+          } catch {
+            // ignore
+          }
+        }
+        art.controls.add(control);
+        yogurtSubtitleControlAddedRef.current = true;
+      } catch (err) {
+        console.warn('添加字幕控件失败:', err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [videoUrl]);
 
   // 当组件卸载时清理定时器、Wake Lock 和播放器资源
   useEffect(() => {

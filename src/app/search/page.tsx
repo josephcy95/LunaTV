@@ -216,6 +216,15 @@ function SearchPageClient() {
     return episodeCount && episodeCount > 1 ? 'tv' : 'movie';
   };
 
+  // 二元 movie/tv 判定：优先使用源提供的 type_name，缺失时才回退到集数。
+  // 某些源（如 YOGURT）的搜索结果每条只带 1 个播放链接，若仅按集数判断会把
+  // 电视剧误判为电影，导致它无法与其他源聚合、也无法进入换源列表。
+  const inferBinaryType = (
+    typeName?: string,
+    episodeCount?: number
+  ): 'movie' | 'tv' =>
+    inferTypeFromName(typeName, episodeCount) === 'movie' ? 'movie' : 'tv';
+
   const getSearchResultUrl = (params: {
     title: string;
     year?: string;
@@ -689,7 +698,7 @@ function SearchPageClient() {
     filteredResults.forEach((item) => {
       // 使用 title + year + type 作为键，year 必然存在，但依然兜底 'unknown'
       const key = `${item.title.replaceAll(' ', '')}-${item.year || 'unknown'
-        }-${item.episodes.length === 1 ? 'movie' : 'tv'}`;
+        }-${inferBinaryType(item.type_name, item.episodes.length)}`;
       const arr = map.get(key) || [];
 
       // 如果是新的键，记录其顺序
@@ -2287,7 +2296,7 @@ function SearchPageClient() {
                         const poster = group[0]?.poster || '';
                         const year = group[0]?.year || 'unknown';
                         const { episodes, source_names, douban_id } = computeGroupStats(group);
-                        const type = episodes === 1 ? 'movie' : 'tv';
+                        const type = inferBinaryType(group[0]?.type_name, episodes);
                         if (!groupStatsRef.current.has(mapKey)) {
                           groupStatsRef.current.set(mapKey, { episodes, source_names, douban_id });
                         }
@@ -2354,7 +2363,7 @@ function SearchPageClient() {
                       const desc = group.find((e) => e.desc?.trim())?.desc || '';
                       const vodRemarks = group.find((e) => (e as any).remarks?.trim())?.remarks || '';
                       const { episodes, source_names, douban_id } = computeGroupStats(group);
-                      const type = episodes === 1 ? 'movie' : 'tv';
+                      const type = inferBinaryType(group[0]?.type_name, episodes);
                       if (!groupStatsRef.current.has(mapKey)) {
                         groupStatsRef.current.set(mapKey, { episodes, source_names, douban_id });
                       }
