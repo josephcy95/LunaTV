@@ -2869,6 +2869,24 @@ function PlayPageClient() {
         } catch (err) {
           console.error('[Play] Failed to fetch Emby detail:', err);
         }
+      } else if (newSource === 'YOGURT' && (!newDetail.episodes || newDetail.episodes.length <= 1)) {
+        // YOGURT 的搜索结果是专辑级的单条地址，换源时需要通过 detail 接口拉取完整分集，
+        // 否则切到 YOGURT 后只会有 1 集。
+        console.log('[Play] YOGURT source: fetching full episode list via detail...');
+        try {
+          const titleParam = newTitle ? `&title=${encodeURIComponent(newTitle)}` : '';
+          const detailResponse = await fetch(
+            `/api/detail?source=YOGURT&id=${encodeURIComponent(newId)}${titleParam}`
+          );
+          if (detailResponse.ok) {
+            const detailData = (await detailResponse.json()) as SearchResult;
+            if (detailData?.episodes && detailData.episodes.length > 0) {
+              detailToUse = detailData;
+            }
+          }
+        } catch (err) {
+          console.error('[Play] Failed to fetch YOGURT detail:', err);
+        }
       }
 
       // 🔥 换源时保持当前集数不变（除非新源集数不够）
@@ -4551,8 +4569,10 @@ function PlayPageClient() {
                   // 必须有集数数据（所有源包括短剧源都必须满足）
                   if (!source.episodes || source.episodes.length < 1) return false;
 
-                  // 短剧源不受集数差异限制（但必须有集数数据）
-                  if (source.source === 'shortdrama') return true;
+                  // 短剧源与 YOGURT 源不受集数差异限制：它们的搜索结果只返回专辑级的
+                  // 单条播放地址，真实分集在换源时才通过 detail 接口解析，若按搜索集数
+                  // 与当前源比对会被误删（例如 12 集番剧的 YOGURT 源只报 1 集）。
+                  if (source.source === 'shortdrama' || source.source === 'YOGURT') return true;
 
                   // 如果当前有 detail，只显示集数相近的源（允许 ±30% 的差异）
                   if (detail && detail.episodes && detail.episodes.length > 0) {
