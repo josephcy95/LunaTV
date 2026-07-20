@@ -230,6 +230,66 @@ function switchYogurtSubtitle(art: any, url: string, name: string): void {
   }
 }
 
+// -----------------------------------------------------------------------------
+// 字幕字号缩放：用户偏好持久化。实际字号由 artplayer-theme.css 用
+// `clamp(...) * var(--lunatv-subtitle-scale)` 计算，这里只负责读写缩放系数。
+// -----------------------------------------------------------------------------
+const SUBTITLE_SCALE_STORAGE_KEY = 'lunatv_subtitle_scale';
+const SUBTITLE_SCALE_MIN = 0.6;
+const SUBTITLE_SCALE_MAX = 2.0;
+const SUBTITLE_SCALE_DEFAULT = 1.0;
+
+function clampSubtitleScale(value: number): number {
+  if (!Number.isFinite(value)) return SUBTITLE_SCALE_DEFAULT;
+  return Math.min(SUBTITLE_SCALE_MAX, Math.max(SUBTITLE_SCALE_MIN, value));
+}
+
+function getStoredSubtitleScale(): number {
+  if (typeof window === 'undefined') return SUBTITLE_SCALE_DEFAULT;
+  try {
+    const raw = window.localStorage.getItem(SUBTITLE_SCALE_STORAGE_KEY);
+    if (raw == null) return SUBTITLE_SCALE_DEFAULT;
+    return clampSubtitleScale(parseFloat(raw));
+  } catch {
+    return SUBTITLE_SCALE_DEFAULT;
+  }
+}
+
+// 把缩放系数写入播放器根元素的 CSS 变量（.art-subtitle 继承它）。
+function applySubtitleScale(art: any, scale: number): void {
+  try {
+    const root = art?.template?.$player as HTMLElement | undefined;
+    if (root) {
+      root.style.setProperty('--lunatv-subtitle-scale', String(scale));
+    }
+  } catch {
+    // ignore
+  }
+}
+
+// 判定一条字幕轨道的语言优先级（数字越小越优先，null 表示不自动开启）：
+//   1 = 简体中文，2 = 繁体中文，3 = 英文。
+// 需求：仅当存在简体 / 繁体 / 英文字幕时才默认开启，并按上述顺序取最高优先级；
+// 其余语言（日语、韩语等）一律不自动开启。无简 / 繁标记的泛中文（"中文/中字"）
+// 按简体（1）对待——它多为简体，且用户以简体为主，理应优先于英文。
+function subtitleLangRank(name: string): number | null {
+  const s = (name || '').toLowerCase();
+  // 先判繁体：繁体标签往往同时含「中文」，必须在泛中文之前拦截。
+  const isTrad = /繁|cht|zh-?hant|zh-?tw|zh-?hk|big5/.test(s);
+  // 简体显式标记（简 / 簡 两种字形都覆盖）。
+  const isSimp = /[简簡]|chs|zh-?hans|zh-?cn|gb2312|gbk/.test(s);
+  if (isSimp && !isTrad) return 1;
+  if (isTrad && !isSimp) return 2;
+  if (isSimp && isTrad) return 1; // 简繁双语：按简体优先
+  // 泛中文（无简 / 繁标记）：中文、中字、中英、华语等 → 视作简体优先级
+  if (/中文|中字|中英|华语|華語|chinese|\bzh\b|\bchi\b|\bzho\b|\bcmn\b/.test(s)) {
+    return 1;
+  }
+  // 英文
+  if (/english|英文|英语|英語|\beng\b|\ben\b/.test(s)) return 3;
+  return null;
+}
+
 // 扩展 HTMLVideoElement 类型以支持 hls 属性
 declare global {
   interface HTMLVideoElement {
@@ -3810,6 +3870,36 @@ function PlayPageClient() {
         subtitleOffset: true,
         // 初始化字幕模块（无默认轨道）。YOGURT 外挂字幕由下方的字幕选择控件按集加载。
         subtitle: { type: 'vtt', escape: false },
+        // 设置面板自定义项：字幕字号缩放（配合 subtitleOffset 的偏移滑块，
+        // 让用户既能增减偏移，也能增减字号）。实际字号在 CSS 中按缩放系数计算。
+        settings: [
+          {
+            name: 'subtitle-font-size',
+            html: '字幕字号',
+            tooltip: `${Math.round(getStoredSubtitleScale() * 100)}%`,
+            icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V7a3 3 0 0 1 3-3h3"/><path d="M8 12h5"/><path d="M13 20V9a3 3 0 0 1 3-3h4"/><path d="M17 14h4"/></svg>',
+            range: [
+              getStoredSubtitleScale(),
+              SUBTITLE_SCALE_MIN,
+              SUBTITLE_SCALE_MAX,
+              0.1,
+            ],
+            onChange(item: any) {
+              const scale = clampSubtitleScale(Number(item.range));
+              // 用 ref 而非 this，避免不同 ArtPlayer 版本 onChange 的 this 绑定差异
+              applySubtitleScale(artPlayerRef.current, scale);
+              try {
+                window.localStorage.setItem(
+                  SUBTITLE_SCALE_STORAGE_KEY,
+                  String(scale)
+                );
+              } catch {
+                // ignore persist failure
+              }
+              return `${Math.round(scale * 100)}%`;
+            },
+          },
+        ],
         miniProgressBar: true,
         hotkey: false,
         mutex: true,
@@ -4122,6 +4212,9 @@ function PlayPageClient() {
         setError(null);
         setPlayerReady(true); // 标记播放器已就绪，启用观影室同步
 
+        // 应用记忆的字幕字号缩放（range 默认值不会触发 onChange，需手动写入 CSS 变量）
+        applySubtitleScale(artPlayerRef.current, getStoredSubtitleScale());
+
         // 观影室时间同步：从URL参数读取初始播放时间。
         // 只在本次挂载的第一次 ready 应用，避免播放器重建时把用户拉回旧时间点
         const timeParam = searchParams.get('t') || searchParams.get('time');
@@ -4306,6 +4399,13 @@ function PlayPageClient() {
   // YOGURT 外挂字幕：按集拉取字幕列表，并在播放器上提供「字幕」选择控件。
   // 仅当当前源为 YOGURT 且播放地址可解析出 videoId 时启用；其他源不受影响。
   const yogurtSubtitleControlAddedRef = useRef(false);
+  // 记忆用户对字幕的选择，避免每次换集都强行按默认优先级覆盖用户意图：
+  //   off=true → 用户手动关闭了字幕，后续换集不再自动开启；
+  //   preferredName → 用户手动选过的轨道名，换集时优先沿用同名轨道。
+  // 初始（off=false, preferredName=null）→ 首次加载按语言优先级自动开启。
+  const subtitlePrefRef = useRef<{ off: boolean; preferredName: string | null }>(
+    { off: false, preferredName: null }
+  );
   useEffect(() => {
     let cancelled = false;
 
@@ -4390,20 +4490,51 @@ function PlayPageClient() {
         return;
       }
 
+      // 计算默认开启的轨道：
+      //   1) 若用户此前手动关闭字幕（off）→ 不自动开启；
+      //   2) 否则优先沿用用户上次选过的同名轨道；
+      //   3) 再否则按语言优先级（简体 > 繁体 > 英文）取最高优先级轨道；
+      //   4) 找不到任何目标语言 → 不自动开启（保持关闭）。
+      let defaultTrack: { name: string; url: string } | null = null;
+      if (!subtitlePrefRef.current.off) {
+        const preferred = subtitlePrefRef.current.preferredName;
+        if (preferred) {
+          defaultTrack = tracks.find((t) => t.name === preferred) || null;
+        }
+        if (!defaultTrack) {
+          let bestRank = Infinity;
+          for (const t of tracks) {
+            const rank = subtitleLangRank(t.name);
+            if (rank != null && rank < bestRank) {
+              bestRank = rank;
+              defaultTrack = t;
+            }
+          }
+        }
+      }
+
       const control = {
         name: 'yogurt-subtitle',
         position: 'right',
         html: '字幕',
         tooltip: '字幕',
         selector: [
-          { html: '关闭字幕', value: '', default: true },
-          ...tracks.map((t) => ({ html: t.name, value: t.url })),
+          { html: '关闭字幕', value: '', default: !defaultTrack },
+          ...tracks.map((t) => ({
+            html: t.name,
+            value: t.url,
+            default: defaultTrack ? t.url === defaultTrack.url : false,
+          })),
         ],
         onSelect: function (this: any, item: any) {
           if (!item.value) {
+            // 用户手动关闭：记住偏好，换集不再自动开启
+            subtitlePrefRef.current = { off: true, preferredName: null };
             this.subtitle.show = false;
             return '字幕';
           }
+          // 用户手动选择：记住轨道名，换集时优先沿用
+          subtitlePrefRef.current = { off: false, preferredName: item.html };
           switchYogurtSubtitle(this, item.value, item.html);
           return item.html;
         },
@@ -4420,6 +4551,12 @@ function PlayPageClient() {
         }
         art.controls.add(control);
         yogurtSubtitleControlAddedRef.current = true;
+        // selector 的 default 只是视觉选中，不会触发 onSelect，需手动切换到默认轨道。
+        if (defaultTrack) {
+          switchYogurtSubtitle(art, defaultTrack.url, defaultTrack.name);
+        } else {
+          art.subtitle.show = false;
+        }
       } catch (err) {
         console.warn('添加字幕控件失败:', err);
       }
@@ -4599,7 +4736,7 @@ function PlayPageClient() {
               <button
                 type='button'
                 onClick={() => setIsEpisodeSelectorCollapsed(false)}
-                className='absolute inset-0 hidden items-start justify-center rounded-xl border border-gray-200/80 bg-black/10 pt-4 text-gray-500 shadow-sm transition-colors hover:bg-black/15 hover:text-gray-900 dark:border-gray-700/60 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10 lg:flex'
+                className='absolute inset-0 hidden items-start justify-center rounded-2xl border border-amber-200/70 bg-gradient-to-b from-amber-50/80 to-amber-100/30 pt-4 text-amber-700/70 shadow-[0_10px_34px_-12px_rgba(150,105,10,0.28)] backdrop-blur-md transition-colors hover:from-amber-100/70 hover:text-amber-800 dark:border-amber-300/10 dark:from-amber-950/25 dark:to-gray-950/60 dark:text-gray-300 dark:hover:text-amber-200 lg:flex'
                 title='显示选集面板'
                 aria-label='显示选集面板'
               >

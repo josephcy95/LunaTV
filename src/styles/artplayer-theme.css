@@ -359,3 +359,37 @@
     animation: none !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * 字幕：更大、可缩放、随播放器尺寸自适应
+ *
+ * 需求：默认字号偏小 → 整体放大；同时保留用户「增减字号」「增减偏移」的能力。
+ *
+ * 做法：
+ *  1) 把 .art-video-player 声明为容器查询上下文（container-type: inline-size），
+ *     这样字号可用 cqw（容器宽度的 1%）随「播放器实际宽度」自适应——窗口态取
+ *     播放器宽度，原生 / 网页全屏态取全屏宽度，两种全屏都会正确放大。
+ *  2) 字号 = clamp(下限, 2.8cqw, 上限) × var(--lunatv-subtitle-scale)（用户缩放）。
+ *     缩放变量由播放页写到 .art-video-player 上（localStorage 记忆），默认 1。
+ *  3) ArtPlayer 会给 .art-subtitle 注入内联 font-size，故此处必须用 !important 覆盖。
+ *  4) 叠层文字阴影充当描边，保证字幕在任意画面（亮 / 暗底）上都清晰可读。
+ * ------------------------------------------------------------------------- */
+.art-video-player.art-video-player {
+  container-type: inline-size;
+}
+
+.art-video-player .art-subtitle {
+  /* 回退：不支持容器查询单位（cqw）的旧浏览器用 vw，仍保证字幕偏大可读 */
+  font-size: calc(clamp(18px, 2.4vw, 44px) * var(--lunatv-subtitle-scale, 1)) !important;
+  /* 首选：随播放器宽度自适应（窗口 / 全屏都正确） */
+  font-size: calc(clamp(18px, 2.8cqw, 46px) * var(--lunatv-subtitle-scale, 1)) !important;
+  line-height: 1.35 !important;
+  font-weight: 600 !important;
+  color: #fff !important;
+  letter-spacing: 0.01em;
+  text-shadow:
+    0 0 2px rgba(0, 0, 0, 0.95),
+    0 1px 3px rgba(0, 0, 0, 0.9),
+    0 2px 8px rgba(0, 0, 0, 0.72) !important;
+  padding-bottom: 0.15em;
+}

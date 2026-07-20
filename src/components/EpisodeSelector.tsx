@@ -462,48 +462,54 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   );
 
   return (
-    <div className='h-full overflow-hidden rounded-lg border border-gray-200/80 bg-black/10 px-2 py-0 shadow-sm dark:border-gray-700/60 dark:bg-white/5 sm:px-4 md:ml-2 flex flex-col'>
-      {/* 主要的 Tab 切换 - 美化版本 */}
-      <div className='relative -mx-2 mb-1 flex shrink-0 sm:-mx-4 sm:mb-2'>
-        {totalEpisodes > 1 && (
-          <div
-            onClick={() => setActiveTab('episodes')}
-            className={`relative min-h-[38px] flex-1 cursor-pointer px-3 py-2.5 text-center font-semibold transition-colors duration-150 sm:min-h-[44px] sm:px-6 sm:py-4
-              ${activeTab === 'episodes'
-                ? 'text-green-600 dark:text-green-400'
-                : 'text-gray-700 hover:text-green-600 dark:text-gray-300 dark:hover:text-green-400'
-              }
-            `.trim()}
+    <div className='flex h-full flex-col overflow-hidden rounded-2xl border border-amber-200/70 bg-gradient-to-b from-amber-50/80 to-amber-100/30 px-2 py-2 shadow-[0_10px_34px_-12px_rgba(150,105,10,0.28)] backdrop-blur-md dark:border-amber-300/10 dark:from-amber-950/25 dark:to-gray-950/60 sm:px-3 md:ml-2'>
+      {/* 主要的 Tab 切换 —— 分段控件：激活页签底色与内容面板同色系，
+          清晰指示「当前打开的是哪个页签」，并与金色主题保持一致 */}
+      <div className='mb-2 flex shrink-0 items-center gap-2 sm:mb-3'>
+        <div className='flex flex-1 items-stretch gap-1 rounded-xl bg-amber-900/[0.06] p-1 ring-1 ring-inset ring-amber-900/10 dark:bg-black/30 dark:ring-white/5'>
+          {totalEpisodes > 1 && (
+            <button
+              type='button'
+              onClick={() => setActiveTab('episodes')}
+              className={`relative flex min-h-[36px] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-bold transition-all duration-200 active:scale-[0.98] sm:min-h-[40px] sm:text-base
+                ${activeTab === 'episodes'
+                  ? 'bg-gradient-to-b from-amber-50 to-amber-100/70 text-amber-800 shadow-sm ring-1 ring-amber-300/50 dark:from-gray-800 dark:to-gray-900 dark:text-amber-200 dark:ring-amber-300/20'
+                  : 'text-amber-900/50 hover:bg-black/[0.03] hover:text-amber-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-amber-200'
+                }`.trim()}
+            >
+              <svg
+                className='h-4 w-4'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth={2}
+                viewBox='0 0 24 24'
+              >
+                <rect x='3' y='3' width='7' height='7' rx='1.5' />
+                <rect x='14' y='3' width='7' height='7' rx='1.5' />
+                <rect x='3' y='14' width='7' height='7' rx='1.5' />
+                <rect x='14' y='14' width='7' height='7' rx='1.5' />
+              </svg>
+              <span>选集</span>
+              {activeTab === 'episodes' && (
+                <span className='absolute bottom-1 left-1/2 h-[3px] w-7 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 dark:from-amber-300 dark:to-amber-400' />
+              )}
+            </button>
+          )}
+          <button
+            type='button'
+            onClick={handleSourceTabClick}
+            className={`relative flex min-h-[36px] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-bold transition-all duration-200 active:scale-[0.98] sm:min-h-[40px] sm:text-base
+              ${activeTab === 'sources'
+                ? 'bg-gradient-to-b from-amber-50 to-amber-100/70 text-amber-800 shadow-sm ring-1 ring-amber-300/50 dark:from-gray-800 dark:to-gray-900 dark:text-amber-200 dark:ring-amber-300/20'
+                : 'text-amber-900/50 hover:bg-black/[0.03] hover:text-amber-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-amber-200'
+              }`.trim()}
           >
-            {/* 激活态背景光晕 */}
-            {activeTab === 'episodes' && (
-              <div className='absolute inset-0 bg-linear-to-r from-green-50 via-emerald-50 to-green-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-green-900/20 -z-10'></div>
+            <RefreshCw className='h-4 w-4' />
+            <span>换源</span>
+            {activeTab === 'sources' && (
+              <span className='absolute bottom-1 left-1/2 h-[3px] w-7 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 dark:from-amber-300 dark:to-amber-400' />
             )}
-            {/* 非激活态背景 */}
-            {activeTab !== 'episodes' && (
-              <div className='absolute inset-0 bg-gray-100/50 transition-colors duration-150 dark:bg-gray-800/50 -z-10'></div>
-            )}
-            <span className='relative z-10 text-sm font-bold sm:text-base'>选集</span>
-          </div>
-        )}
-        <div
-          onClick={handleSourceTabClick}
-          className={`relative min-h-[38px] flex-1 cursor-pointer px-3 py-2.5 text-center font-semibold transition-colors duration-150 sm:min-h-[44px] sm:px-6 sm:py-4
-            ${activeTab === 'sources'
-              ? 'text-blue-600 dark:text-blue-400'
-              : 'text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400'
-            }
-          `.trim()}
-        >
-          {/* 激活态背景光晕 */}
-          {activeTab === 'sources' && (
-            <div className='absolute inset-0 bg-linear-to-r from-blue-50 via-cyan-50 to-sky-50 dark:from-blue-900/20 dark:via-cyan-900/20 dark:to-sky-900/20 -z-10'></div>
-          )}
-          {/* 非激活态背景 */}
-          {activeTab !== 'sources' && (
-            <div className='absolute inset-0 bg-gray-100/50 transition-colors duration-150 dark:bg-gray-800/50 -z-10'></div>
-          )}
-          <span className='relative z-10 text-sm font-bold sm:text-base'>换源</span>
+          </button>
         </div>
         {onTogglePanelCollapse && (
           <button
@@ -512,7 +518,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
               event.stopPropagation();
               onTogglePanelCollapse();
             }}
-            className='hidden lg:flex w-12 shrink-0 items-center justify-center bg-gray-100/70 text-gray-500 transition-colors duration-150 hover:bg-gray-200 hover:text-gray-800 dark:bg-gray-800/60 dark:text-gray-300 dark:hover:bg-gray-700'
+            className='hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-200/60 bg-amber-50/50 text-amber-700/70 transition-colors duration-150 hover:border-amber-300/70 hover:bg-amber-100/60 hover:text-amber-800 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-amber-200 lg:flex'
             title={isPanelCollapsed ? '显示选集面板' : '隐藏选集面板'}
             aria-label={isPanelCollapsed ? '显示选集面板' : '隐藏选集面板'}
           >
