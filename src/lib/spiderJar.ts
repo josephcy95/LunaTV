@@ -5,6 +5,7 @@
  * - Provides minimal fallback jar when all fail (still 200 to avoid TVBox unreachable)
  */
 import crypto from 'crypto';
+import { fetchWithValidatedRedirects, readArrayBufferLimited } from './proxy-security';
 import { DEFAULT_USER_AGENT } from './user-agent';
 
 // 高可用 JAR 候选源配置 - 针对不同网络环境优化
@@ -104,9 +105,6 @@ async function fetchRemote(
 
   for (let attempt = 0; attempt <= retryCount; attempt++) {
     try {
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort('timeout'), timeoutMs);
-
       // 根据源类型优化请求头
       const headers: Record<string, string> = {
         Accept: '*/*',
@@ -128,13 +126,11 @@ async function fetchRemote(
       }
 
       // 直接获取文件内容，跳过 HEAD 检查（减少请求次数）
-      const resp = await fetch(url, {
-        method: 'GET',
-        signal: controller.signal,
-        headers,
-        redirect: 'follow', // 允许重定向
-      });
-      clearTimeout(id);
+      const resp = await fetchWithValidatedRedirects(
+        url,
+        { method: 'GET', headers },
+        { timeoutMs },
+      );
 
       if (!resp.ok) {
         _lastError = `HTTP ${resp.status}: ${resp.statusText}`;
@@ -144,7 +140,7 @@ async function fetchRemote(
         continue; // 其他错误尝试重试
       }
 
-      const ab = await resp.arrayBuffer();
+      const ab = await readArrayBufferLimited(resp, 20 * 1024 * 1024);
       if (ab.byteLength < 1000) {
         _lastError = `File too small: ${ab.byteLength} bytes`;
         continue;

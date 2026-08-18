@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: channelsWithEpgLogos
+    }, {
+      headers: { 'Cache-Control': 'private, max-age=300' }
     });
   } catch (error) {
     return NextResponse.json(

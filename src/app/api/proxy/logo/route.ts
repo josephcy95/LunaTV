@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { fetchWithValidatedRedirects, readArrayBufferLimited, validateProxyTargetUrl } from '@/lib/proxy-security';
 
 export const runtime = 'nodejs';
 
@@ -10,26 +11,6 @@ export const runtime = 'nodejs';
 const logoCache = new Map<string, { data: ArrayBuffer; contentType: string; timestamp: number; etag?: string }>();
 const LOGO_CACHE_TTL = 86400000; // 24小时
 const MAX_CACHE_SIZE = 500;
-
-// 连接池管理
-import * as https from 'https';
-import * as http from 'http';
-
-const httpsAgent = new https.Agent({
-  keepAlive: true,
-  maxSockets: 30,
-  maxFreeSockets: 10,
-  timeout: 20000,
-  keepAliveMsecs: 30000,
-});
-
-const httpAgent = new http.Agent({
-  keepAlive: true,
-  maxSockets: 30,
-  maxFreeSockets: 10,
-  timeout: 20000,
-  keepAliveMsecs: 30000,
-});
 
 // 性能统计
 const logoStats = {
@@ -105,7 +86,13 @@ export async function GET(request: Request) {
   const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
   const ua = liveSource?.ua || 'AptvPlayer/1.4.10';
 
-  const decodedUrl = decodeURIComponent(imageUrl);
+  let decodedUrl: string;
+  try {
+    decodedUrl = await validateProxyTargetUrl(imageUrl);
+  } catch {
+    logoStats.errors++;
+    return NextResponse.json({ error: 'Invalid or blocked URL' }, { status: 403 });
+  }
   const cacheKey = `${source || 'default'}-${decodedUrl}`;
   
   // 检查缓存
@@ -128,31 +115,22 @@ export async function GET(request: Request) {
     });
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
-
   try {
-    const isHttps = decodedUrl.startsWith('https:');
-    const agent = isHttps ? httpsAgent : httpAgent;
-
-    const imageResponse = await fetch(decodedUrl, {
-      cache: 'no-cache',
-      redirect: 'follow',
-      credentials: 'same-origin',
-      signal: controller.signal,
-      headers: {
-        'User-Agent': ua,
-        'Accept': 'image/webp,image/avif,image/png,image/jpeg,image/gif,image/svg+xml,*/*;q=0.8',
-        'Accept-Encoding': 'identity',
-        'Cache-Control': 'no-cache',
-        ...(cached?.etag && { 'If-None-Match': cached.etag })
+    const imageResponse = await fetchWithValidatedRedirects(
+      decodedUrl,
+      {
+        cache: 'no-cache',
+        credentials: 'same-origin',
+        headers: {
+          'User-Agent': ua,
+          'Accept': 'image/webp,image/avif,image/png,image/jpeg,image/gif,image/svg+xml,*/*;q=0.8',
+          'Accept-Encoding': 'identity',
+          'Cache-Control': 'no-cache',
+          ...(cached?.etag && { 'If-None-Match': cached.etag })
+        },
       },
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - Node.js specific option
-      agent: typeof window === 'undefined' ? agent : undefined,
-    });
-
-    clearTimeout(timeoutId);
+      { timeoutMs: 15000 },
+    );
 
     // 如果是 304 Not Modified，返回缓存的数据
     if (imageResponse.status === 304 && cached) {
@@ -203,7 +181,7 @@ export async function GET(request: Request) {
     }
 
     // 读取图片数据并缓存
-    const imageData = await imageResponse.arrayBuffer();
+    const imageData = await readArrayBufferLimited(imageResponse, 5 * 1024 * 1024);
     
     // 缓存图片数据
     logoCache.set(cacheKey, {
@@ -248,7 +226,6 @@ export async function GET(request: Request) {
 
   } catch (error: any) {
     logoStats.errors++;
-    clearTimeout(timeoutId);
     
     // 处理不同类型的错误
     if (error.name === 'AbortError') {
@@ -268,7 +245,6 @@ export async function GET(request: Request) {
     }, { status: 500 });
     
   } finally {
-    clearTimeout(timeoutId);
     
     // 定期打印统计信息
     if (logoStats.requests % 200 === 0 && process.env.NODE_ENV === 'development') {

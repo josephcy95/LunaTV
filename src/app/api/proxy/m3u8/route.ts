@@ -4,28 +4,13 @@ import { NextResponse } from "next/server";
 
 import { getConfig } from "@/lib/config";
 import { getBaseUrl, resolveUrl } from "@/lib/live";
+import { fetchWithValidatedRedirects, readTextLimited } from "@/lib/proxy-security";
+import { DEFAULT_USER_AGENT } from "@/lib/user-agent";
+
+// m3u8 manifest 响应体大小硬上限，防止异常上游返回超大响应把内存打爆
+const MAX_M3U8_BYTES = 5 * 1024 * 1024; // 5MB
 
 export const runtime = 'nodejs';
-
-// 连接池管理
-import * as https from 'https';
-import * as http from 'http';
-
-const httpsAgent = new https.Agent({
-  keepAlive: true,
-  maxSockets: 50,
-  maxFreeSockets: 10,
-  timeout: 60000,
-  keepAliveMsecs: 30000,
-});
-
-const httpAgent = new http.Agent({
-  keepAlive: true,
-  maxSockets: 50,
-  maxFreeSockets: 10,
-  timeout: 60000,
-  keepAliveMsecs: 30000,
-});
 
 // 性能统计
 const stats = {
@@ -50,24 +35,22 @@ export async function GET(request: Request) {
   }
 
   const config = await getConfig();
-  const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
-  if (!liveSource) {
-    stats.errors++;
-    return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+  // moontv-source 仅用于直播源的 UA 定制；点播场景（VOD 直连失败降级）不传该参数，
+  // 此时使用浏览器 UA 默认值而非要求匹配 LiveConfig，否则会 404 拒绝点播流量。
+  let ua = DEFAULT_USER_AGENT;
+  if (source) {
+    const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
+    if (!liveSource) {
+      stats.errors++;
+      return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+    }
+    ua = liveSource.ua || ua;
   }
-  const ua = liveSource.ua || 'AptvPlayer/1.4.10';
 
   let response: Response | null = null;
   let responseUsed = false;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
-
   try {
-    const decodedUrl = decodeURIComponent(url);
-
-    // 选择合适的 agent
-    const isHttps = decodedUrl.startsWith('https:');
-    const agent = isHttps ? httpsAgent : httpAgent;
+    const decodedUrl = url;
 
     // 参考 hls.js fetch-loader，构建标准headers
     const headers: Record<string, string> = {
@@ -101,23 +84,19 @@ export async function GET(request: Request) {
       }
     }
 
-    response = await fetch(decodedUrl, {
-      cache: 'no-cache',
-      redirect: 'follow',
-      credentials: 'same-origin',
-      signal: controller.signal,
-      headers: new Headers(headers),
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - Node.js specific option
-      agent: typeof window === 'undefined' ? agent : undefined,
-    });
-
-    clearTimeout(timeoutId);
+    response = await fetchWithValidatedRedirects(
+      decodedUrl,
+      {
+        cache: 'no-cache',
+        credentials: 'same-origin',
+        headers: new Headers(headers),
+      },
+      { timeoutMs: 15000 },
+    );
 
     // 参考 hls.js fetch-loader 的错误处理逻辑
     if (!response.ok) {
       stats.errors++;
-      clearTimeout(timeoutId);
       
       // 直接返回原始的HTTP错误，让hls.js处理
       // 不返回JSON，因为hls.js期望的是M3U8内容或标准HTTP错误
@@ -145,7 +124,7 @@ export async function GET(request: Request) {
     if (isM3U8) {
       // 获取最终的响应URL（处理重定向后的URL）
       const finalUrl = response.url;
-      const m3u8Content = await response.text();
+      const m3u8Content = await readTextLimited(response, MAX_M3U8_BYTES);
       responseUsed = true;
 
       // 更新统计信息
@@ -212,7 +191,6 @@ export async function GET(request: Request) {
 
   } catch (error: any) {
     stats.errors++;
-    clearTimeout(timeoutId);
     
     // 处理不同类型的错误
     if (error.name === 'AbortError') {
@@ -232,7 +210,6 @@ export async function GET(request: Request) {
     }, { status: 500 });
 
   } finally {
-    clearTimeout(timeoutId);
     
     // 确保 response 被正确关闭以释放资源
     if (response && !responseUsed) {

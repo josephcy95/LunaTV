@@ -264,7 +264,7 @@ function LoginPageClient() {
           </div>
 
           {error && (
-            <div className='flex items-center gap-2 rounded-xl border border-red-400/35 bg-red-50/80 p-3 dark:bg-red-500/10'>
+            <div role='alert' className='flex items-center gap-2 rounded-xl border border-red-400/35 bg-red-50/80 p-3 dark:bg-red-500/10 animate-shake-in'>
               <AlertCircle className='h-4 w-4 text-red-600 dark:text-red-400 shrink-0' />
               <p className='text-sm text-red-600 dark:text-red-400'>{error}</p>
             </div>

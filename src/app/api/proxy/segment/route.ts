@@ -3,28 +3,10 @@
 import { NextResponse } from "next/server";
 
 import { getConfig } from "@/lib/config";
+import { fetchWithValidatedRedirects } from "@/lib/proxy-security";
+import { DEFAULT_USER_AGENT } from "@/lib/user-agent";
 
 export const runtime = 'nodejs';
-
-// 连接池管理
-import * as https from 'https';
-import * as http from 'http';
-
-const httpsAgent = new https.Agent({
-  keepAlive: true,
-  maxSockets: 100,
-  maxFreeSockets: 20,
-  timeout: 30000,
-  keepAliveMsecs: 30000,
-});
-
-const httpAgent = new http.Agent({
-  keepAlive: true,
-  maxSockets: 100,
-  maxFreeSockets: 20,
-  timeout: 30000,
-  keepAliveMsecs: 30000,
-});
 
 // 性能统计
 const segmentStats = {
@@ -51,39 +33,37 @@ export async function GET(request: Request) {
   }
 
   const config = await getConfig();
-  const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
-  if (!liveSource) {
-    segmentStats.errors++;
-    segmentStats.activeStreams--;
-    return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+  // 点播场景不携带 moontv-source（该参数只用于直播源的 UA 定制），此时使用默认浏览器 UA。
+  let ua = DEFAULT_USER_AGENT;
+  if (source) {
+    const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
+    if (!liveSource) {
+      segmentStats.errors++;
+      segmentStats.activeStreams--;
+      return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+    }
+    ua = liveSource.ua || ua;
   }
-  const ua = liveSource.ua || 'AptvPlayer/1.4.10';
 
   let response: Response | null = null;
   let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
 
   try {
-    const decodedUrl = decodeURIComponent(url);
-    const isHttps = decodedUrl.startsWith('https:');
-    const agent = isHttps ? httpsAgent : httpAgent;
+    const decodedUrl = url;
 
-    response = await fetch(decodedUrl, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': ua,
-        'Accept': 'video/mp2t, video/*, */*',
-        'Accept-Encoding': 'identity',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+    response = await fetchWithValidatedRedirects(
+      decodedUrl,
+      {
+        headers: {
+          'User-Agent': ua,
+          'Accept': 'video/mp2t, video/*, */*',
+          'Accept-Encoding': 'identity',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
       },
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - Node.js specific option
-      agent: typeof window === 'undefined' ? agent : undefined,
-    });
-
-    clearTimeout(timeoutId);
+      { timeoutMs: 30000 },
+    );
 
     if (!response.ok) {
       segmentStats.errors++;
@@ -244,7 +224,6 @@ export async function GET(request: Request) {
   } catch (error: any) {
     segmentStats.errors++;
     segmentStats.activeStreams--;
-    clearTimeout(timeoutId);
     
     // 确保在错误情况下也释放资源
     if (reader) {
@@ -281,7 +260,6 @@ export async function GET(request: Request) {
     }, { status: 500 });
     
   } finally {
-    clearTimeout(timeoutId);
     
     // 定期打印统计信息
     if (segmentStats.requests % 500 === 0 && process.env.NODE_ENV === 'development') {

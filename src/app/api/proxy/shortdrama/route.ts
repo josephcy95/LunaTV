@@ -1,28 +1,10 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 
 import { NextResponse } from "next/server";
+import { fetchWithValidatedRedirects } from '@/lib/proxy-security';
 import { DEFAULT_USER_AGENT } from '@/lib/user-agent';
 
 export const runtime = 'nodejs';
-
-import * as https from 'https';
-import * as http from 'http';
-
-const httpsAgent = new https.Agent({
-  keepAlive: true,
-  maxSockets: 50,
-  maxFreeSockets: 10,
-  timeout: 60000,
-  keepAliveMsecs: 30000,
-});
-
-const httpAgent = new http.Agent({
-  keepAlive: true,
-  maxSockets: 50,
-  maxFreeSockets: 10,
-  timeout: 60000,
-  keepAliveMsecs: 30000,
-});
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -32,13 +14,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing url parameter' }, { status: 400 });
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
-
   try {
-    const decodedUrl = decodeURIComponent(url);
-    const isHttps = decodedUrl.startsWith('https:');
-    const agent = isHttps ? httpsAgent : httpAgent;
+    const decodedUrl = url;
 
     const headers: Record<string, string> = {
       'User-Agent': DEFAULT_USER_AGENT,
@@ -53,17 +30,11 @@ export async function GET(request: Request) {
       delete headers['Range'];
     }
 
-    const response = await fetch(decodedUrl, {
-      cache: 'no-cache',
-      redirect: 'follow',
-      signal: controller.signal,
-      headers: new Headers(headers),
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - Node.js specific option
-      agent: typeof window === 'undefined' ? agent : undefined,
-    });
-
-    clearTimeout(timeoutId);
+    const response = await fetchWithValidatedRedirects(
+      decodedUrl,
+      { cache: 'no-cache', headers: new Headers(headers) },
+      { timeoutMs: 30000 },
+    );
 
     if (!response.ok) {
       return NextResponse.json(
@@ -93,7 +64,6 @@ export async function GET(request: Request) {
     });
 
   } catch (error: any) {
-    clearTimeout(timeoutId);
     console.error('短剧代理错误:', error);
 
     if (error.name === 'AbortError') {

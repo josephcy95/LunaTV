@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: liveSources
+    }, {
+      headers: { 'Cache-Control': 'private, max-age=300' }
     });
   } catch (error) {
     console.error('获取直播源失败:', error);

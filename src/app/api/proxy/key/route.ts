@@ -3,33 +3,18 @@
 import { NextResponse } from "next/server";
 
 import { getConfig } from "@/lib/config";
+import { fetchWithValidatedRedirects, readArrayBufferLimited, validateProxyTargetUrl } from "@/lib/proxy-security";
+import { DEFAULT_USER_AGENT } from "@/lib/user-agent";
 
 export const runtime = 'nodejs';
+
+// AES 密钥文件正常只有 16 字节，给个宽松上限防御异常上游
+const MAX_KEY_BYTES = 1 * 1024 * 1024; // 1MB
 
 // Key 缓存管理
 const keyCache = new Map<string, { data: ArrayBuffer; timestamp: number; etag?: string }>();
 const KEY_CACHE_TTL = 300000; // 5分钟
 const MAX_CACHE_SIZE = 200;
-
-// 连接池管理
-import * as https from 'https';
-import * as http from 'http';
-
-const httpsAgent = new https.Agent({
-  keepAlive: true,
-  maxSockets: 30,
-  maxFreeSockets: 10,
-  timeout: 15000,
-  keepAliveMsecs: 30000,
-});
-
-const httpAgent = new http.Agent({
-  keepAlive: true,
-  maxSockets: 30,
-  maxFreeSockets: 10,
-  timeout: 15000,
-  keepAliveMsecs: 30000,
-});
 
 // 性能统计
 const keyStats = {
@@ -81,14 +66,24 @@ export async function GET(request: Request) {
   }
 
   const config = await getConfig();
-  const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
-  if (!liveSource) {
-    keyStats.errors++;
-    return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+  // 点播场景不携带 moontv-source（该参数只用于直播源的 UA 定制），此时使用默认浏览器 UA。
+  let ua = DEFAULT_USER_AGENT;
+  if (source) {
+    const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
+    if (!liveSource) {
+      keyStats.errors++;
+      return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+    }
+    ua = liveSource.ua || ua;
   }
-  const ua = liveSource.ua || 'AptvPlayer/1.4.10';
 
-  const decodedUrl = decodeURIComponent(url);
+  let decodedUrl: string;
+  try {
+    decodedUrl = await validateProxyTargetUrl(url);
+  } catch {
+    keyStats.errors++;
+    return NextResponse.json({ error: 'Invalid or blocked URL' }, { status: 403 });
+  }
   const cacheKey = `${source}-${decodedUrl}`;
   
   // 检查缓存
@@ -113,31 +108,23 @@ export async function GET(request: Request) {
     });
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
-
   try {
     if (process.env.NODE_ENV === 'development') {
       console.log(`Fetching key: ${decodedUrl}`);
     }
     
-    const isHttps = decodedUrl.startsWith('https:');
-    const agent = isHttps ? httpsAgent : httpAgent;
-
-    const response = await fetch(decodedUrl, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': ua,
-        'Accept': 'application/octet-stream, */*',
-        'Cache-Control': 'no-cache',
-        ...(cached?.etag && { 'If-None-Match': cached.etag })
+    const response = await fetchWithValidatedRedirects(
+      decodedUrl,
+      {
+        headers: {
+          'User-Agent': ua,
+          'Accept': 'application/octet-stream, */*',
+          'Cache-Control': 'no-cache',
+          ...(cached?.etag && { 'If-None-Match': cached.etag })
+        },
       },
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - Node.js specific option
-      agent: typeof window === 'undefined' ? agent : undefined,
-    });
-
-    clearTimeout(timeoutId);
+      { timeoutMs: 10000 },
+    );
 
     // 如果是 304 Not Modified，返回缓存的数据
     if (response.status === 304 && cached) {
@@ -173,7 +160,7 @@ export async function GET(request: Request) {
       }, { status: response.status >= 500 ? 500 : response.status });
     }
     
-    const keyData = await response.arrayBuffer();
+    const keyData = await readArrayBufferLimited(response, MAX_KEY_BYTES);
     const etag = response.headers.get('ETag');
     
     // 缓存 key 数据
@@ -210,7 +197,6 @@ export async function GET(request: Request) {
     
   } catch (error: any) {
     keyStats.errors++;
-    clearTimeout(timeoutId);
     
     // 处理不同类型的错误
     if (error.name === 'AbortError') {
@@ -230,7 +216,6 @@ export async function GET(request: Request) {
     }, { status: 500 });
     
   } finally {
-    clearTimeout(timeoutId);
     
     // 定期打印统计信息
     if (keyStats.requests % 100 === 0 && process.env.NODE_ENV === 'development') {
