@@ -15,7 +15,7 @@ async function lookupWithRetry(
   hostname: string,
   options: any,
   maxRetries = 3,
-  initialDelay = 500
+  initialDelay = 500,
 ): Promise<any[]> {
   let lastError: Error | null = null;
 
@@ -41,8 +41,10 @@ async function lookupWithRetry(
       if (isRetryable && i < maxRetries - 1) {
         // 指数退避：500ms, 1000ms, 2000ms
         const delay = initialDelay * Math.pow(2, i);
-        console.warn(`[DNS] Retry ${i + 1}/${maxRetries} for ${hostname} after ${delay}ms (error: ${error.code})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        console.warn(
+          `[DNS] Retry ${i + 1}/${maxRetries} for ${hostname} after ${delay}ms (error: ${error.code})`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
 
@@ -178,7 +180,10 @@ export async function validateProxyTargetUrl(rawUrl: string): Promise<string> {
   }
 
   // 使用带重试机制的 DNS 查询（cacheable-lookup + 指数退避）
-  const records = await lookupWithRetry(hostname, { all: true, verbatim: true });
+  const records = await lookupWithRetry(hostname, {
+    all: true,
+    verbatim: true,
+  });
   if (!records.length) throw new Error('Host did not resolve');
 
   if (records.some((record) => isBlockedAddress(record.address))) {
@@ -200,65 +205,6 @@ async function fetchWithTimeout(
   } finally {
     clearTimeout(timer);
   }
-}
-
-/**
- * 读取响应体，但对大小设硬上限——防止异常/恶意上游返回超大响应把内存打爆。
- * 边读边累计字节数，一旦超限立即抛出，不等读完整个响应体。
- */
-async function readBodyLimited(
-  response: Response,
-  limitBytes: number,
-): Promise<Uint8Array> {
-  const body = response.body;
-  if (!body) return new Uint8Array(0);
-
-  const reader = body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-
-  try {
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (!value) continue;
-
-      total += value.byteLength;
-      if (total > limitBytes) {
-        await reader.cancel();
-        throw new Error(`Response body exceeds ${limitBytes} byte limit`);
-      }
-      chunks.push(value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-
-  const merged = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    merged.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return merged;
-}
-
-export async function readTextLimited(
-  response: Response,
-  limitBytes: number,
-): Promise<string> {
-  const bytes = await readBodyLimited(response, limitBytes);
-  return new TextDecoder('utf-8').decode(bytes);
-}
-
-export async function readArrayBufferLimited(
-  response: Response,
-  limitBytes: number,
-): Promise<ArrayBuffer> {
-  const bytes = await readBodyLimited(response, limitBytes);
-  const out = new ArrayBuffer(bytes.byteLength);
-  new Uint8Array(out).set(bytes);
-  return out;
 }
 
 export async function fetchWithValidatedRedirects(

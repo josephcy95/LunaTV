@@ -2,7 +2,15 @@
 
 'use client';
 
-import { AlertCircle, CheckCircle, User, Lock, Sparkles, UserPlus, Shield } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle,
+  User,
+  Lock,
+  Sparkles,
+  UserPlus,
+  Shield,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -106,7 +114,10 @@ function RegisterForm({ requireInviteCode }: RegisterPageClientProps) {
   };
 
   return (
-    <div translate="no" className='fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-3 py-8 sm:px-4 sm:py-10'>
+    <div
+      translate='no'
+      className='fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-3 py-8 sm:px-4 sm:py-10'
+    >
       {/* Bing 每日壁纸背景（沉入夜色之下） */}
       {bingWallpaper && (
         <div
@@ -117,7 +128,10 @@ function RegisterForm({ requireInviteCode }: RegisterPageClientProps) {
 
       {/* 夜幕叠加层：墨色 + 月晕 */}
       <div className='absolute inset-0 bg-linear-to-b from-black/45 via-black/30 to-black/60' />
-      <div aria-hidden='true' className='pointer-events-none absolute inset-0 overflow-hidden'>
+      <div
+        aria-hidden='true'
+        className='pointer-events-none absolute inset-0 overflow-hidden'
+      >
         <div className='absolute -top-40 left-1/2 h-[30rem] w-[30rem] -translate-x-1/2 rounded-full bg-green-400/12 blur-[110px]' />
         <div className='absolute bottom-[-10rem] right-[-8rem] h-[24rem] w-[24rem] rounded-full bg-indigo-500/14 blur-[100px]' />
       </div>
@@ -136,7 +150,10 @@ function RegisterForm({ requireInviteCode }: RegisterPageClientProps) {
 
         <form onSubmit={handleSubmit} className='space-y-4 sm:space-y-5'>
           <div className='group'>
-            <label htmlFor='username' className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label
+              htmlFor='username'
+              className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+            >
               用户名
             </label>
             <div className='relative'>
@@ -156,7 +173,10 @@ function RegisterForm({ requireInviteCode }: RegisterPageClientProps) {
           </div>
 
           <div className='group'>
-            <label htmlFor='password' className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label
+              htmlFor='password'
+              className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+            >
               密码
             </label>
             <div className='relative'>
@@ -176,7 +196,10 @@ function RegisterForm({ requireInviteCode }: RegisterPageClientProps) {
           </div>
 
           <div className='group'>
-            <label htmlFor='confirmPassword' className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label
+              htmlFor='confirmPassword'
+              className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+            >
               确认密码
             </label>
             <div className='relative'>
@@ -197,7 +220,10 @@ function RegisterForm({ requireInviteCode }: RegisterPageClientProps) {
 
           {requireInviteCode && (
             <div className='group'>
-              <label htmlFor='inviteCode' className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label
+                htmlFor='inviteCode'
+                className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+              >
                 邀请码
               </label>
               <div className='relative'>
@@ -218,16 +244,18 @@ function RegisterForm({ requireInviteCode }: RegisterPageClientProps) {
           )}
 
           {error && (
-            <div role='alert' className='flex items-center gap-2 rounded-xl border border-red-400/35 bg-red-50/80 p-3 dark:bg-red-500/10 animate-shake-in'>
+            <div className='flex items-center gap-2 rounded-xl border border-red-400/35 bg-red-50/80 p-3 dark:bg-red-500/10 animate-slide-down'>
               <AlertCircle className='h-4 w-4 text-red-600 dark:text-red-400 shrink-0' />
               <p className='text-sm text-red-600 dark:text-red-400'>{error}</p>
             </div>
           )}
 
           {success && (
-            <div role='status' className='flex items-center gap-2 rounded-xl border border-green-500/35 bg-green-50/80 p-3 dark:bg-green-400/10 animate-shake-in'>
+            <div className='flex items-center gap-2 rounded-xl border border-green-500/35 bg-green-50/80 p-3 dark:bg-green-400/10 animate-slide-down'>
               <CheckCircle className='h-4 w-4 text-green-600 dark:text-green-400 shrink-0' />
-              <p className='text-sm text-green-600 dark:text-green-400'>{success}</p>
+              <p className='text-sm text-green-600 dark:text-green-400'>
+                {success}
+              </p>
             </div>
           )}
 
@@ -239,7 +267,11 @@ function RegisterForm({ requireInviteCode }: RegisterPageClientProps) {
             className='btn-gold w-full py-3 text-base'
           >
             <UserPlus className='h-5 w-5' />
-            {loading ? '注册中...' : success ? '注册成功，正在跳转...' : '立即注册'}
+            {loading
+              ? '注册中...'
+              : success
+                ? '注册成功，正在跳转...'
+                : '立即注册'}
           </button>
 
           <div className='mt-6 pt-6 border-t border-gray-900/10 dark:border-white/10'>
@@ -253,7 +285,9 @@ function RegisterForm({ requireInviteCode }: RegisterPageClientProps) {
             >
               <Lock className='w-4 h-4' />
               <span>立即登录</span>
-              <span className='inline-block transition-transform group-hover:translate-x-1'>→</span>
+              <span className='inline-block transition-transform group-hover:translate-x-1'>
+                →
+              </span>
             </Link>
           </div>
         </form>

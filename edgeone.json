@@ -3,7 +3,7 @@
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm edgeone:build",
   "outputDirectory": ".edgeone",
-  "nodeVersion": "22.11.0",
+  "nodeVersion": "24",
   "cloudFunctions": {
     "nodejs": {
       "maxDuration": 120

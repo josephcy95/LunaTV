@@ -5,7 +5,6 @@
  * - Provides minimal fallback jar when all fail (still 200 to avoid TVBox unreachable)
  */
 import crypto from 'crypto';
-import { fetchWithValidatedRedirects, readArrayBufferLimited } from './proxy-security';
 import { DEFAULT_USER_AGENT } from './user-agent';
 
 // 高可用 JAR 候选源配置 - 针对不同网络环境优化
@@ -71,7 +70,11 @@ function isLikelyDomesticEnvironment(): boolean {
   try {
     // 检查时区（简单判断）
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz.includes('Asia/Shanghai') || tz.includes('Asia/Chongqing') || tz.includes('Asia/Beijing')) {
+    if (
+      tz.includes('Asia/Shanghai') ||
+      tz.includes('Asia/Chongqing') ||
+      tz.includes('Asia/Beijing')
+    ) {
       return true;
     }
 
@@ -99,12 +102,15 @@ const FAILURE_RESET_INTERVAL = 2 * 60 * 60 * 1000; // 2小时重置失败记录
 async function fetchRemote(
   url: string,
   timeoutMs = 12000,
-  retryCount = 2
+  retryCount = 2,
 ): Promise<Buffer | null> {
   let _lastError: string | null = null;
 
   for (let attempt = 0; attempt <= retryCount; attempt++) {
     try {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort('timeout'), timeoutMs);
+
       // 根据源类型优化请求头
       const headers: Record<string, string> = {
         Accept: '*/*',
@@ -117,8 +123,7 @@ async function fetchRemote(
       if (url.includes('github') || url.includes('raw.githubusercontent')) {
         headers['User-Agent'] = 'curl/7.68.0'; // GitHub 友好
       } else if (url.includes('gitee') || url.includes('gitcode')) {
-        headers['User-Agent'] =
-          DEFAULT_USER_AGENT; // 国内源友好
+        headers['User-Agent'] = DEFAULT_USER_AGENT; // 国内源友好
       } else if (url.includes('jsdelivr') || url.includes('fastly')) {
         headers['User-Agent'] = 'LunaTV/1.0'; // CDN 源简洁标识
       } else {
@@ -126,11 +131,13 @@ async function fetchRemote(
       }
 
       // 直接获取文件内容，跳过 HEAD 检查（减少请求次数）
-      const resp = await fetchWithValidatedRedirects(
-        url,
-        { method: 'GET', headers },
-        { timeoutMs },
-      );
+      const resp = await fetch(url, {
+        method: 'GET',
+        signal: controller.signal,
+        headers,
+        redirect: 'follow', // 允许重定向
+      });
+      clearTimeout(id);
 
       if (!resp.ok) {
         _lastError = `HTTP ${resp.status}: ${resp.statusText}`;
@@ -140,7 +147,7 @@ async function fetchRemote(
         continue; // 其他错误尝试重试
       }
 
-      const ab = await readArrayBufferLimited(resp, 20 * 1024 * 1024);
+      const ab = await resp.arrayBuffer();
       if (ab.byteLength < 1000) {
         _lastError = `File too small: ${ab.byteLength} bytes`;
         continue;
@@ -153,7 +160,9 @@ async function fetchRemote(
         continue;
       }
 
-      console.log(`[SpiderJar] Successfully fetched ${url}: ${ab.byteLength} bytes`);
+      console.log(
+        `[SpiderJar] Successfully fetched ${url}: ${ab.byteLength} bytes`,
+      );
       return Buffer.from(ab);
     } catch (error: unknown) {
       _lastError = error instanceof Error ? error.message : 'fetch error';
@@ -161,14 +170,16 @@ async function fetchRemote(
       // 网络错误等待后重试
       if (attempt < retryCount) {
         await new Promise((resolve) =>
-          setTimeout(resolve, 1000 * (attempt + 1))
+          setTimeout(resolve, 1000 * (attempt + 1)),
         );
       }
     }
   }
 
   // 记录最终失败
-  console.warn(`[SpiderJar] Failed to fetch ${url} after ${retryCount + 1} attempts: ${_lastError}`);
+  console.warn(
+    `[SpiderJar] Failed to fetch ${url} after ${retryCount + 1} attempts: ${_lastError}`,
+  );
   return null;
 }
 
@@ -224,7 +235,7 @@ export function getSpiderJarByMd5(expectedMd5: string): SpiderJarInfo | null {
 
 async function loadSpiderJar(
   forceRefresh = false,
-  customUrl?: string
+  customUrl?: string,
 ): Promise<SpiderJarInfo> {
   const now = Date.now();
 
@@ -306,7 +317,7 @@ async function loadSpiderJar(
 
 export async function getSpiderJar(
   forceRefresh = false,
-  customUrl?: string
+  customUrl?: string,
 ): Promise<SpiderJarInfo> {
   // 自定义 URL 请求不参与去重/缓存合并，直接独立加载
   if (customUrl) {

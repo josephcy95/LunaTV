@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
-import { fetchWithValidatedRedirects, validateProxyTargetUrl } from '@/lib/proxy-security';
+import { validateProxyTargetUrl } from '@/lib/proxy-security';
 
 export const runtime = 'nodejs';
 
@@ -41,7 +41,8 @@ export async function OPTIONS() {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const url = searchParams.get('url');
-  const source = searchParams.get('moontv-source') || searchParams.get('decotv-source');
+  const source =
+    searchParams.get('moontv-source') || searchParams.get('decotv-source');
 
   if (!url) {
     return NextResponse.json({ error: 'Missing url' }, { status: 400 });
@@ -54,7 +55,7 @@ export async function GET(request: Request) {
   }
 
   const ua = liveSource.ua || 'AptvPlayer/1.4.10';
-  const decodedUrl = url;
+  const decodedUrl = decodeURIComponent(url);
 
   // SSRF 防护：验证目标 URL
   try {
@@ -63,7 +64,7 @@ export async function GET(request: Request) {
     console.error('[Stream Proxy] SSRF validation failed:', error);
     return NextResponse.json(
       { error: 'Invalid or blocked URL' },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
@@ -83,11 +84,11 @@ export async function GET(request: Request) {
       requestHeaders.set('Range', range);
     }
 
-    const response = await fetchWithValidatedRedirects(
-      decodedUrl,
-      { cache: 'no-cache', headers: requestHeaders },
-      { timeoutMs: 30000 },
-    );
+    const response = await fetch(decodedUrl, {
+      cache: 'no-cache',
+      redirect: 'follow',
+      headers: requestHeaders,
+    });
 
     if (!response.ok && response.status !== 206) {
       return NextResponse.json(

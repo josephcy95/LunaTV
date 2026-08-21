@@ -5,12 +5,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { clearConfigCache, getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-import { validateProxyTargetUrl } from '@/lib/proxy-security';
 
 export const runtime = 'nodejs';
 
 // 支持的操作类型
-type Action = 'add' | 'update' | 'disable' | 'enable' | 'delete' | 'sort' | 'batch_disable' | 'batch_enable' | 'batch_delete' | 'update_adult' | 'batch_mark_adult' | 'batch_unmark_adult' | 'batch_mark_shortdrama' | 'batch_mark_vod' | 'update_weight';
+type Action =
+  | 'add'
+  | 'update'
+  | 'disable'
+  | 'enable'
+  | 'delete'
+  | 'sort'
+  | 'batch_disable'
+  | 'batch_enable'
+  | 'batch_delete'
+  | 'update_adult'
+  | 'batch_mark_adult'
+  | 'batch_unmark_adult'
+  | 'batch_mark_shortdrama'
+  | 'batch_mark_vod'
+  | 'update_weight';
 
 interface BaseBody {
   action?: Action;
@@ -23,7 +37,7 @@ export async function POST(request: NextRequest) {
       {
         error: '不支持本地存储进行管理员配置',
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -38,7 +52,23 @@ export async function POST(request: NextRequest) {
     const username = authInfo.username;
 
     // 基础校验
-    const ACTIONS: Action[] = ['add', 'update', 'disable', 'enable', 'delete', 'sort', 'batch_disable', 'batch_enable', 'batch_delete', 'update_adult', 'batch_mark_adult', 'batch_unmark_adult', 'batch_mark_shortdrama', 'batch_mark_vod', 'update_weight'];
+    const ACTIONS: Action[] = [
+      'add',
+      'update',
+      'disable',
+      'enable',
+      'delete',
+      'sort',
+      'batch_disable',
+      'batch_enable',
+      'batch_delete',
+      'update_adult',
+      'batch_mark_adult',
+      'batch_unmark_adult',
+      'batch_mark_shortdrama',
+      'batch_mark_vod',
+      'update_weight',
+    ];
     if (!username || !action || !ACTIONS.includes(action)) {
       return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
     }
@@ -49,7 +79,7 @@ export async function POST(request: NextRequest) {
     // 权限与身份校验
     if (username !== process.env.USERNAME) {
       const userEntry = adminConfig.UserConfig.Users.find(
-        (u) => u.username === username
+        (u) => u.username === username,
       );
       if (!userEntry || userEntry.role !== 'admin' || userEntry.banned) {
         return NextResponse.json({ error: '权限不足' }, { status: 401 });
@@ -73,16 +103,6 @@ export async function POST(request: NextRequest) {
         if (adminConfig.SourceConfig.some((s) => s.key === key)) {
           return NextResponse.json({ error: '该源已存在' }, { status: 400 });
         }
-        // 校验采集源地址，拒绝内网/环回等 SSRF 目标，避免管理员（或被盗账号）
-        // 把内部服务地址存进配置，后续被搜索/详情/测速等运行时请求悄悄打到内网
-        try {
-          await validateProxyTargetUrl(api);
-        } catch (err) {
-          return NextResponse.json(
-            { error: `采集源地址不合法：${(err as Error).message}` },
-            { status: 400 }
-          );
-        }
         adminConfig.SourceConfig.push({
           key,
           name,
@@ -92,7 +112,8 @@ export async function POST(request: NextRequest) {
           disabled: false,
           is_adult: is_adult || false,
           type: type || 'vod',
-          weight: weight !== undefined ? Math.max(0, Math.min(100, weight)) : 50,
+          weight:
+            weight !== undefined ? Math.max(0, Math.min(100, weight)) : 50,
         });
         break;
       }
@@ -113,22 +134,13 @@ export async function POST(request: NextRequest) {
         if (!entry) {
           return NextResponse.json({ error: '源不存在' }, { status: 404 });
         }
-        if (api) {
-          try {
-            await validateProxyTargetUrl(api);
-          } catch (err) {
-            return NextResponse.json(
-              { error: `采集源地址不合法：${(err as Error).message}` },
-              { status: 400 }
-            );
-          }
-        }
         if (name) entry.name = name;
         if (api) entry.api = api;
         if (detail !== undefined) entry.detail = detail;
         if (is_adult !== undefined) entry.is_adult = is_adult;
         if (type !== undefined) entry.type = type;
-        if (weight !== undefined) entry.weight = Math.max(0, Math.min(100, weight));
+        if (weight !== undefined)
+          entry.weight = Math.max(0, Math.min(100, weight));
         break;
       }
       case 'disable': {
@@ -167,17 +179,17 @@ export async function POST(request: NextRequest) {
         // 检查并清理用户组和用户的权限数组
         // 清理用户组权限
         if (adminConfig.UserConfig.Tags) {
-          adminConfig.UserConfig.Tags.forEach(tag => {
+          adminConfig.UserConfig.Tags.forEach((tag) => {
             if (tag.enabledApis) {
-              tag.enabledApis = tag.enabledApis.filter(api => api !== key);
+              tag.enabledApis = tag.enabledApis.filter((api) => api !== key);
             }
           });
         }
 
         // 清理用户权限
-        adminConfig.UserConfig.Users.forEach(user => {
+        adminConfig.UserConfig.Users.forEach((user) => {
           if (user.enabledApis) {
-            user.enabledApis = user.enabledApis.filter(api => api !== key);
+            user.enabledApis = user.enabledApis.filter((api) => api !== key);
           }
         });
         break;
@@ -185,9 +197,12 @@ export async function POST(request: NextRequest) {
       case 'batch_disable': {
         const { keys } = body as { keys?: string[] };
         if (!Array.isArray(keys) || keys.length === 0) {
-          return NextResponse.json({ error: '缺少 keys 参数或为空' }, { status: 400 });
+          return NextResponse.json(
+            { error: '缺少 keys 参数或为空' },
+            { status: 400 },
+          );
         }
-        keys.forEach(key => {
+        keys.forEach((key) => {
           const entry = adminConfig.SourceConfig.find((s) => s.key === key);
           if (entry) {
             entry.disabled = true;
@@ -198,9 +213,12 @@ export async function POST(request: NextRequest) {
       case 'batch_enable': {
         const { keys } = body as { keys?: string[] };
         if (!Array.isArray(keys) || keys.length === 0) {
-          return NextResponse.json({ error: '缺少 keys 参数或为空' }, { status: 400 });
+          return NextResponse.json(
+            { error: '缺少 keys 参数或为空' },
+            { status: 400 },
+          );
         }
-        keys.forEach(key => {
+        keys.forEach((key) => {
           const entry = adminConfig.SourceConfig.find((s) => s.key === key);
           if (entry) {
             entry.disabled = false;
@@ -211,16 +229,19 @@ export async function POST(request: NextRequest) {
       case 'batch_delete': {
         const { keys } = body as { keys?: string[] };
         if (!Array.isArray(keys) || keys.length === 0) {
-          return NextResponse.json({ error: '缺少 keys 参数或为空' }, { status: 400 });
+          return NextResponse.json(
+            { error: '缺少 keys 参数或为空' },
+            { status: 400 },
+          );
         }
         // 过滤掉 from=config 的源，但不报错
-        const keysToDelete = keys.filter(key => {
+        const keysToDelete = keys.filter((key) => {
           const entry = adminConfig.SourceConfig.find((s) => s.key === key);
           return entry && entry.from !== 'config';
         });
 
         // 批量删除
-        keysToDelete.forEach(key => {
+        keysToDelete.forEach((key) => {
           const idx = adminConfig.SourceConfig.findIndex((s) => s.key === key);
           if (idx !== -1) {
             adminConfig.SourceConfig.splice(idx, 1);
@@ -231,17 +252,21 @@ export async function POST(request: NextRequest) {
         if (keysToDelete.length > 0) {
           // 清理用户组权限
           if (adminConfig.UserConfig.Tags) {
-            adminConfig.UserConfig.Tags.forEach(tag => {
+            adminConfig.UserConfig.Tags.forEach((tag) => {
               if (tag.enabledApis) {
-                tag.enabledApis = tag.enabledApis.filter(api => !keysToDelete.includes(api));
+                tag.enabledApis = tag.enabledApis.filter(
+                  (api) => !keysToDelete.includes(api),
+                );
               }
             });
           }
 
           // 清理用户权限
-          adminConfig.UserConfig.Users.forEach(user => {
+          adminConfig.UserConfig.Users.forEach((user) => {
             if (user.enabledApis) {
-              user.enabledApis = user.enabledApis.filter(api => !keysToDelete.includes(api));
+              user.enabledApis = user.enabledApis.filter(
+                (api) => !keysToDelete.includes(api),
+              );
             }
           });
         }
@@ -252,7 +277,7 @@ export async function POST(request: NextRequest) {
         if (!Array.isArray(order)) {
           return NextResponse.json(
             { error: '排序列表格式错误' },
-            { status: 400 }
+            { status: 400 },
           );
         }
         const map = new Map(adminConfig.SourceConfig.map((s) => [s.key, s]));
@@ -286,9 +311,12 @@ export async function POST(request: NextRequest) {
       case 'batch_mark_adult': {
         const { keys } = body as { keys?: string[] };
         if (!Array.isArray(keys) || keys.length === 0) {
-          return NextResponse.json({ error: '缺少 keys 参数或为空' }, { status: 400 });
+          return NextResponse.json(
+            { error: '缺少 keys 参数或为空' },
+            { status: 400 },
+          );
         }
-        keys.forEach(key => {
+        keys.forEach((key) => {
           const entry = adminConfig.SourceConfig.find((s) => s.key === key);
           if (entry) {
             entry.is_adult = true;
@@ -299,9 +327,12 @@ export async function POST(request: NextRequest) {
       case 'batch_unmark_adult': {
         const { keys } = body as { keys?: string[] };
         if (!Array.isArray(keys) || keys.length === 0) {
-          return NextResponse.json({ error: '缺少 keys 参数或为空' }, { status: 400 });
+          return NextResponse.json(
+            { error: '缺少 keys 参数或为空' },
+            { status: 400 },
+          );
         }
-        keys.forEach(key => {
+        keys.forEach((key) => {
           const entry = adminConfig.SourceConfig.find((s) => s.key === key);
           if (entry) {
             entry.is_adult = false;
@@ -312,9 +343,12 @@ export async function POST(request: NextRequest) {
       case 'batch_mark_shortdrama': {
         const { keys } = body as { keys?: string[] };
         if (!Array.isArray(keys) || keys.length === 0) {
-          return NextResponse.json({ error: '缺少 keys 参数或为空' }, { status: 400 });
+          return NextResponse.json(
+            { error: '缺少 keys 参数或为空' },
+            { status: 400 },
+          );
         }
-        keys.forEach(key => {
+        keys.forEach((key) => {
           const entry = adminConfig.SourceConfig.find((s) => s.key === key);
           if (entry) {
             entry.type = 'shortdrama';
@@ -325,9 +359,12 @@ export async function POST(request: NextRequest) {
       case 'batch_mark_vod': {
         const { keys } = body as { keys?: string[] };
         if (!Array.isArray(keys) || keys.length === 0) {
-          return NextResponse.json({ error: '缺少 keys 参数或为空' }, { status: 400 });
+          return NextResponse.json(
+            { error: '缺少 keys 参数或为空' },
+            { status: 400 },
+          );
         }
-        keys.forEach(key => {
+        keys.forEach((key) => {
           const entry = adminConfig.SourceConfig.find((s) => s.key === key);
           if (entry) {
             entry.type = 'vod';
@@ -341,7 +378,10 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: '缺少 key 参数' }, { status: 400 });
         }
         if (weight === undefined || typeof weight !== 'number') {
-          return NextResponse.json({ error: '缺少有效的 weight 参数' }, { status: 400 });
+          return NextResponse.json(
+            { error: '缺少有效的 weight 参数' },
+            { status: 400 },
+          );
         }
         const entry = adminConfig.SourceConfig.find((s) => s.key === key);
         if (!entry) {
@@ -356,7 +396,7 @@ export async function POST(request: NextRequest) {
 
     // 持久化到存储
     await db.saveAdminConfig(adminConfig);
-    
+
     // 清除配置缓存，强制下次重新从数据库读取
     clearConfigCache();
 
@@ -366,7 +406,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Cache-Control': 'no-store',
         },
-      }
+      },
     );
   } catch (error) {
     console.error('视频源管理操作失败:', error);
@@ -375,7 +415,7 @@ export async function POST(request: NextRequest) {
         error: '视频源管理操作失败',
         details: (error as Error).message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

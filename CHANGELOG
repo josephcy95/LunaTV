@@ -1,3 +1,9 @@
+## [6.6.4] - 2026-08-22
+
+### Fixed
+
+- Rolled back the upstream security and playback synchronization from `3a1954fd` after reports of increased VOD buffering, restoring the previous known-good playback and proxy behavior.
+
 ## [6.6.3] - 2026-06-26
 
 ### Added

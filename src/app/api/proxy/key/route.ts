@@ -1,20 +1,38 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { getConfig } from "@/lib/config";
-import { fetchWithValidatedRedirects, readArrayBufferLimited, validateProxyTargetUrl } from "@/lib/proxy-security";
-import { DEFAULT_USER_AGENT } from "@/lib/user-agent";
+import { getConfig } from '@/lib/config';
 
 export const runtime = 'nodejs';
 
-// AES 密钥文件正常只有 16 字节，给个宽松上限防御异常上游
-const MAX_KEY_BYTES = 1 * 1024 * 1024; // 1MB
-
 // Key 缓存管理
-const keyCache = new Map<string, { data: ArrayBuffer; timestamp: number; etag?: string }>();
+const keyCache = new Map<
+  string,
+  { data: ArrayBuffer; timestamp: number; etag?: string }
+>();
 const KEY_CACHE_TTL = 300000; // 5分钟
 const MAX_CACHE_SIZE = 200;
+
+// 连接池管理
+import * as https from 'https';
+import * as http from 'http';
+
+const httpsAgent = new https.Agent({
+  keepAlive: true,
+  maxSockets: 30,
+  maxFreeSockets: 10,
+  timeout: 15000,
+  keepAliveMsecs: 30000,
+});
+
+const httpAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: 30,
+  maxFreeSockets: 10,
+  timeout: 15000,
+  keepAliveMsecs: 30000,
+});
 
 // 性能统计
 const keyStats = {
@@ -29,7 +47,7 @@ const keyStats = {
 function cleanupExpiredCache() {
   const now = Date.now();
   let cleanedCount = 0;
-  
+
   // 使用 Array.from() 来避免迭代器问题
   const cacheEntries = Array.from(keyCache.entries());
   for (const [key, value] of cacheEntries) {
@@ -38,15 +56,17 @@ function cleanupExpiredCache() {
       cleanedCount++;
     }
   }
-  
+
   // 如果缓存仍然过大，删除最老的条目
   if (keyCache.size > MAX_CACHE_SIZE) {
-    const entries = Array.from(keyCache.entries()).sort((a, b) => a[1].timestamp - b[1].timestamp);
+    const entries = Array.from(keyCache.entries()).sort(
+      (a, b) => a[1].timestamp - b[1].timestamp,
+    );
     const toDelete = entries.slice(0, entries.length - MAX_CACHE_SIZE);
     toDelete.forEach(([key]) => keyCache.delete(key));
     cleanedCount += toDelete.length;
   }
-  
+
   if (cleanedCount > 0 && process.env.NODE_ENV === 'development') {
     console.log(`Cleaned ${cleanedCount} expired key cache entries`);
   }
@@ -59,80 +79,83 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const url = searchParams.get('url');
   const source = searchParams.get('moontv-source');
-  
+
   if (!url) {
     keyStats.errors++;
     return NextResponse.json({ error: 'Missing url' }, { status: 400 });
   }
 
   const config = await getConfig();
-  // 点播场景不携带 moontv-source（该参数只用于直播源的 UA 定制），此时使用默认浏览器 UA。
-  let ua = DEFAULT_USER_AGENT;
-  if (source) {
-    const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
-    if (!liveSource) {
-      keyStats.errors++;
-      return NextResponse.json({ error: 'Source not found' }, { status: 404 });
-    }
-    ua = liveSource.ua || ua;
-  }
-
-  let decodedUrl: string;
-  try {
-    decodedUrl = await validateProxyTargetUrl(url);
-  } catch {
+  const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
+  if (!liveSource) {
     keyStats.errors++;
-    return NextResponse.json({ error: 'Invalid or blocked URL' }, { status: 403 });
+    return NextResponse.json({ error: 'Source not found' }, { status: 404 });
   }
+  const ua = liveSource.ua || 'AptvPlayer/1.4.10';
+
+  const decodedUrl = decodeURIComponent(url);
   const cacheKey = `${source}-${decodedUrl}`;
-  
+
   // 检查缓存
   const cached = keyCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < KEY_CACHE_TTL) {
     keyStats.cacheHits++;
-    
+
     const responseTime = Date.now() - startTime;
-    keyStats.avgResponseTime = (keyStats.avgResponseTime * (keyStats.requests - 1) + responseTime) / keyStats.requests;
-    
+    keyStats.avgResponseTime =
+      (keyStats.avgResponseTime * (keyStats.requests - 1) + responseTime) /
+      keyStats.requests;
+
     return new Response(cached.data, {
       headers: {
         'Content-Type': 'application/octet-stream',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, HEAD',
-        'Access-Control-Allow-Headers': 'Content-Type, Range, Origin, Accept, User-Agent',
+        'Access-Control-Allow-Headers':
+          'Content-Type, Range, Origin, Accept, User-Agent',
         'Cache-Control': 'public, max-age=300, s-maxage=300',
         'X-Cache': 'HIT',
         'Content-Length': cached.data.byteLength.toString(),
-        ...(cached.etag && { 'ETag': cached.etag })
+        ...(cached.etag && { ETag: cached.etag }),
       },
     });
   }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
 
   try {
     if (process.env.NODE_ENV === 'development') {
       console.log(`Fetching key: ${decodedUrl}`);
     }
-    
-    const response = await fetchWithValidatedRedirects(
-      decodedUrl,
-      {
-        headers: {
-          'User-Agent': ua,
-          'Accept': 'application/octet-stream, */*',
-          'Cache-Control': 'no-cache',
-          ...(cached?.etag && { 'If-None-Match': cached.etag })
-        },
+
+    const isHttps = decodedUrl.startsWith('https:');
+    const agent = isHttps ? httpsAgent : httpAgent;
+
+    const response = await fetch(decodedUrl, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': ua,
+        Accept: 'application/octet-stream, */*',
+        'Cache-Control': 'no-cache',
+        ...(cached?.etag && { 'If-None-Match': cached.etag }),
       },
-      { timeoutMs: 10000 },
-    );
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore - Node.js specific option
+      agent: typeof window === 'undefined' ? agent : undefined,
+    });
+
+    clearTimeout(timeoutId);
 
     // 如果是 304 Not Modified，返回缓存的数据
     if (response.status === 304 && cached) {
       keyStats.cacheHits++;
-      
+
       const responseTime = Date.now() - startTime;
-      keyStats.avgResponseTime = (keyStats.avgResponseTime * (keyStats.requests - 1) + responseTime) / keyStats.requests;
-      
+      keyStats.avgResponseTime =
+        (keyStats.avgResponseTime * (keyStats.requests - 1) + responseTime) /
+        keyStats.requests;
+
       return new Response(cached.data, {
         headers: {
           'Content-Type': 'application/octet-stream',
@@ -155,72 +178,94 @@ export async function GET(request: Request) {
         errorMessage = `上游资源拒绝访问（${upstreamStatus}），已尝试自动补齐鉴权和防盗链请求头`;
       }
 
-      return NextResponse.json({
-        error: errorMessage
-      }, { status: response.status >= 500 ? 500 : response.status });
+      return NextResponse.json(
+        {
+          error: errorMessage,
+        },
+        { status: response.status >= 500 ? 500 : response.status },
+      );
     }
-    
-    const keyData = await readArrayBufferLimited(response, MAX_KEY_BYTES);
+
+    const keyData = await response.arrayBuffer();
     const etag = response.headers.get('ETag');
-    
+
     // 缓存 key 数据
-    keyCache.set(cacheKey, { 
-      data: keyData, 
+    keyCache.set(cacheKey, {
+      data: keyData,
       timestamp: Date.now(),
-      etag: etag || undefined
+      etag: etag || undefined,
     });
-    
+
     // 定期清理缓存
     if (keyCache.size > MAX_CACHE_SIZE || keyStats.requests % 50 === 0) {
       cleanupExpiredCache();
     }
-    
+
     // 更新统计信息
     keyStats.totalBytes += keyData.byteLength;
     const responseTime = Date.now() - startTime;
-    keyStats.avgResponseTime = (keyStats.avgResponseTime * (keyStats.requests - 1) + responseTime) / keyStats.requests;
-    
+    keyStats.avgResponseTime =
+      (keyStats.avgResponseTime * (keyStats.requests - 1) + responseTime) /
+      keyStats.requests;
+
     return new Response(keyData, {
       headers: {
         'Content-Type': 'application/octet-stream',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, HEAD',
-        'Access-Control-Allow-Headers': 'Content-Type, Range, Origin, Accept, User-Agent',
-        'Access-Control-Expose-Headers': 'Content-Length, X-Cache, X-Upstream-Url',
+        'Access-Control-Allow-Headers':
+          'Content-Type, Range, Origin, Accept, User-Agent',
+        'Access-Control-Expose-Headers':
+          'Content-Length, X-Cache, X-Upstream-Url',
         'Cache-Control': 'public, max-age=300, s-maxage=300',
         'X-Cache': 'MISS',
         'Content-Length': keyData.byteLength.toString(),
-        ...(etag && { 'ETag': etag }),
-        ...(response.url && { 'X-Upstream-Url': response.url })
+        ...(etag && { ETag: etag }),
+        ...(response.url && { 'X-Upstream-Url': response.url }),
       },
     });
-    
   } catch (error: any) {
     keyStats.errors++;
-    
+    clearTimeout(timeoutId);
+
     // 处理不同类型的错误
     if (error.name === 'AbortError') {
-      return NextResponse.json({ error: 'Key request timeout' }, { status: 408 });
+      return NextResponse.json(
+        { error: 'Key request timeout' },
+        { status: 408 },
+      );
     }
-    
+
     if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-      return NextResponse.json({ error: 'Network connection failed' }, { status: 503 });
+      return NextResponse.json(
+        { error: 'Network connection failed' },
+        { status: 503 },
+      );
     }
 
     if (process.env.NODE_ENV === 'development') {
       console.error('Key proxy error:', error);
     }
-    return NextResponse.json({ 
-      error: 'Failed to fetch key',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    }, { status: 500 });
-    
+    return NextResponse.json(
+      {
+        error: 'Failed to fetch key',
+        details:
+          process.env.NODE_ENV === 'development' ? error.message : undefined,
+      },
+      { status: 500 },
+    );
   } finally {
-    
+    clearTimeout(timeoutId);
+
     // 定期打印统计信息
-    if (keyStats.requests % 100 === 0 && process.env.NODE_ENV === 'development') {
-      const hitRate = keyStats.cacheHits / keyStats.requests * 100;
-      console.log(`Key Proxy Stats - Requests: ${keyStats.requests}, Cache Hits: ${keyStats.cacheHits} (${hitRate.toFixed(1)}%), Errors: ${keyStats.errors}, Avg Time: ${keyStats.avgResponseTime.toFixed(2)}ms, Cache Size: ${keyCache.size}, Total: ${(keyStats.totalBytes / 1024).toFixed(2)}KB`);
+    if (
+      keyStats.requests % 100 === 0 &&
+      process.env.NODE_ENV === 'development'
+    ) {
+      const hitRate = (keyStats.cacheHits / keyStats.requests) * 100;
+      console.log(
+        `Key Proxy Stats - Requests: ${keyStats.requests}, Cache Hits: ${keyStats.cacheHits} (${hitRate.toFixed(1)}%), Errors: ${keyStats.errors}, Avg Time: ${keyStats.avgResponseTime.toFixed(2)}ms, Cache Size: ${keyCache.size}, Total: ${(keyStats.totalBytes / 1024).toFixed(2)}KB`,
+      );
     }
   }
 }

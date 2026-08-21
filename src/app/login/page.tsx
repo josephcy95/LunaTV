@@ -2,7 +2,14 @@
 
 'use client';
 
-import { AlertCircle, CheckCircle, User, Lock, UserPlus, Send } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle,
+  User,
+  Lock,
+  UserPlus,
+  Send,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -13,7 +20,12 @@ import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 import BrandMark from '@/components/BrandMark';
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { OIDCProviderLogo, detectProvider, getProviderButtonStyle, getProviderButtonText } from '@/components/OIDCProviderLogos';
+import {
+  OIDCProviderLogo,
+  detectProvider,
+  getProviderButtonStyle,
+  getProviderButtonText,
+} from '@/components/OIDCProviderLogos';
 
 function VersionDisplay() {
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null);
@@ -39,12 +51,13 @@ function VersionDisplay() {
       <span className='font-mono'>v{CURRENT_VERSION}</span>
       {!isChecking && updateStatus !== UpdateStatus.FETCH_FAILED && (
         <div
-          className={`flex items-center gap-1.5 ${updateStatus === UpdateStatus.HAS_UPDATE
-            ? 'text-yellow-600 dark:text-yellow-400'
-            : updateStatus === UpdateStatus.NO_UPDATE
-              ? 'text-green-600 dark:text-green-400'
-              : ''
-            }`}
+          className={`flex items-center gap-1.5 ${
+            updateStatus === UpdateStatus.HAS_UPDATE
+              ? 'text-yellow-600 dark:text-yellow-400'
+              : updateStatus === UpdateStatus.NO_UPDATE
+                ? 'text-green-600 dark:text-green-400'
+                : ''
+          }`}
         >
           {updateStatus === UpdateStatus.HAS_UPDATE && (
             <>
@@ -71,7 +84,8 @@ function LoginPageClient() {
   const [username, setUsername] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const shouldAskUsername = process.env.NEXT_PUBLIC_STORAGE_TYPE !== 'localstorage';
+  const shouldAskUsername =
+    process.env.NEXT_PUBLIC_STORAGE_TYPE !== 'localstorage';
 
   // Telegram Magic Link 状态
   const [telegramLoading, setTelegramLoading] = useState(false);
@@ -80,12 +94,14 @@ function LoginPageClient() {
   const [telegramUsername, setTelegramUsername] = useState('');
 
   // OIDC 登录状态
-  const [oidcProviders, setOidcProviders] = useState<Array<{
-    id: string;
-    name: string;
-    buttonText: string;
-    issuer: string;
-  }>>([]);
+  const [oidcProviders, setOidcProviders] = useState<
+    Array<{
+      id: string;
+      name: string;
+      buttonText: string;
+      issuer: string;
+    }>
+  >([]);
   const [oidcEnabled, setOidcEnabled] = useState(false);
   const [oidcButtonText, setOidcButtonText] = useState('使用OIDC登录');
   const [oidcIssuer, setOidcIssuer] = useState<string>('');
@@ -141,7 +157,7 @@ function LoginPageClient() {
           await fetch('/api/user/my-stats', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ loginTime })
+            body: JSON.stringify({ loginTime }),
           });
           localStorage.setItem('lastRecordedLogin', loginTime.toString());
         } catch (error) {
@@ -196,15 +212,30 @@ function LoginPageClient() {
   };
 
   return (
-    <div translate="no" className='fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-3 py-8 sm:px-4 sm:py-10'>
+    <div
+      translate='no'
+      className='fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-3 py-8 sm:px-4 sm:py-10'
+    >
       {/* 月夜背景：大月晕 + 远景星点 */}
-      <div aria-hidden='true' className='pointer-events-none absolute inset-0 overflow-hidden'>
+      <div
+        aria-hidden='true'
+        className='pointer-events-none absolute inset-0 overflow-hidden'
+      >
         <div className='absolute -top-40 left-1/2 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full bg-green-400/14 blur-[110px] dark:bg-green-400/10' />
         <div className='absolute bottom-[-12rem] right-[-8rem] h-[26rem] w-[26rem] rounded-full bg-blue-500/10 blur-[100px] dark:bg-indigo-500/12' />
         <span className='animate-moon-pulse absolute left-[16%] top-[22%] h-1 w-1 rounded-full bg-green-400/80 shadow-[0_0_8px_rgba(230,185,74,0.9)]' />
-        <span className='animate-moon-pulse absolute right-[20%] top-[30%] h-0.5 w-0.5 rounded-full bg-gray-300/90' style={{ animationDelay: '0.9s' }} />
-        <span className='animate-moon-pulse absolute left-[30%] bottom-[24%] h-0.5 w-0.5 rounded-full bg-gray-300/70' style={{ animationDelay: '1.6s' }} />
-        <span className='animate-moon-pulse absolute right-[32%] bottom-[16%] h-1 w-1 rounded-full bg-green-300/70 shadow-[0_0_6px_rgba(230,185,74,0.7)]' style={{ animationDelay: '2.2s' }} />
+        <span
+          className='animate-moon-pulse absolute right-[20%] top-[30%] h-0.5 w-0.5 rounded-full bg-gray-300/90'
+          style={{ animationDelay: '0.9s' }}
+        />
+        <span
+          className='animate-moon-pulse absolute left-[30%] bottom-[24%] h-0.5 w-0.5 rounded-full bg-gray-300/70'
+          style={{ animationDelay: '1.6s' }}
+        />
+        <span
+          className='animate-moon-pulse absolute right-[32%] bottom-[16%] h-1 w-1 rounded-full bg-green-300/70 shadow-[0_0_6px_rgba(230,185,74,0.7)]'
+          style={{ animationDelay: '2.2s' }}
+        />
       </div>
 
       <div className='absolute top-3 right-3 sm:top-4 sm:right-4 z-20'>
@@ -223,7 +254,10 @@ function LoginPageClient() {
         <form onSubmit={handleSubmit} className='space-y-4'>
           {shouldAskUsername && (
             <div>
-              <label htmlFor='username' className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
+              <label
+                htmlFor='username'
+                className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'
+              >
                 用户名
               </label>
               <div className='relative'>
@@ -244,7 +278,10 @@ function LoginPageClient() {
           )}
 
           <div>
-            <label htmlFor='password' className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
+            <label
+              htmlFor='password'
+              className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'
+            >
               密码
             </label>
             <div className='relative'>
@@ -264,7 +301,7 @@ function LoginPageClient() {
           </div>
 
           {error && (
-            <div role='alert' className='flex items-center gap-2 rounded-xl border border-red-400/35 bg-red-50/80 p-3 dark:bg-red-500/10 animate-shake-in'>
+            <div className='flex items-center gap-2 rounded-xl border border-red-400/35 bg-red-50/80 p-3 dark:bg-red-500/10'>
               <AlertCircle className='h-4 w-4 text-red-600 dark:text-red-400 shrink-0' />
               <p className='text-sm text-red-600 dark:text-red-400'>{error}</p>
             </div>
@@ -343,7 +380,12 @@ function LoginPageClient() {
                 </p>
                 <p className='text-xs text-blue-600 dark:text-blue-300'>
                   如果没有自动打开，请点击{' '}
-                  <a href={telegramDeepLink} target='_blank' rel='noopener noreferrer' className='underline font-semibold'>
+                  <a
+                    href={telegramDeepLink}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='underline font-semibold'
+                  >
                     这里
                   </a>
                 </p>
@@ -360,7 +402,9 @@ function LoginPageClient() {
                 <div className='w-full border-t border-gray-300 dark:border-gray-600'></div>
               </div>
               <div className='relative flex justify-center text-sm'>
-                <span className='rounded-full border border-gray-900/10 bg-white/80 px-3 py-0.5 text-xs text-gray-500 backdrop-blur-sm dark:border-white/10 dark:bg-gray-900/80 dark:text-gray-400'>或</span>
+                <span className='rounded-full border border-gray-900/10 bg-white/80 px-3 py-0.5 text-xs text-gray-500 backdrop-blur-sm dark:border-white/10 dark:bg-gray-900/80 dark:text-gray-400'>
+                  或
+                </span>
               </div>
             </div>
 
@@ -368,18 +412,42 @@ function LoginPageClient() {
               <div className='mt-3 space-y-2'>
                 {oidcProviders.map((provider) => {
                   const providerId = provider.id.toLowerCase();
-                  const detectedProvider = ['google', 'github', 'microsoft', 'facebook', 'wechat', 'apple', 'linuxdo'].includes(providerId)
-                    ? (providerId as 'google' | 'github' | 'microsoft' | 'facebook' | 'wechat' | 'apple' | 'linuxdo')
+                  const detectedProvider = [
+                    'google',
+                    'github',
+                    'microsoft',
+                    'facebook',
+                    'wechat',
+                    'apple',
+                    'linuxdo',
+                  ].includes(providerId)
+                    ? (providerId as
+                        | 'google'
+                        | 'github'
+                        | 'microsoft'
+                        | 'facebook'
+                        | 'wechat'
+                        | 'apple'
+                        | 'linuxdo')
                     : detectProvider(provider.issuer || provider.buttonText);
                   const buttonStyle = getProviderButtonStyle(detectedProvider);
-                  const customText = provider.buttonText && provider.buttonText !== '使用OIDC登录' ? provider.buttonText : undefined;
-                  const buttonText = getProviderButtonText(detectedProvider, customText);
+                  const customText =
+                    provider.buttonText &&
+                    provider.buttonText !== '使用OIDC登录'
+                      ? provider.buttonText
+                      : undefined;
+                  const buttonText = getProviderButtonText(
+                    detectedProvider,
+                    customText,
+                  );
 
                   return (
                     <button
                       key={provider.id}
                       type='button'
-                      onClick={() => window.location.href = `/api/auth/oidc/login?provider=${provider.id}`}
+                      onClick={() =>
+                        (window.location.href = `/api/auth/oidc/login?provider=${provider.id}`)
+                      }
                       className={`w-full inline-flex justify-center items-center rounded-lg py-2.5 text-sm font-semibold transition-colors ${buttonStyle}`}
                     >
                       <OIDCProviderLogo provider={detectedProvider} />
@@ -392,13 +460,18 @@ function LoginPageClient() {
               (() => {
                 const provider = detectProvider(oidcIssuer || oidcButtonText);
                 const buttonStyle = getProviderButtonStyle(provider);
-                const customText = oidcButtonText && oidcButtonText !== '使用OIDC登录' ? oidcButtonText : undefined;
+                const customText =
+                  oidcButtonText && oidcButtonText !== '使用OIDC登录'
+                    ? oidcButtonText
+                    : undefined;
                 const buttonText = getProviderButtonText(provider, customText);
 
                 return (
                   <button
                     type='button'
-                    onClick={() => window.location.href = '/api/auth/oidc/login'}
+                    onClick={() =>
+                      (window.location.href = '/api/auth/oidc/login')
+                    }
                     className={`mt-3 w-full inline-flex justify-center items-center rounded-lg py-2.5 text-sm font-semibold transition-colors ${buttonStyle}`}
                   >
                     <OIDCProviderLogo provider={provider} />

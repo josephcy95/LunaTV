@@ -1,10 +1,9 @@
 import prettier from 'eslint-config-prettier';
-// eslint-config-next@16 原生导出 flat config 数组，不能再用 FlatCompat 按旧格式加载
 import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import unusedImports from 'eslint-plugin-unused-imports';
 
-export default [
+const config = [
   {
     ignores: ['public/sw.js', 'public/workbox-*.js', 'node_modules/**', '.next/**'],
   },
@@ -21,6 +20,7 @@ export default [
       'no-console': 'warn',
       'react/no-unescaped-entities': 'off',
       'react/display-name': 'off',
+      'react-hooks/set-state-in-effect': 'off',
       'react/jsx-curly-brace-presence': [
         'warn',
         { props: 'never', children: 'never' },
@@ -65,3 +65,5 @@ export default [
     },
   },
 ];
+
+export default config;

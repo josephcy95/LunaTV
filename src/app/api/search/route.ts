@@ -6,7 +6,11 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getCacheTime, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
 import { generateSearchVariants } from '@/lib/downstream';
-import { recordRequest, getDbQueryCount, resetDbQueryCount } from '@/lib/performance-monitor';
+import {
+  recordRequest,
+  getDbQueryCount,
+  resetDbQueryCount,
+} from '@/lib/performance-monitor';
 import {
   buildResolutionFilterFromSearchParams,
   filterSearchResultsByResolution,
@@ -47,7 +51,10 @@ export async function GET(request: NextRequest) {
   if (!query) {
     const cacheTime = await getCacheTime();
     const successResponse = { results: [] };
-    const responseSize = Buffer.byteLength(JSON.stringify(successResponse), 'utf8');
+    const responseSize = Buffer.byteLength(
+      JSON.stringify(successResponse),
+      'utf8',
+    );
 
     recordRequest({
       timestamp: startTime,
@@ -62,17 +69,14 @@ export async function GET(request: NextRequest) {
       filter: 'empty-query',
     });
 
-    return NextResponse.json(
-      successResponse,
-      {
-        headers: {
-          'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
-          'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-          'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-          'Netlify-Vary': 'query',
-        },
-      }
-    );
+    return NextResponse.json(successResponse, {
+      headers: {
+        'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
+        'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
+        'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
+        'Netlify-Vary': 'query',
+      },
+    });
   }
 
   const config = await getConfig();
@@ -86,12 +90,12 @@ export async function GET(request: NextRequest) {
     Promise.race([
       searchFromApi(site, query, searchVariants), // 传入预计算的变体
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`${site.name} timeout`)), 10000)
+        setTimeout(() => reject(new Error(`${site.name} timeout`)), 20000),
       ),
     ]).catch((err) => {
       console.warn(`搜索失败 ${site.name}:`, err.message);
       return []; // 返回空数组而不是抛出错误
-    })
+    }),
   );
 
   try {
@@ -108,13 +112,19 @@ export async function GET(request: NextRequest) {
     }
 
     // 分辨率过滤（resolution 已在 downstream 解析阶段装饰）
-    flattenedResults = filterSearchResultsByResolution(flattenedResults, resolutionFilter);
+    flattenedResults = filterSearchResultsByResolution(
+      flattenedResults,
+      resolutionFilter,
+    );
     const cacheTime = await getCacheTime();
 
     if (flattenedResults.length === 0) {
       // no cache if empty
       const emptyResponse = { results: [] };
-      const responseSize = Buffer.byteLength(JSON.stringify(emptyResponse), 'utf8');
+      const responseSize = Buffer.byteLength(
+        JSON.stringify(emptyResponse),
+        'utf8',
+      );
 
       recordRequest({
         timestamp: startTime,
@@ -122,7 +132,8 @@ export async function GET(request: NextRequest) {
         path: '/api/search',
         statusCode: 200,
         duration: Date.now() - startTime,
-        memoryUsed: (process.memoryUsage().heapUsed - startMemory) / 1024 / 1024,
+        memoryUsed:
+          (process.memoryUsage().heapUsed - startMemory) / 1024 / 1024,
         dbQueries: getDbQueryCount(),
         requestSize: 0,
         responseSize,
@@ -133,7 +144,10 @@ export async function GET(request: NextRequest) {
     }
 
     const successResponse = { results: flattenedResults };
-    const responseSize = Buffer.byteLength(JSON.stringify(successResponse), 'utf8');
+    const responseSize = Buffer.byteLength(
+      JSON.stringify(successResponse),
+      'utf8',
+    );
 
     recordRequest({
       timestamp: startTime,
@@ -148,17 +162,14 @@ export async function GET(request: NextRequest) {
       filter: `query:${query}`,
     });
 
-    return NextResponse.json(
-      successResponse,
-      {
-        headers: {
-          'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
-          'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-          'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-          'Netlify-Vary': 'query',
-        },
-      }
-    );
+    return NextResponse.json(successResponse, {
+      headers: {
+        'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
+        'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
+        'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
+        'Netlify-Vary': 'query',
+      },
+    });
   } catch (error) {
     const errorResponse = { error: '搜索失败' };
     const errorSize = Buffer.byteLength(JSON.stringify(errorResponse), 'utf8');
