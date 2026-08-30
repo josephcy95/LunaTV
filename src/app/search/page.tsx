@@ -496,6 +496,7 @@ function SearchPageClient() {
   const [showResults, setShowResults] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [useFluidSearch, setUseFluidSearch] = useState(true);
+  const [searchSettingsReady, setSearchSettingsReady] = useState(false);
   // 虚拟化开关状态
   const [useVirtualization, setUseVirtualization] = useState(() =>
     getStoredBoolean('useVirtualization', true),
@@ -824,7 +825,7 @@ function SearchPageClient() {
       },
       initialValue: STREAMED_INITIAL,
     }),
-    enabled: !!trimmedQuery && useFluidSearch,
+    enabled: searchSettingsReady && !!trimmedQuery && useFluidSearch,
     staleTime: 2 * 60 * 1000, // 2 minutes - cache search results for quick back navigation
     gcTime: 5 * 60 * 1000, // 5 minutes - keep in cache longer for search history
   });
@@ -841,7 +842,7 @@ function SearchPageClient() {
         ? (data.results as SearchResult[])
         : [];
     },
-    enabled: !!trimmedQuery && !useFluidSearch,
+    enabled: searchSettingsReady && !!trimmedQuery && !useFluidSearch,
     staleTime: 2 * 60 * 1000, // 2 minutes - cache search results for quick back navigation
     gcTime: 5 * 60 * 1000, // 5 minutes - keep in cache longer for search history
   });
@@ -1166,6 +1167,7 @@ function SearchPageClient() {
           ? getStoredBoolean('fluidSearch', defaultFluidSearch)
           : defaultFluidSearch,
       );
+      setSearchSettingsReady(true);
 
       // 读取精确搜索设置
       const savedExactSearch = localStorage.getItem('exactSearch');
@@ -1183,9 +1185,8 @@ function SearchPageClient() {
     );
 
     // 获取滚动位置的函数 - 专门针对 body 滚动
-    const getScrollTop = () => {
-      return document.body.scrollTop || 0;
-    };
+    const getScrollTop = () =>
+      window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
 
     // 使用 requestAnimationFrame 持续检测滚动位置
     let isRunning = false;
@@ -1209,14 +1210,14 @@ function SearchPageClient() {
       setShowBackToTop(scrollTop > 300);
     };
 
-    document.body.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
       unsubscribe();
       isRunning = false; // 停止 requestAnimationFrame 循环
 
       // 移除 body 滚动事件监听器
-      document.body.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
@@ -1229,7 +1230,7 @@ function SearchPageClient() {
         searchType === 'tmdb-actor') &&
       showResults
     ) {
-      const currentQuery = searchQuery.trim() || searchParams.get('q');
+      const currentQuery = searchParams.get('q') || searchQuery.trim();
       if (currentQuery) {
         if (searchType === 'netdisk' && netdiskResourceType === 'netdisk') {
           handleNetDiskSearch(currentQuery);
@@ -1245,7 +1246,7 @@ function SearchPageClient() {
         }
       }
     }
-  }, [searchType, netdiskResourceType, showResults, searchQuery, searchParams]);
+  }, [searchType, netdiskResourceType, showResults, searchParams]);
 
   useEffect(() => {
     // 当搜索参数变化时更新 UI 状态（数据获取由 TanStack Query 驱动）
@@ -1539,28 +1540,31 @@ function SearchPageClient() {
     if (searchType === 'netdisk') {
       // 网盘搜索 - 也更新URL保持一致性
       router.push(`/search?q=${encodeURIComponent(trimmed)}`);
-      if (netdiskResourceType === 'netdisk') {
-        handleNetDiskSearch(trimmed);
-      } else {
-        // ACG 搜索：触发 AcgSearch 组件搜索
-        setAcgTriggerSearch((prev) => !prev);
+      if (trimmed === trimmedQuery) {
+        if (netdiskResourceType === 'netdisk') {
+          handleNetDiskSearch(trimmed);
+        } else {
+          setAcgTriggerSearch((prev) => !prev);
+        }
       }
     } else if (searchType === 'youtube') {
       // YouTube搜索 - 只在搜索模式下执行
       if (youtubeMode === 'search') {
         router.push(`/search?q=${encodeURIComponent(trimmed)}`);
-        handleYouTubeSearch(trimmed);
+        if (trimmed === trimmedQuery) handleYouTubeSearch(trimmed);
       }
     } else if (searchType === 'bilibili') {
       // Bilibili搜索 - 只在搜索模式下执行
       if (bilibiliMode === 'search') {
         router.push(`/search?q=${encodeURIComponent(trimmed)}`);
-        handleBilibiliSearch(trimmed);
+        if (trimmed === trimmedQuery) handleBilibiliSearch(trimmed);
       }
     } else if (searchType === 'tmdb-actor') {
       // TMDB演员搜索
       router.push(`/search?q=${encodeURIComponent(trimmed)}`);
-      handleTmdbActorSearch(trimmed, tmdbActorType, tmdbFilterState);
+      if (trimmed === trimmedQuery) {
+        handleTmdbActorSearch(trimmed, tmdbActorType, tmdbFilterState);
+      }
     } else {
       // 原有的影视搜索逻辑
       router.push(`/search?q=${encodeURIComponent(trimmed)}`);
@@ -1583,13 +1587,13 @@ function SearchPageClient() {
   const scrollToTop = () => {
     try {
       // 1. 滚动页面到顶部
-      document.body.scrollTo({
+      window.scrollTo({
         top: 0,
         behavior: 'smooth',
       });
     } catch (error) {
       // 如果平滑滚动完全失败，使用立即滚动
-      document.body.scrollTop = 0;
+      window.scrollTo(0, 0);
     }
   };
 

@@ -192,16 +192,15 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
     [isAggregate, actualEpisodes, type]
   );
 
-  // 判断是否为即将上映（未发布的内容）- 只有真正未上映的才算
-  const isUpcoming = useMemo(() =>
-    remarks && remarks.includes('天后上映'),
-    [remarks]
+  // 这些值必须始终是 boolean，因为会传给 Query 的 enabled。
+  const isUpcoming = Boolean(remarks?.includes('天后上映'));
+  const hasReleaseTag = Boolean(
+    remarks?.includes('天后上映') ||
+    remarks?.includes('已上映') ||
+    remarks?.includes('今日上映')
   );
-
-  // 判断是否有上映相关标记（包括已上映、今日上映、即将上映）
-  const hasReleaseTag = useMemo(() =>
-    remarks && (remarks.includes('天后上映') || remarks.includes('已上映') || remarks.includes('今日上映')),
-    [remarks]
+  const isNewRelease = Boolean(
+    remarks?.includes('已上映') || remarks?.includes('今日上映')
   );
 
   // 🎯 智能判断是否有底部标签（用于AI按钮位置调整）
@@ -211,7 +210,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
   }, [remarks, hasReleaseTag, isAggregate, dynamicSourceNames]);
 
   // 🔥 判断是否应该显示提醒按钮（即将上映或新上映）
-  const isNewRelease = remarks && (remarks.includes('已上映') || remarks.includes('今日上映'));
   const shouldShowBell = isUpcoming || isNewRelease;
 
   // 🚀 TanStack Query - 获取收藏/提醒状态
@@ -297,7 +295,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
       if (!actualSource || !actualId) return;
 
       // 🔥 修复：检查是否是"新上映"的内容
-      const isNewRelease = remarks && (remarks.includes('已上映') || remarks.includes('今日上映'));
+      const isNewRelease = Boolean(remarks?.includes('已上映') || remarks?.includes('今日上映'));
       const shouldShowBell = isUpcoming || isNewRelease;
 
       if (shouldShowBell) {
@@ -695,7 +693,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
     // 收藏/取消收藏操作（或提醒操作）
     if (config.showHeart && actualSource && actualId) {
       // 🔥 修复：检查是否是"新上映"的内容
-      const isNewRelease = remarks && (remarks.includes('已上映') || remarks.includes('今日上映'));
+      const isNewRelease = Boolean(remarks?.includes('已上映') || remarks?.includes('今日上映'));
       const shouldShowBell = isUpcoming || isNewRelease;
 
       // 🚀 使用乐观状态显示，提供即时UI反馈
@@ -1068,7 +1066,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
                 <>
                   {(() => {
                     // 🔥 修复：如果是"新上映"的内容（remarks包含"已上映"或"今日上映"），显示Bell图标
-                    const isNewRelease = remarks && (remarks.includes('已上映') || remarks.includes('今日上映'));
+                    const isNewRelease = Boolean(remarks?.includes('已上映') || remarks?.includes('今日上映'));
                     const shouldShowBell = isUpcoming || isNewRelease;
 
                     if (shouldShowBell) {
@@ -1150,7 +1148,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(function VideoCard
             >
               {(() => {
                 // 🔥 修复：检查是否是"新上映"的内容
-                const isNewRelease = remarks && (remarks.includes('已上映') || remarks.includes('今日上映'));
+                const isNewRelease = Boolean(remarks?.includes('已上映') || remarks?.includes('今日上映'));
                 const shouldShowBell = isUpcoming || isNewRelease;
 
                 return shouldShowBell ? (
