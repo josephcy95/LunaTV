@@ -16,7 +16,9 @@
  * 同优先级会覆盖这里的规则。因此变量覆盖统一用双类名提升优先级，
  * 并用 :not() 放行全屏态（ArtPlayer 全屏时会自行放大控制栏/进度条）。
  * ------------------------------------------------------------------------- */
-.art-video-player.art-video-player:not(.art-fullscreen):not(.art-fullscreen-web) {
+.art-video-player.art-video-player:not(.art-fullscreen):not(
+    .art-fullscreen-web
+  ) {
   --art-control-height: 44px;
   --art-progress-height: 4px;
 }
@@ -39,7 +41,9 @@
   min-width: 36px;
   padding: 0 6px;
   opacity: 0.92;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 
 .art-video-player .art-controls .art-control:hover {
@@ -211,6 +215,12 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* 全屏自动隐藏控件时，隐藏 mini progress bar，避免留下进度轨迹 */
+.art-video-player.art-fullscreen.art-mini-progress-bar .art-bottom,
+.art-video-player.art-fullscreen-web.art-mini-progress-bar .art-bottom {
+  opacity: 0 !important;
+}
+
 /* 网页全屏：ArtPlayer 自带 fixed 定位与足够高的 z-index
  * （配合 Artplayer.FULLSCREEN_WEB_IN_BODY = true 挂到 body 下，
  * 已能盖过站点固定导航，无需在此覆盖层级） */
@@ -219,7 +229,9 @@
  * 移动端（<768px）
  * ------------------------------------------------------------------------- */
 @media (max-width: 767px) {
-  .art-video-player.art-video-player:not(.art-fullscreen):not(.art-fullscreen-web) {
+  .art-video-player.art-video-player:not(.art-fullscreen):not(
+      .art-fullscreen-web
+    ) {
     --art-control-height: 40px;
   }
 
@@ -380,9 +392,13 @@
 
 .art-video-player .art-subtitle {
   /* 回退：不支持容器查询单位（cqw）的旧浏览器用 vw，仍保证字幕偏大可读 */
-  font-size: calc(clamp(18px, 2.4vw, 44px) * var(--lunatv-subtitle-scale, 1)) !important;
+  font-size: calc(
+    clamp(18px, 2.4vw, 44px) * var(--lunatv-subtitle-scale, 1)
+  ) !important;
   /* 首选：随播放器宽度自适应（窗口 / 全屏都正确） */
-  font-size: calc(clamp(18px, 2.8cqw, 46px) * var(--lunatv-subtitle-scale, 1)) !important;
+  font-size: calc(
+    clamp(18px, 2.8cqw, 46px) * var(--lunatv-subtitle-scale, 1)
+  ) !important;
   line-height: 1.35 !important;
   font-weight: 600 !important;
   color: #fff !important;
