@@ -3,6 +3,7 @@
 
 import { ChevronUp, Grid2x2, List, Play, Search, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Select from 'react-select';
 import {
@@ -21,173 +22,66 @@ import {
 } from '@/lib/db.client';
 import { SearchResult } from '@/lib/types';
 
-// ─── streamedQuery 类型 ───────────────────────────────────────────────────────
-
-type SSEChunk =
-  | { type: 'start'; totalSources: number }
-  | { type: 'source_result'; results: SearchResult[] } // 80ms 批量
-  | { type: 'source_progress' } // 进度 +1（无数据）
-  | { type: 'source_error' }
-  | { type: 'complete'; completedSources: number };
+import { searchStream, type SSEChunk } from '@/lib/search-stream';
 
 type StreamedState = {
   results: SearchResult[];
   totalSources: number;
   completedSources: number;
+  failedSources: number;
+  totalResults?: number;
 };
-
 const STREAMED_INITIAL: StreamedState = {
   results: [],
   totalSources: 0,
   completedSources: 0,
+  failedSources: 0,
+  totalResults: 0,
 };
 
-/**
- * 将 EventSource 包装为 AsyncIterable<SSEChunk>
- *
- * 缓冲策略：
- * - source_result 数据积入 pending，每 80ms 批量 yield 一次
- * - complete 到达时同步 flush pending，确保数据不丢失
- * - 进度（completedSources）通过独立的 source_progress chunk 实时更新
- */
-function eventSourceIterable(
-  url: string,
-  signal?: AbortSignal,
-): AsyncIterable<SSEChunk> {
-  return {
-    [Symbol.asyncIterator]() {
-      type Item =
-        | { value: SSEChunk; done: false }
-        | { value: undefined; done: true };
-      const queue: Item[] = [];
-      let waiting: ((item: Item) => void) | null = null;
-      let closed = false;
-
-      let pending: SearchResult[] = [];
-      let flushTimer: ReturnType<typeof setTimeout> | null = null;
-
-      const enqueue = (chunk: SSEChunk) => {
-        if (closed) return;
-        const item: Item = { value: chunk, done: false };
-        if (waiting) {
-          const w = waiting;
-          waiting = null;
-          w(item);
-        } else queue.push(item);
-      };
-
-      const flushPending = () => {
-        flushTimer = null;
-        if (pending.length === 0) return;
-        enqueue({ type: 'source_result', results: pending });
-        pending = [];
-      };
-
-      const close = (completedSources?: number) => {
-        if (closed) return;
-        // 同步 flush 剩余缓冲
-        if (flushTimer !== null) {
-          clearTimeout(flushTimer);
-          flushTimer = null;
-        }
-        if (pending.length > 0) {
-          enqueue({ type: 'source_result', results: pending });
-          pending = [];
-        }
-        if (completedSources !== undefined) {
-          enqueue({ type: 'complete', completedSources });
-        }
-        closed = true;
-        const done: Item = { value: undefined, done: true };
-        if (waiting) {
-          const w = waiting;
-          waiting = null;
-          w(done);
-        } else queue.push(done);
-      };
-
-      const es = new EventSource(url);
-
-      es.onmessage = (event) => {
-        if (!event.data || closed) return;
-        try {
-          const payload = JSON.parse(event.data);
-          switch (payload.type) {
-            case 'start':
-              enqueue({
-                type: 'start',
-                totalSources: payload.totalSources || 0,
-              });
-              break;
-            case 'source_result':
-              // 进度立即更新
-              enqueue({ type: 'source_progress' });
-              // 数据缓冲 80ms 批量
-              if (
-                Array.isArray(payload.results) &&
-                payload.results.length > 0
-              ) {
-                pending.push(...(payload.results as SearchResult[]));
-                if (flushTimer === null) {
-                  flushTimer = setTimeout(flushPending, 80);
-                }
-              }
-              break;
-            case 'source_error':
-              enqueue({ type: 'source_error' });
-              break;
-            case 'complete':
-              try {
-                es.close();
-              } catch {}
-              close(payload.completedSources ?? 0);
-              break;
-          }
-        } catch {}
-      };
-
-      es.onerror = () => {
-        try {
-          es.close();
-        } catch {}
-        close();
-      };
-
-      signal?.addEventListener('abort', () => {
-        try {
-          es.close();
-        } catch {}
-        close();
-      });
-
-      return {
-        next(): Promise<IteratorResult<SSEChunk>> {
-          if (queue.length > 0) return Promise.resolve(queue.shift()!);
-          if (closed) return Promise.resolve({ value: undefined, done: true });
-          return new Promise((resolve) => {
-            waiting = resolve;
-          });
-        },
-      };
-    },
-  };
-}
-
-import ImageViewer from '@/components/ImageViewer';
 import PageLayout from '@/components/PageLayout';
 import SearchResultFilter, {
   SearchFilterCategory,
 } from '@/components/SearchResultFilter';
 import SearchSuggestions from '@/components/SearchSuggestions';
-import VideoCard, { VideoCardHandle } from '@/components/VideoCard';
+import VideoCard, { type VideoCardHandle } from '@/components/VideoCard';
 import VirtualGrid from '@/components/VirtualGrid';
-import NetDiskSearchResults from '@/components/NetDiskSearchResults';
-import YouTubeVideoCard from '@/components/YouTubeVideoCard';
-import BilibiliVideoCard from '@/components/BilibiliVideoCard';
-import BilibiliUpuserCard from '@/components/BilibiliUpuserCard';
-import DirectYouTubePlayer from '@/components/DirectYouTubePlayer';
-import TMDBFilterPanel, { TMDBFilterState } from '@/components/TMDBFilterPanel';
-import AcgSearch from '@/components/AcgSearch';
+import type { TMDBFilterState } from '@/components/TMDBFilterPanel';
+
+const optionalLoading = () => (
+  <div className='py-6 text-center text-sm text-gray-500 dark:text-gray-400'>
+    正在加载…
+  </div>
+);
+const ImageViewer = dynamic(() => import('@/components/ImageViewer'), {
+  loading: optionalLoading,
+});
+const NetDiskSearchResults = dynamic(
+  () => import('@/components/NetDiskSearchResults'),
+  { loading: optionalLoading },
+);
+const YouTubeVideoCard = dynamic(
+  () => import('@/components/YouTubeVideoCard'),
+  { loading: optionalLoading },
+);
+const BilibiliVideoCard = dynamic(
+  () => import('@/components/BilibiliVideoCard'),
+  { loading: optionalLoading },
+);
+const BilibiliUpuserCard = dynamic(
+  () => import('@/components/BilibiliUpuserCard'),
+  { loading: optionalLoading },
+);
+const DirectYouTubePlayer = dynamic(
+  () => import('@/components/DirectYouTubePlayer'),
+  { loading: optionalLoading },
+);
+const TMDBFilterPanel = dynamic(() => import('@/components/TMDBFilterPanel'), {
+  loading: optionalLoading,
+});
+const AcgSearch = dynamic(() => import('@/components/AcgSearch'), {
+  loading: optionalLoading,
+});
 import { useServerConfigQuery } from '@/hooks/useUserMenuQueries';
 import stcasc from 'switch-chinese';
 
@@ -797,7 +691,7 @@ function SearchPageClient() {
     queryKey: ['search', 'streamed', trimmedQuery],
     queryFn: streamedQuery<SSEChunk, StreamedState>({
       streamFn: (ctx) =>
-        eventSourceIterable(
+        searchStream(
           `/api/search/ws?q=${encodeURIComponent(trimmedQuery)}`,
           ctx.signal,
         ),
@@ -809,22 +703,43 @@ function SearchPageClient() {
               results: [],
               totalSources: chunk.totalSources,
               completedSources: 0,
+              failedSources: 0,
+              totalResults: 0,
             };
-          case 'source_result':
-            return { ...acc, results: acc.results.concat(chunk.results) };
-          case 'source_progress':
+          case 'source_result': {
+            const seen = new Set(
+              acc.results.map((item) => `${item.source}:${item.id}`),
+            );
+            const fresh = chunk.results.filter((item) => {
+              const key = `${item.source}:${item.id}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
+            return { ...acc, results: acc.results.concat(fresh) };
+          }
+          case 'source_done':
             return { ...acc, completedSources: acc.completedSources + 1 };
           case 'source_error':
-            return { ...acc, completedSources: acc.completedSources + 1 };
+            return {
+              ...acc,
+              completedSources: acc.completedSources + 1,
+              failedSources: acc.failedSources + 1,
+            };
           case 'complete':
             return {
               ...acc,
-              completedSources: chunk.completedSources || acc.totalSources,
+              completedSources: chunk.completedSources,
+              failedSources: chunk.failedSources,
+              totalResults: chunk.totalResults ?? acc.results.length,
             };
         }
       },
       initialValue: STREAMED_INITIAL,
     }),
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     enabled: searchSettingsReady && !!trimmedQuery && useFluidSearch,
     staleTime: 2 * 60 * 1000, // 2 minutes - cache search results for quick back navigation
     gcTime: 5 * 60 * 1000, // 5 minutes - keep in cache longer for search history
@@ -833,10 +748,12 @@ function SearchPageClient() {
   // 传统搜索
   const traditionalSearchQuery = useQuery<SearchResult[]>({
     queryKey: ['search', 'traditional', trimmedQuery],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const res = await fetch(
         `/api/search?q=${encodeURIComponent(trimmedQuery)}`,
+        { signal },
       );
+      if (!res.ok) throw new Error(`搜索失败 (${res.status})`);
       const data = await res.json();
       return Array.isArray(data.results)
         ? (data.results as SearchResult[])
@@ -1186,7 +1103,10 @@ function SearchPageClient() {
 
     // 获取滚动位置的函数 - 专门针对 body 滚动
     const getScrollTop = () =>
-      window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+      window.scrollY ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop ||
+      0;
 
     // 使用 requestAnimationFrame 持续检测滚动位置
     let isRunning = false;
@@ -2890,6 +2810,27 @@ function SearchPageClient() {
                     </div>
                   )}
 
+                  {(streamedSearchQuery.error ||
+                    (streamedSearchQuery.data?.failedSources ?? 0) > 0) &&
+                    useFluidSearch && (
+                      <div
+                        role='status'
+                        className='my-6 text-center text-sm text-amber-700 dark:text-amber-300'
+                      >
+                        <p>
+                          {streamedSearchQuery.error?.message ||
+                            `${streamedSearchQuery.data?.failedSources} 个来源未完成，已保留可用结果。`}
+                        </p>
+                        <button
+                          type='button'
+                          disabled={isLoading}
+                          onClick={() => streamedSearchQuery.refetch()}
+                          className='mt-2 rounded-lg border px-4 py-2 disabled:opacity-50'
+                        >
+                          重新搜索
+                        </button>
+                      </div>
+                    )}
                   {/* Footer */}
                   {isLoading &&
                   (filteredAggResults.length > 0 ||
@@ -2906,7 +2847,11 @@ function SearchPageClient() {
                     <div className='flex justify-center mt-8 py-8'>
                       <div className='px-6 py-4 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-center'>
                         <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                          搜索完成，共找到{' '}
+                          {useFluidSearch &&
+                          (streamedSearchQuery.error ||
+                            streamedSearchQuery.data?.failedSources)
+                            ? '部分结果，共找到 '
+                            : '搜索完成，共找到 '}
                           {viewMode === 'agg'
                             ? filteredAggResults.length
                             : filteredAllResults.length}{' '}

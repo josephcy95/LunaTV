@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getAvailableApiSites, getCacheTime, getConfig } from '@/lib/config';
+import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
 import { generateSearchVariants } from '@/lib/downstream';
 import {
@@ -41,7 +41,10 @@ export async function GET(request: NextRequest) {
       responseSize: errorSize,
     });
 
-    return NextResponse.json(errorResponse, { status: 401 });
+    return NextResponse.json(errorResponse, {
+      status: 401,
+      headers: { 'Cache-Control': 'private, no-store' },
+    });
   }
 
   const { searchParams } = new URL(request.url);
@@ -49,7 +52,6 @@ export async function GET(request: NextRequest) {
   const resolutionFilter = buildResolutionFilterFromSearchParams(searchParams);
 
   if (!query) {
-    const cacheTime = await getCacheTime();
     const successResponse = { results: [] };
     const responseSize = Buffer.byteLength(
       JSON.stringify(successResponse),
@@ -71,10 +73,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(successResponse, {
       headers: {
-        'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
-        'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-        'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-        'Netlify-Vary': 'query',
+        'Cache-Control': 'private, no-store',
       },
     });
   }
@@ -85,18 +84,21 @@ export async function GET(request: NextRequest) {
   // 优化：预计算搜索变体，智能生成（普通查询1个，需要变体的2个）
   const searchVariants = generateSearchVariants(query);
 
-  // 添加超时控制和错误处理，避免慢接口拖累整体响应
-  const searchPromises = apiSites.map((site) =>
-    Promise.race([
-      searchFromApi(site, query, searchVariants), // 传入预计算的变体
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`${site.name} timeout`)), 20000),
-      ),
-    ]).catch((err) => {
-      console.warn(`搜索失败 ${site.name}:`, err.message);
-      return []; // 返回空数组而不是抛出错误
-    }),
-  );
+  // 添加可取消的超时控制，避免 Promise.race 超时后上游请求继续占用连接。
+  const searchPromises = apiSites.map((site) => {
+    const deadline = new AbortController();
+    const timeoutId = setTimeout(() => deadline.abort(), 20000);
+    const signal = AbortSignal.any([request.signal, deadline.signal]);
+    return searchFromApi(site, query, searchVariants, { signal })
+      .catch((err) => {
+        console.warn(
+          `搜索失败 ${site.name}:`,
+          err instanceof Error ? err.message : err,
+        );
+        return [];
+      })
+      .finally(() => clearTimeout(timeoutId));
+  });
 
   try {
     const results = await Promise.allSettled(searchPromises);
@@ -116,8 +118,6 @@ export async function GET(request: NextRequest) {
       flattenedResults,
       resolutionFilter,
     );
-    const cacheTime = await getCacheTime();
-
     if (flattenedResults.length === 0) {
       // no cache if empty
       const emptyResponse = { results: [] };
@@ -137,10 +137,13 @@ export async function GET(request: NextRequest) {
         dbQueries: getDbQueryCount(),
         requestSize: 0,
         responseSize,
-        filter: `query:${query}`,
+        filter: 'search-results',
       });
 
-      return NextResponse.json(emptyResponse, { status: 200 });
+      return NextResponse.json(emptyResponse, {
+        status: 200,
+        headers: { 'Cache-Control': 'private, no-store' },
+      });
     }
 
     const successResponse = { results: flattenedResults };
@@ -159,15 +162,12 @@ export async function GET(request: NextRequest) {
       dbQueries: getDbQueryCount(),
       requestSize: 0,
       responseSize,
-      filter: `query:${query}`,
+      filter: 'search-results',
     });
 
     return NextResponse.json(successResponse, {
       headers: {
-        'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
-        'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-        'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-        'Netlify-Vary': 'query',
+        'Cache-Control': 'private, no-store',
       },
     });
   } catch (error) {
@@ -186,6 +186,9 @@ export async function GET(request: NextRequest) {
       responseSize: errorSize,
     });
 
-    return NextResponse.json(errorResponse, { status: 500 });
+    return NextResponse.json(errorResponse, {
+      status: 500,
+      headers: { 'Cache-Control': 'private, no-store' },
+    });
   }
 }
