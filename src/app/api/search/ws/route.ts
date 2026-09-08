@@ -4,6 +4,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { generateSearchVariants, searchFromApi } from '@/lib/downstream';
 import { yellowWords } from '@/lib/yellow';
+import { recordStreamingMetrics } from '@/lib/streaming-metrics';
 
 export const runtime = 'nodejs';
 
@@ -55,6 +56,7 @@ export async function GET(request: NextRequest) {
       let completedSources = 0;
       let failedSources = 0;
       let totalResults = 0;
+      let firstResultMs: number | undefined;
       // Do not return the task from start(): the response must remain cancellable
       // while providers are running, including during additional-page requests.
       // Bound fan-out so a large provider list cannot exhaust connections/resources.
@@ -81,6 +83,9 @@ export async function GET(request: NextRequest) {
                         ),
                     );
                 totalResults += results.length;
+                if (results.length && firstResultMs === undefined) {
+                  firstResultMs = performance.now() - startedAt;
+                }
                 if (results.length)
                   send({
                     type: 'source_result',
@@ -122,6 +127,16 @@ export async function GET(request: NextRequest) {
           failedSources,
           totalResults,
           durationMs: performance.now() - startedAt,
+        });
+        recordStreamingMetrics({
+          requestId,
+          startedAt,
+          setupMs,
+          firstResultMs,
+          completedAt: performance.now(),
+          providerFailures: failedSources,
+          resultCount: totalResults,
+          path: '/api/search/ws',
         });
         close();
       });
