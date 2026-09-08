@@ -22,7 +22,22 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   const startTime = Date.now();
   const startMemory = process.memoryUsage().heapUsed;
+  const requestId = crypto.randomUUID();
+  const phaseStarts: Record<string, number> = { total: startTime };
+  const phases: Record<string, number> = {};
+  const phase = (name: string) => {
+    const now = Date.now();
+    if (phaseStarts[name] !== undefined) phases[name] = now - phaseStarts[name];
+    phaseStarts[name] = now;
+  };
+  const recordSearchRequest = (
+    metrics: Parameters<typeof recordRequest>[0],
+  ) => {
+    phases.total = Date.now() - startTime;
+    recordRequest({ ...metrics, requestId, phases });
+  };
   resetDbQueryCount();
+  phase('auth');
 
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
@@ -52,6 +67,7 @@ export async function GET(request: NextRequest) {
   const resolutionFilter = buildResolutionFilterFromSearchParams(searchParams);
 
   if (!query) {
+    phase('serialization');
     const successResponse = { results: [] };
     const responseSize = Buffer.byteLength(
       JSON.stringify(successResponse),
@@ -78,8 +94,10 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  phase('config');
   const config = await getConfig();
   const apiSites = await getAvailableApiSites(authInfo.username);
+  phase('provider');
 
   // 优化：预计算搜索变体，智能生成（普通查询1个，需要变体的2个）
   const searchVariants = generateSearchVariants(query);
@@ -102,6 +120,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const results = await Promise.allSettled(searchPromises);
+    phase('filter');
     const successResults = results
       .filter((result) => result.status === 'fulfilled')
       .map((result) => (result as PromiseFulfilledResult<any>).value);
@@ -126,7 +145,7 @@ export async function GET(request: NextRequest) {
         'utf8',
       );
 
-      recordRequest({
+      recordSearchRequest({
         timestamp: startTime,
         method: 'GET',
         path: '/api/search',
@@ -146,6 +165,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    phase('serialization');
     const successResponse = { results: flattenedResults };
     const responseSize = Buffer.byteLength(
       JSON.stringify(successResponse),
