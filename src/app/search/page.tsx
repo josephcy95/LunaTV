@@ -2606,6 +2606,7 @@ function SearchPageClient() {
                           rowGapClass='pb-14 sm:pb-20'
                           estimateRowHeight={320}
                           restoreKey={`search:agg:${searchQuery.trim()}`}
+                          getItemKey={([mapKey]) => mapKey}
                           renderItem={([mapKey, group]) => {
                             const title = group[0]?.title || '';
                             const poster = group[0]?.poster || '';
@@ -2653,6 +2654,7 @@ function SearchPageClient() {
                           rowGapClass='pb-14 sm:pb-20'
                           estimateRowHeight={320}
                           restoreKey={`search:all:${searchQuery.trim()}`}
+                          getItemKey={(item) => `${item.source}-${item.id}`}
                           renderItem={(item) => (
                             <div
                               key={`all-${item.source}-${item.id}`}

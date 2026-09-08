@@ -1,7 +1,17 @@
 'use client';
 
-import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  useWindowVirtualizer,
+  type VirtualItem,
+} from '@tanstack/react-virtual';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { DOMErrorBoundary } from './DOMErrorBoundary';
 
 interface VirtualGridProps<T> {
@@ -28,6 +38,8 @@ interface VirtualGridProps<T> {
    * filter states must produce different keys.
    */
   restoreKey?: string;
+  /** Stable identity for a cell so recycled rows do not remount the wrong card. */
+  getItemKey?: (item: T, index: number) => string | number;
 }
 
 interface StoredSnapshot {
@@ -42,7 +54,10 @@ const STORAGE_PREFIX = 'lt:vgrid:';
 const MAX_AGE_MS = 30 * 60 * 1000; // 30 minutes
 const MIN_ITEM_COUNT_RATIO = 0.5; // discard if itemCount differs by >50%
 
-function loadSnapshot(key: string, currentItemCount: number): StoredSnapshot | null {
+function loadSnapshot(
+  key: string,
+  currentItemCount: number,
+): StoredSnapshot | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = window.sessionStorage.getItem(STORAGE_PREFIX + key);
@@ -53,7 +68,8 @@ function loadSnapshot(key: string, currentItemCount: number): StoredSnapshot | n
     // Guard against item set changing drastically (different filter, fresh fetch, etc.)
     if (currentItemCount === 0) return null;
     const ratio = parsed.itemCount / currentItemCount;
-    if (ratio < MIN_ITEM_COUNT_RATIO || ratio > 1 / MIN_ITEM_COUNT_RATIO) return null;
+    if (ratio < MIN_ITEM_COUNT_RATIO || ratio > 1 / MIN_ITEM_COUNT_RATIO)
+      return null;
     return parsed;
   } catch {
     return null;
@@ -63,7 +79,10 @@ function loadSnapshot(key: string, currentItemCount: number): StoredSnapshot | n
 function saveSnapshot(key: string, snapshot: StoredSnapshot): void {
   if (typeof window === 'undefined') return;
   try {
-    window.sessionStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(snapshot));
+    window.sessionStorage.setItem(
+      STORAGE_PREFIX + key,
+      JSON.stringify(snapshot),
+    );
   } catch {
     // QuotaExceeded or storage disabled — silently skip
   }
@@ -73,51 +92,54 @@ function saveSnapshot(key: string, snapshot: StoredSnapshot): void {
  * A virtualised grid that piggy-backs on CSS grid for column layout
  * and virtualises *rows* via @tanstack/react-virtual.
  *
- * Uses document.body as scroll element for window-level scrolling.
+ * Uses window scrolling (the page scroller), not an inner overflow container.
  */
 export default function VirtualGrid<T>({
   items,
   renderItem,
   estimateRowHeight = 320,
   rowGapClass = 'pb-14 sm:pb-20',
-  overscan = 3,
+  overscan = 5,
   className = '',
   endReached,
   endReachedThreshold = 2,
   restoreKey,
+  getItemKey,
 }: VirtualGridProps<T>) {
   const parentRef = useRef<HTMLDivElement>(null);
   const [columns, setColumns] = useState(3);
   const [scrollMargin, setScrollMargin] = useState(0);
 
-  // Track parentRef's offsetTop so virtualizer knows where the container starts
-  // relative to the body scroll origin. Must update after every layout change
-  // (filters expanding/collapsing, responsive breakpoints, etc.).
+  // Window offset of the grid. Do not observe document.body: virtualizer height
+  // changes would retrigger this and shift every visible row.
   useLayoutEffect(() => {
     const el = parentRef.current;
     if (!el) return;
-    const update = () => setScrollMargin(el.offsetTop);
+    const update = () => {
+      const top = Math.round(el.getBoundingClientRect().top + window.scrollY);
+      setScrollMargin((current) => (current === top ? current : top));
+    };
     update();
-    const ro = new ResizeObserver(update);
-    ro.observe(document.body);
-    return () => ro.disconnect();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
   }, []);
 
-  // Detect column count from a hidden probe row that shares the same grid CSS
+  // Detect column count from a hidden probe row that shares the same grid CSS.
+  // Only recompute on window resize so a content-driven width blip cannot
+  // rebuild the whole grid while scrolling.
   const probeRef = useRef<HTMLDivElement>(null);
 
   const detectColumns = useCallback(() => {
     if (!probeRef.current) return;
     const style = window.getComputedStyle(probeRef.current);
     const cols = style.gridTemplateColumns.split(' ').length;
-    if (cols > 0) setColumns(prev => (cols !== prev ? cols : prev));
+    if (cols > 0) setColumns((prev) => (cols !== prev ? cols : prev));
   }, []);
 
   useEffect(() => {
     detectColumns();
-    const ro = new ResizeObserver(detectColumns);
-    if (probeRef.current) ro.observe(probeRef.current);
-    return () => ro.disconnect();
+    window.addEventListener('resize', detectColumns);
+    return () => window.removeEventListener('resize', detectColumns);
   }, [detectColumns]);
 
   const rowCount = Math.ceil(items.length / columns);
@@ -127,18 +149,16 @@ export default function VirtualGrid<T>({
   const initialSnapshot = useMemo(
     () => (restoreKey ? loadSnapshot(restoreKey, rowCount) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   );
 
-  const virtualizer = useVirtualizer({
+  const virtualizer = useWindowVirtualizer({
     count: rowCount,
-    getScrollElement: () => document.body,
     estimateSize: () => estimateRowHeight,
     overscan,
     scrollMargin,
     initialMeasurementsCache: initialSnapshot?.measurements,
     initialOffset: initialSnapshot?.scrollOffset,
-    useScrollendEvent: true,
   });
 
   const virtualRows = virtualizer.getVirtualItems();
@@ -184,11 +204,15 @@ export default function VirtualGrid<T>({
 
     // Calculate dynamic threshold based on viewport height and row height
     // Mobile devices need earlier triggering due to smaller screens
-    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+    const viewportHeight =
+      typeof window !== 'undefined' ? window.innerHeight : 800;
     const visibleRows = Math.ceil(viewportHeight / estimateRowHeight);
     // Trigger when remaining rows <= visible rows + threshold
     // This ensures data loads before user sees the end
-    const dynamicThreshold = Math.max(visibleRows + endReachedThreshold, endReachedThreshold);
+    const dynamicThreshold = Math.max(
+      visibleRows + endReachedThreshold,
+      endReachedThreshold,
+    );
 
     // Trigger endReached when we're within dynamic threshold rows of the end
     // and we haven't triggered for this position yet
@@ -199,10 +223,16 @@ export default function VirtualGrid<T>({
       lastVirtualRowRef.current = lastRowIndex;
       endReached();
     }
-  }, [virtualRows, rowCount, endReached, endReachedThreshold, estimateRowHeight]);
+  }, [
+    virtualRows,
+    rowCount,
+    endReached,
+    endReachedThreshold,
+    estimateRowHeight,
+  ]);
 
   return (
-    <DOMErrorBoundary componentName="VirtualGrid">
+    <DOMErrorBoundary componentName='VirtualGrid'>
       {/* Hidden probe element to measure column count from computed CSS grid */}
       <div
         ref={probeRef}
@@ -246,11 +276,16 @@ export default function VirtualGrid<T>({
                 className={rowGapClass}
               >
                 <div className={`grid ${className}`} translate='no'>
-                  {rowItems.map((item, i) => (
-                    <React.Fragment key={startIdx + i}>
-                      {renderItem(item, startIdx + i)}
-                    </React.Fragment>
-                  ))}
+                  {rowItems.map((item, i) => {
+                    const index = startIdx + i;
+                    return (
+                      <React.Fragment
+                        key={getItemKey ? getItemKey(item, index) : index}
+                      >
+                        {renderItem(item, index)}
+                      </React.Fragment>
+                    );
+                  })}
                 </div>
               </div>
             );
