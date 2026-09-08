@@ -46,6 +46,7 @@ import { useFavoritesQuery } from '@/hooks/useFavoritesQuery';
 import { usePlayRecordsQuery } from '@/hooks/usePlayRecordsQuery';
 import { useRemindersQuery } from '@/hooks/useRemindersQuery';
 import { useWatchingUpdatesQuery } from '@/hooks/useWatchingUpdates';
+import { useInView } from '@/hooks/useInView';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import ContinueWatching from '@/components/ContinueWatching';
@@ -398,13 +399,18 @@ function HomeClient({
     [hotMovies, hotTvShows, hotVarietyShows, hotAnime],
   );
 
-  // 🚀 Fetch TMDB logos for hero banner items
+  // TMDB logos are optional enrichment; defer requests until the hero is near viewport.
+  const { ref: heroRef, isInView: heroInView } = useInView<HTMLElement>({
+    rootMargin: '200px',
+    triggerOnce: true,
+  });
   const tmdbLogos = useTMDBLogos(
     heroBannerItems.map((item) => ({
       title: item.title,
       year: item.year,
       type: item.type,
     })),
+    heroInView,
   );
 
   // 🚀 Merge TMDB logos into hero banner items
@@ -1417,7 +1423,10 @@ function HomeClient({
               <div className='mx-auto w-full max-w-[1800px] space-y-8 px-0 sm:px-2'>
                 {state.homePageConfig.showHeroBanner &&
                   heroBannerItemsWithLogos.length > 0 && (
-                    <section className='glass-panel overflow-hidden rounded-2xl p-1.5 sm:p-2'>
+                    <section
+                      ref={heroRef}
+                      className='glass-panel overflow-hidden rounded-2xl p-1.5 sm:p-2'
+                    >
                       <div className='overflow-hidden rounded-xl bg-black'>
                         <HeroBanner
                           items={heroBannerItemsWithLogos}
