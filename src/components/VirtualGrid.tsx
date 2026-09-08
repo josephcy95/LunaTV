@@ -166,7 +166,6 @@ export default function VirtualGrid<T>({
     estimateSize: () => estimateRowHeight,
     overscan,
     scrollMargin,
-    initialMeasurementsCache: initialSnapshot?.measurements,
     initialOffset: initialSnapshot?.scrollOffset,
     useScrollendEvent: true,
   });
