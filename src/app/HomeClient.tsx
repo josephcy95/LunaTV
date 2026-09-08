@@ -28,6 +28,19 @@ import { useHomePageQueries } from '@/hooks/useHomePageQueries';
 import { useTMDBLogos } from '@/hooks/useTMDBLogo';
 import { getDoubanDetails } from '@/lib/douban.client';
 import { DoubanItem } from '@/lib/types';
+
+/** Merge locally enriched items without repeatedly scanning the local array. */
+function mergeLocalDetails<T extends { id: string | number }>(
+  remote: T[],
+  local: T[],
+): T[] {
+  if (local.length === 0 || remote.length === 0) return remote;
+  const localById = new Map(local.map((item) => [item.id, item]));
+  return remote.map((item) => {
+    const detail = localById.get(item.id);
+    return detail ? { ...item, ...detail } : item;
+  });
+}
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { useFavoritesQuery } from '@/hooks/useFavoritesQuery';
 import { usePlayRecordsQuery } from '@/hooks/usePlayRecordsQuery';
@@ -279,10 +292,7 @@ function HomeClient({
 
     // 合并本地详情数据
     if (state.hotMovies.length > 0 && dataToUse.length > 0) {
-      return dataToUse.map((m) => {
-        const local = state.hotMovies.find((lm) => lm.id === m.id);
-        return local ? { ...m, ...local } : m;
-      });
+      return mergeLocalDetails(dataToUse, state.hotMovies);
     }
     return dataToUse;
   }, [homeData?.hotMovies, state.hotMovies]);
@@ -645,10 +655,18 @@ function HomeClient({
     };
   }, []);
 
-  // 如果首页数据加载完成但热门短剧为空，强制刷新（可能之前缓存了空数据）
+  // 如果首页数据加载完成但热门短剧为空，最多强制刷新一次。
+  // 查询持续返回空数组时，避免 effect 在每次 refetch 后再次触发，形成请求循环。
+  const hasRetriedEmptyShortDramasRef = useRef(false);
   useEffect(() => {
-    if (homeData && homeData.hotShortDramas.length === 0 && !homeLoading) {
-      console.log('[TanStack Query] 热门短剧为空，强制刷新首页数据');
+    if (
+      homeData &&
+      homeData.hotShortDramas.length === 0 &&
+      !homeLoading &&
+      !hasRetriedEmptyShortDramasRef.current
+    ) {
+      hasRetriedEmptyShortDramasRef.current = true;
+      console.log('[TanStack Query] 热门短剧为空，强制刷新首页数据（仅一次）');
       refetchHomeData();
     }
   }, [homeData, homeLoading, refetchHomeData]);

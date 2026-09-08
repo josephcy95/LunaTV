@@ -341,6 +341,7 @@ At minimum, cover:
 - Typecheck passed and all 16 tests in 4 suites passed. These tests do not exercise homepage visual behavior; slow-provider browser validation remains pending.
 - Rollback: revert the five loading predicates in `src/app/HomeClient.tsx` or the dedicated homepage milestone commit.
 - The follow-up removes render-time ref reads/writes that React's lint correctly rejects; fixed-key TanStack Query data retention is now the refresh-preservation mechanism.
+- Empty short-drama recovery is now guarded to one refetch per mount, preventing a persistently empty response from creating an unbounded request loop. Targeted ESLint has 0 errors (8 pre-existing warnings); typecheck passes.
 
 ### Search rendering batches and homepage state follow-up
 
