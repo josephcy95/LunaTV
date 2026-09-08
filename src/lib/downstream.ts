@@ -257,6 +257,28 @@ export interface SearchOptions {
   onResults?: (results: SearchResult[]) => void;
 }
 
+export async function searchApiPage(
+  apiSite: ApiSite,
+  query: string,
+  page: number,
+  signal?: AbortSignal,
+): Promise<{ results: SearchResult[]; pageCount?: number }> {
+  const path =
+    page === 1
+      ? API_CONFIG.search.path + encodeURIComponent(query)
+      : API_CONFIG.search.pagePath
+          .replace('{query}', encodeURIComponent(query))
+          .replace('{page}', String(page));
+  return searchWithCache(
+    apiSite,
+    query,
+    page,
+    `${apiSite.api}${path}`,
+    8000,
+    signal,
+  );
+}
+
 export async function searchFromApi(
   apiSite: ApiSite,
   query: string,
