@@ -56,3 +56,7 @@ crash-reports.jsonl
 
 # sqlite data
 data/
+
+# local AI/IDE tool state
+.opencode/
+.zcode/
