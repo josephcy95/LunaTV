@@ -1713,6 +1713,10 @@ function HomeClient({
                     eyebrow='Anime On Air'
                     href='/douban?type=anime'
                   >
+                    <SectionError
+                      error={sectionErrors.hotAnime}
+                      onRetry={() => refetchSection('hotAnime')}
+                    />
                     <ScrollableRow edgeBleed showControls={false} compact>
                       {loading && todayAnimes.length === 0
                         ? // 加载状态显示灰色占位数据
@@ -1757,6 +1761,10 @@ function HomeClient({
                     eyebrow='Variety Shows'
                     href='/douban?type=show'
                   >
+                    <SectionError
+                      error={sectionErrors.hotVarietyShows}
+                      onRetry={() => refetchSection('hotVarietyShows')}
+                    />
                     <ScrollableRow edgeBleed showControls={false} compact>
                       {loading && hotVarietyShows.length === 0
                         ? // 加载状态显示灰色占位数据
@@ -1794,6 +1802,10 @@ function HomeClient({
                     eyebrow='Short Dramas'
                     href='/shortdrama'
                   >
+                    <SectionError
+                      error={sectionErrors.hotShortDramas}
+                      onRetry={() => refetchSection('hotShortDramas')}
+                    />
                     <ScrollableRow edgeBleed showControls={false} compact>
                       {loading && hotShortDramas.length === 0
                         ? // 加载状态显示灰色占位数据
