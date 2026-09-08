@@ -350,6 +350,11 @@ At minimum, cover:
 - Nine hook regressions cover 1,003 results, scope changes, incremental arrivals and rapid load actions. Downstream provider tests add 8 deterministic cases for early callbacks, variant/page deduplication, cancellation during fetch/body parsing, no negative cache on abort, partial streaming failures, and traditional partial results. Combined validation: 33 tests in 6 suites and typecheck passed before the homepage state follow-up.
 - Homepage commit hooks exposed existing render-time ref cache violations. Removed redundant `prevHot*Ref` caches: fixed-key TanStack Query retains data through refresh/errors, while successful empty responses must replace old data. Existing enrichment precedence remains. Targeted homepage lint now passes with existing warnings; browser checks remain pending.
 
+### Shared-shell and cache-stampede milestones
+
+- `72cf25c6` demand-loads the watch-room chat/voice window with `ssr: false` and mounts it only when `currentRoom` exists; the persistent provider remains in the root layout, preserving active sessions. Download panel and playback paths remain unchanged. Browser/watch-room regression validation remains open.
+- `dbab6668` deduplicates concurrent identical provider/query/page cache misses. Each caller can abort its own wait without aborting the shared upstream request or poisoning the successful cache. The downstream suite now has 9 deterministic cases.
+
 ## Next action
 
 Continue **P0-01** browser measurements and **P1-02/P1-03** remaining query-scope, partial-cache and deeper-provider pagination work. Homepage ready-content/state changes are committed as `56f47396`; viewport scheduling and full workflow validation remain open.
