@@ -342,6 +342,7 @@ At minimum, cover:
 - Rollback: revert the five loading predicates in `src/app/HomeClient.tsx` or the dedicated homepage milestone commit.
 - The follow-up removes render-time ref reads/writes that React's lint correctly rejects; fixed-key TanStack Query data retention is now the refresh-preservation mechanism.
 - Empty short-drama recovery is now guarded to one refetch per mount, preventing a persistently empty response from creating an unbounded request loop. Targeted ESLint has 0 errors (8 pre-existing warnings); typecheck passes.
+- Homepage local enrichment now builds one `Map` per local detail set instead of calling `find` inside every remote-item mapping, preserving local-over-remote precedence while reducing repeated merge work from quadratic lookup behavior.
 
 ### Search rendering batches and homepage state follow-up
 
