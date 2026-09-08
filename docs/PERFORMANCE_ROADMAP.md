@@ -357,9 +357,15 @@ At minimum, cover:
 - `dbab6668` deduplicates concurrent identical provider/query/page cache misses. Each caller can abort its own wait without aborting the shared upstream request or poisoning the successful cache. The downstream suite now has 9 deterministic cases.
 - `4ee59f5f` documents search-cache TTL, bounded eviction, abort behavior, and private/public endpoint cache policy, with deterministic expiration tests. The player audit found HLS demand-loading is nontrivial because playback subclasses `Hls.DefaultConfig.loader`; live Artplayer/flv loading is already dynamic, so no risky player rewrite was made.
 
+### Latest search transport and request-isolation milestones
+
+- `b82ae6dd` batches streamed source results before emission, reducing update frequency without changing the discovered-result contract. `pnpm exec jest --runInBand src/lib/__tests__/search-stream-route.test.ts src/lib/__tests__/downstream-search.test.ts src/lib/__tests__/streaming-metrics.test.ts` passed: 3 suites, 14 tests. Browser/deployed delivery and responsiveness measurements remain unverified.
+- `10272e8c` makes authenticated search responses private and non-cacheable across the affected JSON routes; `86bb05ca` removes process-global database counters from per-request metrics. The same targeted test command passed (3 suites, 14 tests); this is local evidence only and does not establish deployment behavior.
+- `a3865941` preserves explicit provider page metadata in downstream search results. The search-stream route regression suite passed as part of the targeted command above. Deeper provider pagination is not marked complete because cursor/query scoping and end-to-end browser access remain open.
+
 ## Next action
 
-Continue **P0-01** browser measurements and **P1-02/P1-03** remaining query-scope, partial-cache and deeper-provider pagination work. Homepage ready-content/state changes are committed as `56f47396`; viewport scheduling and full workflow validation remain open.
+Next actionable unchecked item: **P0-01 — measure home → search and return navigation in a production server with browser waterfall evidence**. Do not claim completion without cold/warm, desktop/mobile, and deployed evidence. After that, continue **P1-02/P1-03** query-scope, cancellation, partial-cache, and deeper-provider pagination work. Homepage ready-content/state changes are committed as `56f47396`; viewport scheduling and full workflow validation remain open.
 
 Search navigation inspection found no route loading boundary and an inner Suspense without a fallback. Added `src/app/search/loading.tsx` and reused it in the inner boundary: visible status plus responsive poster placeholders, with animation limited to motion-safe preferences. This adds feedback, not proof of improved navigation latency; browser navigation/auth checks remain pending.
 
