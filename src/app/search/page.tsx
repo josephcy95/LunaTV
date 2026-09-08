@@ -23,6 +23,10 @@ import {
 import { SearchResult } from '@/lib/types';
 
 import { searchStream, type SSEChunk } from '@/lib/search-stream';
+import {
+  SEARCH_RESULT_BATCH_SIZE,
+  useSearchResultBatch,
+} from '@/hooks/useSearchResultBatch';
 
 type StreamedState = {
   results: SearchResult[];
@@ -1055,6 +1059,35 @@ function SearchPageClient() {
         : bTitle.localeCompare(aTitle);
     });
   }, [aggregatedResults, filterAgg, searchQuery]);
+
+  const isVirtualizedView = useVirtualization && resultDisplayMode === 'card';
+  const { limit: resultLimit, loadMore: loadMoreResults } =
+    useSearchResultBatch(
+      JSON.stringify([
+        trimmedQuery,
+        exactSearch,
+        useFluidSearch,
+        viewMode,
+        resultDisplayMode,
+        useVirtualization,
+        filterAll,
+        filterAgg,
+      ]),
+    );
+  // Keep discovery, grouping, filtering and ranking independent of rendering.
+  // VirtualGrid still receives the complete filtered set for scrolling/restoration.
+  const visibleAggResults = useMemo(
+    () => filteredAggResults.slice(0, resultLimit),
+    [filteredAggResults, resultLimit],
+  );
+  const visibleAllResults = useMemo(
+    () => filteredAllResults.slice(0, resultLimit),
+    [filteredAllResults, resultLimit],
+  );
+  const matchingResultCount =
+    viewMode === 'agg' ? filteredAggResults.length : filteredAllResults.length;
+  const displayedResultCount = Math.min(resultLimit, matchingResultCount);
+  const hasMoreResults = displayedResultCount < matchingResultCount;
 
   useEffect(() => {
     // 无搜索参数时聚焦搜索框
@@ -2593,7 +2626,7 @@ function SearchPageClient() {
                     </div>
                   </div>
                   {/* 搜索结果网格/列表 */}
-                  {useVirtualization && resultDisplayMode === 'card' ? (
+                  {isVirtualizedView ? (
                     <div key={`search-results-${viewMode}`}>
                       {viewMode === 'agg' ? (
                         <VirtualGrid
@@ -2682,6 +2715,7 @@ function SearchPageClient() {
                     </div>
                   ) : (
                     <div
+                      id='search-result-batch'
                       key={`search-results-${viewMode}-${resultDisplayMode}`}
                       className={
                         resultDisplayMode === 'list'
@@ -2690,7 +2724,7 @@ function SearchPageClient() {
                       }
                     >
                       {viewMode === 'agg'
-                        ? filteredAggResults.map(([mapKey, group]) => {
+                        ? visibleAggResults.map(([mapKey, group]) => {
                             const title = group[0]?.title || '';
                             const poster = group[0]?.poster || '';
                             const year = group[0]?.year || 'unknown';
@@ -2753,7 +2787,7 @@ function SearchPageClient() {
                               </div>
                             );
                           })
-                        : filteredAllResults.map((item) => {
+                        : visibleAllResults.map((item) => {
                             const type = inferTypeFromName(
                               item.type_name,
                               item.episodes.length,
@@ -2807,6 +2841,48 @@ function SearchPageClient() {
                               </div>
                             );
                           })}
+                    </div>
+                  )}
+
+                  {!isVirtualizedView && (
+                    <div className='mt-8 flex flex-col items-center gap-3 pb-12'>
+                      <p
+                        id='search-result-batch-status'
+                        role='status'
+                        aria-live='polite'
+                        aria-atomic='true'
+                        className='text-center text-sm text-gray-600 dark:text-gray-400'
+                      >
+                        已发现 {searchResults.length} 条来源结果；
+                        {viewMode === 'agg' ? '聚合后匹配' : '筛选后匹配'}{' '}
+                        {matchingResultCount} 个，已显示 {displayedResultCount}{' '}
+                        个。
+                        {isLoading
+                          ? ' 仍在搜索更多结果。'
+                          : hasMoreResults
+                            ? ' 可继续加载已发现的结果。'
+                            : ' 当前匹配结果已全部显示。'}
+                      </p>
+                      {/* Keep the control mounted/focusable after the last batch. */}
+                      {(matchingResultCount > SEARCH_RESULT_BATCH_SIZE ||
+                        resultLimit > SEARCH_RESULT_BATCH_SIZE) && (
+                        <button
+                          type='button'
+                          aria-controls='search-result-batch'
+                          aria-describedby='search-result-batch-status'
+                          aria-disabled={!hasMoreResults}
+                          onClick={() => {
+                            if (hasMoreResults) loadMoreResults();
+                          }}
+                          className='rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 aria-disabled:cursor-default aria-disabled:opacity-60 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
+                        >
+                          {hasMoreResults
+                            ? `加载更多（${Math.min(SEARCH_RESULT_BATCH_SIZE, matchingResultCount - displayedResultCount)} 个）`
+                            : isLoading
+                              ? '已显示当前全部结果，等待更多结果'
+                              : '已显示全部匹配结果'}
+                        </button>
+                      )}
                     </div>
                   )}
 
