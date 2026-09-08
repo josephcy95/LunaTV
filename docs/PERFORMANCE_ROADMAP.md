@@ -345,7 +345,7 @@ At minimum, cover:
 ### Search rendering batches and homepage state follow-up
 
 - `88eba649` adds 60-result rendering batches to nonvirtualized card/list views, after full-set aggregation/filtering/sorting. VirtualGrid retains all results. Accessible Load more keeps every discovered match reachable; this does not add server pagination or stabilize incoming ranking.
-- Nine hook regressions cover 1,003 results, scope changes, incremental arrivals and rapid load actions. Combined validation: 25 tests in 5 suites and typecheck passed before the homepage state follow-up.
+- Nine hook regressions cover 1,003 results, scope changes, incremental arrivals and rapid load actions. Downstream provider tests add 8 deterministic cases for early callbacks, variant/page deduplication, cancellation during fetch/body parsing, no negative cache on abort, partial streaming failures, and traditional partial results. Combined validation: 33 tests in 6 suites and typecheck passed before the homepage state follow-up.
 - Homepage commit hooks exposed existing render-time ref cache violations. Removed redundant `prevHot*Ref` caches: fixed-key TanStack Query retains data through refresh/errors, while successful empty responses must replace old data. Existing enrichment precedence remains. Targeted homepage lint now passes with existing warnings; browser checks remain pending.
 
 ## Next action
