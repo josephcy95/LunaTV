@@ -349,4 +349,6 @@ At minimum, cover:
 
 ## Next action
 
-Start **P0-01**, then implement the first measured navigation/search improvements. Keep the user-facing progress updates short: what improved, how it was verified, what remains, and whether any production validation needs deployment access.
+Continue **P0-01** browser measurements and **P1-02/P1-03** remaining query-scope, partial-cache and deeper-provider pagination work. Homepage ready-content/state changes are committed as `56f47396`; viewport scheduling and full workflow validation remain open.
+
+Search navigation inspection found no route loading boundary and an inner Suspense without a fallback. Added `src/app/search/loading.tsx` and reused it in the inner boundary: visible status plus responsive poster placeholders, with animation limited to motion-safe preferences. This adds feedback, not proof of improved navigation latency; browser navigation/auth checks remain pending.

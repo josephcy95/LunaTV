@@ -23,6 +23,7 @@ import {
 import { SearchResult } from '@/lib/types';
 
 import { searchStream, type SSEChunk } from '@/lib/search-stream';
+import SearchLoading from './loading';
 import {
   SEARCH_RESULT_BATCH_SIZE,
   useSearchResultBatch,
@@ -3144,7 +3145,7 @@ function SearchPageClient() {
 
 export default function SearchPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<SearchLoading />}>
       <SearchPageClient />
     </Suspense>
   );
