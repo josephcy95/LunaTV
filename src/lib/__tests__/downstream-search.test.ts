@@ -91,6 +91,22 @@ afterEach(() => {
 });
 
 describe('real downstream searchFromApi', () => {
+  test('shares concurrent identical cache misses while allowing one waiter to abort', async () => {
+    const upstream = deferred<Response>();
+    fetchMock.mockImplementation(() => upstream.promise);
+    const cancelled = new AbortController();
+    const first = searchFromApi(site, 'same', ['same']);
+    const second = searchFromApi(site, 'same', ['same'], {
+      signal: cancelled.signal,
+    });
+    cancelled.abort();
+    await expect(second).rejects.toMatchObject({ name: 'AbortError' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    upstream.resolve(response(['shared']));
+    expect(ids(await first)).toEqual(['shared']);
+    expect(setCachedSearchPage).toHaveBeenCalledTimes(1);
+  });
+
   test('emits the first available page while another variant is still pending', async () => {
     const slow = deferred<Response>();
     const firstEmission = deferred<SearchResult[]>();
