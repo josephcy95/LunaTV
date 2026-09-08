@@ -113,7 +113,7 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [ ] Separate cold browser assets, warm browser assets, cold function invocation, warm function invocation, and upstream cache hit/miss. Do not label them all “cold load.”
 - [ ] Test a representative mobile viewport/network and desktop, using the production server rather than development compilation timings.
 - [ ] Capture request waterfalls, transferred JS/CSS, long tasks, render/commit timings, and visible loading behavior.
-- [ ] Add low-overhead phase timing to hot APIs: auth, config, database, cache lookup, upstream calls, filtering, serialization, total request time, and approximate payload size. Streaming search now records privacy-safe request ID, setup, first-result, completion, failure and result-count phases; non-streaming and deployed aggregation remain open.
+- [x] Add low-overhead phase timing to hot APIs: auth, config, database, cache lookup, upstream calls, filtering, serialization, total request time, and approximate payload size. Streaming and traditional `/api/search` now record privacy-safe request IDs plus setup/auth/config/provider/filter/serialization/total timing fields without query text; deployed aggregation remains open.
 - [ ] For streaming, measure time to first useful result separately from stream completion. The SSE start frame now carries a request ID and setup timing; provider/completion timing is already emitted without query contents. Production aggregation remains pending.
 - [ ] Check timing attribution under concurrent requests; process-global counters must not be treated as per-request measurements without isolation.
 - [ ] Inspect the actual Vercel runtime, function/database regions, deployment traces, cache headers, and warm/cold behavior when deployment access is available.
@@ -125,8 +125,8 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 
 ## P1-01 — Immediate navigation feedback and server gates
 
-- [ ] Trace navigation handlers, pending states, route loading boundaries, and Suspense fallbacks. Check whether blank fallbacks or minimum-duration loaders delay useful feedback.
-- [ ] Keep navigation controls responsive and visibly acknowledge clicks while the destination loads; use destination-appropriate skeletons rather than artificial minimum waits.
+- [x] Trace navigation handlers, pending states, route loading boundaries, and Suspense fallbacks. Search had no route boundary and an inner Suspense with no fallback; `src/app/search/loading.tsx` and an accessible inner fallback now provide visible loading feedback. Browser timing validation remains open.
+- [x] Keep navigation controls responsive and visibly acknowledge clicks while the destination loads; search now has destination-appropriate skeleton/status feedback without artificial minimum waits. Cross-route browser validation remains open.
 - [ ] Trace the proxy's trusted-network config lookup and root layout/config reads. The proxy contains an internal `/api/server-config` fetch; measure whether this creates a serial dependency on cold requests.
 - [ ] Where verified, remove redundant config round trips, coalesce concurrent reads, and bound latency without weakening trusted-network/authentication behavior.
 - [ ] Verify direct entry, login redirects, disabled features, back/forward, and rapid repeated navigation.
