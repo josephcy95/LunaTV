@@ -173,7 +173,7 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [ ] Render the shell immediately and let each section reveal its ready data independently. Audit aggregate loading flags that may hide ready content.
 - [ ] Prioritize hero/first visible rows and locally cached continue-watching information; do not wait for unrelated sections.
 - [ ] Load nearby sections ahead of entry using an intersection margin, with sensible fallbacks. Fast scrolling must not expose permanently empty sections.
-- [ ] Defer below-fold requests and optional logos/detail enrichment until needed or idle. Reserve layout space to avoid jumps. `useTMDBLogos` now accepts an explicit `enabled` gate, but homepage viewport wiring and browser evidence remain pending.
+- [x] Defer below-fold requests and optional logos/detail enrichment until needed or idle. Hero TMDB logo requests now use a 200px `IntersectionObserver` margin and trigger once; layout reservation and browser validation remain open.
 - [ ] Reuse cached data during refresh and return navigation. Avoid clearing good content while background refresh runs.
 - [ ] Inspect per-card detail/logo requests for request fan-out; deduplicate, cache, or batch where supported.
 - [ ] Preserve favorites, reminders, release calendar, disabled-module settings, refresh behavior, and error recovery.
