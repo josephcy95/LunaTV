@@ -99,6 +99,7 @@ async function searchWithCache(
   url: string,
   timeoutMs = 8000,
   signal?: AbortSignal,
+  coalesce = true,
 ): Promise<{ results: SearchResult[]; pageCount?: number }> {
   signal?.throwIfAborted();
   // 先查缓存
@@ -113,7 +114,7 @@ async function searchWithCache(
 
   // 缓存未命中，复用同一上游请求；调用者只取消自己的等待。
   const key = searchRequestKey(apiSite.key, query, page);
-  const existing = IN_FLIGHT_SEARCHES.get(key);
+  const existing = coalesce ? IN_FLIGHT_SEARCHES.get(key) : undefined;
   if (existing) return abortableWait(existing, signal);
 
   const request = (async () => {
@@ -137,15 +138,23 @@ async function searchWithCache(
       }
 
       const data = await response.json();
-      if (
-        !data ||
-        !data.list ||
-        !Array.isArray(data.list) ||
-        data.list.length === 0
-      ) {
-        // 空结果不做负缓存要求，这里不写入缓存
-        return { results: [] };
+      signal?.throwIfAborted();
+      controller.signal.throwIfAborted();
+      if (!data || !Array.isArray(data.list)) {
+        throw new Error('Malformed provider response');
       }
+      // Providers may omit totals, including on an empty or filtered page.
+      // Never invent an end-of-results marker from a missing pagecount.
+      const rawPageCount = Number(data.pagecount);
+      const pageCount =
+        data.pagecount !== undefined &&
+        data.pagecount !== null &&
+        String(data.pagecount).trim() !== '' &&
+        Number.isSafeInteger(rawPageCount) &&
+        rawPageCount >= 0
+          ? rawPageCount
+          : undefined;
+      if (data.list.length === 0) return { results: [], pageCount };
 
       // 处理结果数据
       const allResults = data.list.map((item: ApiSearchItem) => {
@@ -221,10 +230,17 @@ async function searchWithCache(
         (result: SearchResult) => result.episodes.length > 0,
       );
 
-      const pageCount = page === 1 ? data.pagecount || 1 : undefined;
+      const normalizedPageCount = page === 1 ? pageCount : undefined;
       // 写入缓存（成功）
-      setCachedSearchPage(apiSite.key, query, page, 'ok', results, pageCount);
-      return { results, pageCount };
+      setCachedSearchPage(
+        apiSite.key,
+        query,
+        page,
+        'ok',
+        results,
+        normalizedPageCount,
+      );
+      return { results, pageCount: normalizedPageCount };
     } finally {
       // Keep the deadline active through response-body parsing too. An abandoned
       // request must not poison the shared page cache with a timeout entry.

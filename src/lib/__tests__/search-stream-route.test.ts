@@ -11,6 +11,8 @@ jest.mock('@/lib/config', () => ({
   getAvailableApiSites: jest.fn(),
   getConfig: jest.fn(),
 }));
+// Unit tests must not initialize database adapters through the metrics collector.
+jest.mock('@/lib/performance-monitor', () => ({ recordRequest: jest.fn() }));
 jest.mock('@/lib/downstream', () => ({
   searchFromApi: jest.fn(),
   generateSearchVariants: () => ['test'],
