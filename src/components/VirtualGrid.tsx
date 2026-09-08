@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  useWindowVirtualizer,
-  type VirtualItem,
-} from '@tanstack/react-virtual';
+import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import React, {
   useCallback,
   useEffect,
@@ -12,6 +9,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+
 import { DOMErrorBoundary } from './DOMErrorBoundary';
 
 interface VirtualGridProps<T> {
@@ -88,11 +86,19 @@ function saveSnapshot(key: string, snapshot: StoredSnapshot): void {
   }
 }
 
+function getPageScrollTop(): number {
+  if (typeof document === 'undefined') return 0;
+  return document.body.scrollTop || window.scrollY || 0;
+}
+
 /**
  * A virtualised grid that piggy-backs on CSS grid for column layout
  * and virtualises *rows* via @tanstack/react-virtual.
  *
- * Uses window scrolling (the page scroller), not an inner overflow container.
+ * The page scroller is document.body (html/body are height:100% with
+ * overflow-x:hidden, so overflow-y computes to auto on body). Window
+ * virtualization does not see that scroll offset, so endReached never
+ * retriggers and rows unmount while the user is still scrolling the list.
  */
 export default function VirtualGrid<T>({
   items,
@@ -110,13 +116,15 @@ export default function VirtualGrid<T>({
   const [columns, setColumns] = useState(3);
   const [scrollMargin, setScrollMargin] = useState(0);
 
-  // Window offset of the grid. Do not observe document.body: virtualizer height
-  // changes would retrigger this and shift every visible row.
+  // Offset of the grid within the body scroller. Do not observe document.body:
+  // virtualizer height changes would retrigger this and shift every visible row.
   useLayoutEffect(() => {
     const el = parentRef.current;
     if (!el) return;
     const update = () => {
-      const top = Math.round(el.getBoundingClientRect().top + window.scrollY);
+      const top = Math.round(
+        el.getBoundingClientRect().top + getPageScrollTop(),
+      );
       setScrollMargin((current) => (current === top ? current : top));
     };
     update();
@@ -152,13 +160,15 @@ export default function VirtualGrid<T>({
     [],
   );
 
-  const virtualizer = useWindowVirtualizer({
+  const virtualizer = useVirtualizer({
     count: rowCount,
+    getScrollElement: () => document.body,
     estimateSize: () => estimateRowHeight,
     overscan,
     scrollMargin,
     initialMeasurementsCache: initialSnapshot?.measurements,
     initialOffset: initialSnapshot?.scrollOffset,
+    useScrollendEvent: true,
   });
 
   const virtualRows = virtualizer.getVirtualItems();
@@ -195,7 +205,11 @@ export default function VirtualGrid<T>({
   }, [restoreKey]);
 
   // Detect when user scrolls near the end and trigger endReached callback
-  const lastVirtualRowRef = useRef<number>(-1);
+  const lastEndReachedKeyRef = useRef<string>('');
+  useEffect(() => {
+    lastEndReachedKeyRef.current = '';
+  }, [restoreKey]);
+
   useEffect(() => {
     if (!endReached || virtualRows.length === 0) return;
 
@@ -214,13 +228,12 @@ export default function VirtualGrid<T>({
       endReachedThreshold,
     );
 
-    // Trigger endReached when we're within dynamic threshold rows of the end
-    // and we haven't triggered for this position yet
-    if (
-      lastRowIndex >= rowCount - dynamicThreshold &&
-      lastRowIndex !== lastVirtualRowRef.current
-    ) {
-      lastVirtualRowRef.current = lastRowIndex;
+    // Include rowCount so a fetch that grows the list can fill the viewport
+    // even if the last visible row index did not change.
+    const nearEnd = lastRowIndex >= rowCount - dynamicThreshold;
+    const triggerKey = `${lastRowIndex}:${rowCount}`;
+    if (nearEnd && triggerKey !== lastEndReachedKeyRef.current) {
+      lastEndReachedKeyRef.current = triggerKey;
       endReached();
     }
   }, [
