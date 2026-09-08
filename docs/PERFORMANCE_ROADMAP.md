@@ -112,7 +112,7 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [ ] Separate cold browser assets, warm browser assets, cold function invocation, warm function invocation, and upstream cache hit/miss. Do not label them all “cold load.”
 - [ ] Test a representative mobile viewport/network and desktop, using the production server rather than development compilation timings.
 - [ ] Capture request waterfalls, transferred JS/CSS, long tasks, render/commit timings, and visible loading behavior.
-- [ ] Add low-overhead phase timing to hot APIs: auth, config, database, cache lookup, upstream calls, filtering, serialization, total request time, and approximate payload size.
+- [ ] Add low-overhead phase timing to hot APIs: auth, config, database, cache lookup, upstream calls, filtering, serialization, total request time, and approximate payload size. Streaming search now records privacy-safe request ID, setup, first-result, completion, failure and result-count phases; non-streaming and deployed aggregation remain open.
 - [ ] For streaming, measure time to first useful result separately from stream completion. The SSE start frame now carries a request ID and setup timing; provider/completion timing is already emitted without query contents. Production aggregation remains pending.
 - [ ] Check timing attribution under concurrent requests; process-global counters must not be treated as per-request measurements without isolation.
 - [ ] Inspect the actual Vercel runtime, function/database regions, deployment traces, cache headers, and warm/cold behavior when deployment access is available.
@@ -154,9 +154,9 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 
 ## P1-03 — Load more without losing results
 
-- [ ] Separate “results discovered” from “results currently rendered.” Start with a configurable display batch (for example 40–60), not a total search cap.
-- [ ] Add an accessible Load more control with clear counts and loading/completion status; retain existing grid/list behavior.
-- [ ] Keep all discovered results searchable/filterable. Do not filter only the visible slice or report a false total.
+- [x] Separate “results discovered” from “results currently rendered.” The client uses a configurable 60-result display batch without truncating the discovered/filterable set.
+- [x] Add an accessible Load more control with clear counts and loading/completion status; retain existing grid/list behavior.
+- [x] Keep all discovered results searchable/filterable. Filtering and aggregation run over the complete discovered set before the rendering slice.
 - [ ] Preserve stable result identity, useful source grouping, scroll position, keyboard focus, and playback actions as new batches arrive.
 - [ ] Define ordering while streaming so incoming results do not repeatedly move the item the user is about to click.
 - [ ] Use existing virtualization where it helps; verify row measurement and responsive grids rather than replacing it blindly.
@@ -201,7 +201,7 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [ ] Measure `RouteWarmup` requests alongside normal link prefetching. Its route set is remembered, so do not assume it refetches all routes on every transition.
 - [ ] Prefer selective intent/visibility prefetching over broad speculative work when measurements support it; keep keyboard/touch access fast and respect constrained connections.
 - [ ] Audit idle callback scheduling/cleanup rather than assuming configured timeouts stagger all requests.
-- [ ] Lazy-load optional search panels and players when opened/selected, with useful loading states: ACG, net-disk, YouTube, Bilibili, image viewer, and advanced filters as appropriate.
+- [x] Lazy-load optional search panels and players when opened/selected, with useful loading states: ACG, net-disk, YouTube, Bilibili, image viewer, and advanced filters as appropriate. Production chunk attribution remains open.
 - [ ] Confirm the initial route no longer includes their heavy dependencies; a dynamic import without a real conditional boundary may not defer the work.
 - [ ] Compare first navigation and repeated navigation, not just bundle size. Retain prefetching that demonstrably helps.
 
