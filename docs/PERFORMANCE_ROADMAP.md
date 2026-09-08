@@ -353,3 +353,5 @@ At minimum, cover:
 Continue **P0-01** browser measurements and **P1-02/P1-03** remaining query-scope, partial-cache and deeper-provider pagination work. Homepage ready-content/state changes are committed as `56f47396`; viewport scheduling and full workflow validation remain open.
 
 Search navigation inspection found no route loading boundary and an inner Suspense without a fallback. Added `src/app/search/loading.tsx` and reused it in the inner boundary: visible status plus responsive poster placeholders, with animation limited to motion-safe preferences. This adds feedback, not proof of improved navigation latency; browser navigation/auth checks remain pending.
+
+Incomplete streamed searches now have `staleTime: 0` while retaining visible partial results; remount refetch is disabled and the existing retry action remains explicit. Complete failure-free streams retain the two-minute cache. This avoids silently treating partial provider results as a complete fresh search.

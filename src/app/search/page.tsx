@@ -746,8 +746,22 @@ function SearchPageClient() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     enabled: searchSettingsReady && !!trimmedQuery && useFluidSearch,
-    staleTime: 2 * 60 * 1000, // 2 minutes - cache search results for quick back navigation
+    // Retain incomplete streams for visible partial results, but make them
+    // immediately stale. Refresh remains explicit via the retry action; focus,
+    // reconnect, and mount refetches are disabled below.
+    staleTime: (query) => {
+      const data = query.state.data;
+      if (
+        data &&
+        (data.failedSources > 0 ||
+          (data.totalSources > 0 && data.completedSources < data.totalSources))
+      ) {
+        return 0;
+      }
+      return 2 * 60 * 1000;
+    },
     gcTime: 5 * 60 * 1000, // 5 minutes - keep in cache longer for search history
+    refetchOnMount: false,
   });
 
   // 传统搜索
