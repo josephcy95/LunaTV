@@ -376,6 +376,11 @@ At minimum, cover:
 - `getConfig()` coalesces concurrent DB reads without bringing back a durable memory TTL. Root layout metadata and body share one per-request config read via React `cache()`.
 - Targeted tests: `src/lib/__tests__/trusted-network-lookup.test.ts` and `src/lib/__tests__/config-coalesce.test.ts`. Direct-entry / login-redirect / rapid-navigation browser checks remain open.
 
+### Search first-result regression fix
+
+- Streaming search had been limited to 4 concurrent providers, so a fast source waited behind slow ones. All authorized providers start together again; a 20s per-source abort remains. A source that already emitted results is not marked failed when a later page times out.
+- The “sources unfinished / retry” banner now waits until the stream is idle, instead of covering an in-progress search that still has no cards.
+
 ## Next action
 
 Next actionable unchecked item in P1-01: **verify direct entry, login redirects, disabled features, back/forward, and rapid repeated navigation**. Remaining P0-01 browser/deployed waterfalls are still open. After P1-01 verification, continue **P1-02** search cancellation and slow-provider retry.

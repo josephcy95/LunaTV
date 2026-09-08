@@ -2858,7 +2858,8 @@ function SearchPageClient() {
                   )}
 
                   {(streamedSearchQuery.error ||
-                    (streamedSearchQuery.data?.failedSources ?? 0) > 0) &&
+                    (!isLoading &&
+                      (streamedSearchQuery.data?.failedSources ?? 0) > 0)) &&
                     useFluidSearch && (
                       <div
                         role='status'

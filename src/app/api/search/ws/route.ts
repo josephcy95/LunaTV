@@ -82,62 +82,59 @@ export async function GET(request: NextRequest) {
       };
       let totalResults = 0;
       let firstResultMs: number | undefined;
-      // Do not return the task from start(): the response must remain cancellable
-      // while providers are running, including during additional-page requests.
-      // Bound fan-out so a large provider list cannot exhaust connections/resources.
-      const providerConcurrency = Math.min(4, Math.max(1, apiSites.length));
-      let nextProvider = 0;
-      const runProvider = async () => {
-        while (!signal.aborted) {
-          const index = nextProvider++;
-          const site = apiSites[index];
-          if (!site) return;
-          const providerStart = performance.now();
-          const deadline = new AbortController();
-          const timer = setTimeout(() => deadline.abort(), 20000);
-          try {
-            await searchFromApi(site, query, variants, {
-              signal: AbortSignal.any([signal, deadline.signal]),
-              onResults(batch) {
-                const results = config.SiteConfig.DisableYellowFilter
-                  ? batch
-                  : batch.filter(
-                      (item) =>
-                        !yellowWords.some((word) =>
-                          (item.type_name || '').includes(word),
-                        ),
-                    );
-                totalResults += results.length;
-                if (results.length && firstResultMs === undefined) {
-                  firstResultMs = performance.now() - startedAt;
-                }
-                if (results.length)
-                  send({
-                    type: 'source_result',
-                    source: site.key,
-                    results,
-                    partial: true,
-                  });
-              },
-            });
-            if (!signal.aborted)
-              finishSource(
-                site,
-                deadline.signal.aborted,
-                performance.now() - providerStart,
-              );
-          } catch {
-            if (!signal.aborted) {
-              finishSource(site, true, performance.now() - providerStart);
-            }
-          } finally {
-            clearTimeout(timer);
+      // Start every provider immediately so a fast source is not queued behind
+      // four slow ones. Abort still applies per provider and for disconnect.
+      const runProvider = async (site: (typeof apiSites)[number]) => {
+        if (signal.aborted) return;
+        const providerStart = performance.now();
+        const deadline = new AbortController();
+        const timer = setTimeout(() => deadline.abort(), 20000);
+        let emitted = 0;
+        try {
+          await searchFromApi(site, query, variants, {
+            signal: AbortSignal.any([signal, deadline.signal]),
+            onResults(batch) {
+              const results = config.SiteConfig.DisableYellowFilter
+                ? batch
+                : batch.filter(
+                    (item) =>
+                      !yellowWords.some((word) =>
+                        (item.type_name || '').includes(word),
+                      ),
+                  );
+              if (!results.length) return;
+              emitted += results.length;
+              totalResults += results.length;
+              if (firstResultMs === undefined) {
+                firstResultMs = performance.now() - startedAt;
+              }
+              send({
+                type: 'source_result',
+                source: site.key,
+                results,
+                partial: true,
+              });
+            },
+          });
+          if (!signal.aborted)
+            finishSource(
+              site,
+              emitted === 0 && deadline.signal.aborted,
+              performance.now() - providerStart,
+            );
+        } catch {
+          if (!signal.aborted) {
+            finishSource(
+              site,
+              emitted === 0,
+              performance.now() - providerStart,
+            );
           }
+        } finally {
+          clearTimeout(timer);
         }
       };
-      void Promise.all(
-        Array.from({ length: providerConcurrency }, () => runProvider()),
-      ).then(() => {
+      void Promise.all(apiSites.map((site) => runProvider(site))).then(() => {
         send({
           type: 'complete',
           completedSources,

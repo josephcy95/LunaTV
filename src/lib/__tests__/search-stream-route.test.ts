@@ -65,29 +65,57 @@ test('first page is emitted before provider completion and disconnect aborts ups
   expect(upstreamSignal?.aborted).toBe(true);
 });
 
-test('limits concurrent providers while preserving all results', async () => {
+test('starts every provider immediately so a fast source is not queued', async () => {
   const sites = Array.from({ length: 6 }, (_, i) => ({
     key: `p${i}`,
     name: `P${i}`,
   }));
   (getAvailableApiSites as jest.Mock).mockResolvedValue(sites);
-  let active = 0;
-  let maxActive = 0;
+  let started = 0;
+  const release = new Promise<void>((resolve) => {
+    const check = () => {
+      if (started === sites.length) resolve();
+      else setTimeout(check, 0);
+    };
+    check();
+  });
   (searchFromApi as jest.Mock).mockImplementation(
     async (site, _q, _v, options) => {
-      active++;
-      maxActive = Math.max(maxActive, active);
+      started++;
       options.onResults([{ id: site.key, source: site.key, title: site.name }]);
-      await new Promise((resolve) => setTimeout(resolve, 1));
-      active--;
+      await release;
+    },
+  );
+  const response = await GET(
+    new NextRequest('http://localhost/api/search/ws?q=test'),
+  );
+  const textPromise = response.text();
+  await release;
+  const text = await textPromise;
+  expect(started).toBe(6);
+  for (const site of sites)
+    expect(text).toContain(`\"source\":\"${site.key}\"`);
+  expect(text).toContain('"completedSources":6');
+});
+
+test('keeps a source successful when it emitted results before timeout or extra-page failure', async () => {
+  (getAvailableApiSites as jest.Mock).mockResolvedValue([
+    { key: 'partial', name: 'Partial' },
+  ]);
+  (searchFromApi as jest.Mock).mockImplementation(
+    async (_site, _q, _v, options) => {
+      options.onResults([{ id: '1', source: 'partial', title: 'Kept result' }]);
+      const error = new Error('later page failed');
+      (error as Error & { name: string }).name = 'AbortError';
+      throw error;
     },
   );
   const response = await GET(
     new NextRequest('http://localhost/api/search/ws?q=test'),
   );
   const text = await response.text();
-  expect(maxActive).toBeLessThanOrEqual(4);
-  for (const site of sites)
-    expect(text).toContain(`\"source\":\"${site.key}\"`);
-  expect(text).toContain('"completedSources":6');
+  expect(text).toContain('Kept result');
+  expect(text).toContain('"type":"source_done"');
+  expect(text).not.toContain('"type":"source_error"');
+  expect(text).toContain('"failedSources":0');
 });
