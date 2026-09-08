@@ -55,6 +55,31 @@ export async function GET(request: NextRequest) {
       });
       let completedSources = 0;
       let failedSources = 0;
+      // A provider may resolve/reject more than once through cancellation races;
+      // count its terminal status exactly once.
+      const terminalSources = new Set<string>();
+      const finishSource = (
+        site: (typeof apiSites)[number],
+        failed: boolean,
+        durationMs: number,
+      ) => {
+        if (terminalSources.has(site.key)) return false;
+        terminalSources.add(site.key);
+        completedSources++;
+        if (failed) failedSources++;
+        send(
+          failed
+            ? {
+                type: 'source_error',
+                source: site.key,
+                sourceName: site.name,
+                error: '该来源未完成，可重试获取更多结果',
+                durationMs,
+              }
+            : { type: 'source_done', source: site.key, durationMs },
+        );
+        return true;
+      };
       let totalResults = 0;
       let firstResultMs: number | undefined;
       // Do not return the task from start(): the response must remain cancellable
@@ -95,23 +120,15 @@ export async function GET(request: NextRequest) {
                   });
               },
             });
-            completedSources++;
-            send({
-              type: 'source_done',
-              source: site.key,
-              durationMs: performance.now() - providerStart,
-            });
+            if (!signal.aborted)
+              finishSource(
+                site,
+                deadline.signal.aborted,
+                performance.now() - providerStart,
+              );
           } catch {
             if (!signal.aborted) {
-              completedSources++;
-              failedSources++;
-              send({
-                type: 'source_error',
-                source: site.key,
-                sourceName: site.name,
-                error: '该来源未完成，可重试获取更多结果',
-                durationMs: performance.now() - providerStart,
-              });
+              finishSource(site, true, performance.now() - providerStart);
             }
           } finally {
             clearTimeout(timer);

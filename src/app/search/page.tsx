@@ -23,6 +23,7 @@ import {
 import { SearchResult } from '@/lib/types';
 
 import { searchStream, type SSEChunk } from '@/lib/search-stream';
+import { reduceSearchStream } from '@/lib/search-stream-state';
 import {
   STREAMED_SEARCH_INITIAL,
   type StreamedSearchState as StreamedState,
@@ -693,43 +694,7 @@ function SearchPageClient() {
         ),
       refetchMode: 'reset',
       reducer: (acc: StreamedState, chunk: SSEChunk): StreamedState => {
-        switch (chunk.type) {
-          case 'start':
-            return {
-              results: [],
-              totalSources: chunk.totalSources,
-              completedSources: 0,
-              failedSources: 0,
-              totalResults: 0,
-            };
-          case 'source_result': {
-            const seen = new Set(
-              acc.results.map((item) => `${item.source}:${item.id}`),
-            );
-            const fresh = chunk.results.filter((item) => {
-              const key = `${item.source}:${item.id}`;
-              if (seen.has(key)) return false;
-              seen.add(key);
-              return true;
-            });
-            return { ...acc, results: acc.results.concat(fresh) };
-          }
-          case 'source_done':
-            return { ...acc, completedSources: acc.completedSources + 1 };
-          case 'source_error':
-            return {
-              ...acc,
-              completedSources: acc.completedSources + 1,
-              failedSources: acc.failedSources + 1,
-            };
-          case 'complete':
-            return {
-              ...acc,
-              completedSources: chunk.completedSources,
-              failedSources: chunk.failedSources,
-              totalResults: chunk.totalResults ?? acc.results.length,
-            };
-        }
+        return reduceSearchStream(acc, chunk);
       },
       initialValue: STREAMED_INITIAL,
     }),

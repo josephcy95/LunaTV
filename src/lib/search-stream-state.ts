@@ -7,9 +7,12 @@ export type StreamedSearchState = {
   completedSources: number;
   failedSources: number;
   totalResults?: number;
+  /** Terminal provider events already applied; protects against duplicate worker events. */
+  sourceStatus: Record<string, 'done' | 'error'>;
 };
 
 export const STREAMED_SEARCH_INITIAL: StreamedSearchState = {
+  sourceStatus: {},
   results: [],
   totalSources: 0,
   completedSources: 0,
@@ -37,14 +40,23 @@ export function reduceSearchStream(
       });
       return { ...acc, results: acc.results.concat(fresh) };
     }
-    case 'source_done':
-      return { ...acc, completedSources: acc.completedSources + 1 };
-    case 'source_error':
+    case 'source_done': {
+      if (acc.sourceStatus[chunk.source]) return acc;
+      return {
+        ...acc,
+        completedSources: acc.completedSources + 1,
+        sourceStatus: { ...acc.sourceStatus, [chunk.source]: 'done' },
+      };
+    }
+    case 'source_error': {
+      if (acc.sourceStatus[chunk.source]) return acc;
       return {
         ...acc,
         completedSources: acc.completedSources + 1,
         failedSources: acc.failedSources + 1,
+        sourceStatus: { ...acc.sourceStatus, [chunk.source]: 'error' },
       };
+    }
     case 'complete':
       return {
         ...acc,

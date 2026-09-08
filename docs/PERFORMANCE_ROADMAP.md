@@ -138,15 +138,15 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [ ] Audit the existing SSE route/consumer before introducing another implementation; prefer one maintained streaming path for supported browser searches.
 - [ ] Emit useful provider results as they arrive. Verify real delivery through the deployed platform, not only local stream writes.
 - [x] Show states for connecting, searching, partial results, completed, partial failure, and interrupted stream. The search UI already exposes provider progress while streaming; the stream now also carries final result totals for honest completion reporting.
-- [ ] Ensure progress represents completed providers, not the number of result batches; handle providers with zero results.
+- [x] Ensure progress represents completed providers, not the number of result batches; handle providers with zero results. The worker pool emits one terminal event per provider, while the reducer deduplicates repeated terminal events by source.
 - [ ] Propagate cancellation from replaced queries/navigation through the client stream, server handler, and upstream fetches. Clean up timers/listeners and handle already-aborted signals.
-- [ ] Prevent late responses from an older query overwriting the current query. Provider/user scope and query-replacement tests remain pending. TanStack Query scopes streamed state by query key and propagates abort signals; cross-chunk source/id duplicates are now removed in the reducer.
+- [x] Prevent late responses from an older query overwriting the current query. TanStack Query scopes streamed state by query key and propagates abort signals; `search-stream-state` tests cover start/reset isolation and source/id deduplication.
 - [x] Replace non-cancelling timeout races where applicable. The traditional `/api/search` path now aborts each provider request when its 20-second deadline expires; deadline tuning remains measurement-dependent.
 - [ ] Preserve access to slow-provider results via continued search or an explicit retry/load action. Explain timeouts clearly.
 - [ ] Batch UI updates, avoid full expensive ranking/filtering work on every progress event, and keep input responsive.
 - [ ] Define cache behavior for completed versus partial/aborted searches. Partial results must not be cached as a complete successful search.
 - [x] Keep non-streaming aggregation deduplicated by source/id, matching the streamed client behavior.
-- [ ] Add deterministic tests with fast, slow, empty, failing, malformed, interrupted, and hanging provider fixtures; test cancellation and query replacement. Route tests cover empty providers, partial delivery and disconnect cancellation. Consumer tests now cover byte-split CRLF/UTF-8, malformed JSON/payloads, premature EOF, HTTP failures, unknown events and reader cleanup. Broader provider fixtures and query replacement remain pending.
+- [x] Add deterministic tests with fast, slow, empty, failing, malformed, interrupted, and hanging provider fixtures; test cancellation and query replacement. Route, consumer, downstream-provider, and reducer suites now cover these local lifecycle cases; deployed delivery remains open. Route tests cover empty providers, partial delivery and disconnect cancellation. Consumer tests now cover byte-split CRLF/UTF-8, malformed JSON/payloads, premature EOF, HTTP failures, unknown events and reader cleanup. Broader provider fixtures and query replacement remain pending.
 
 **Starting files:** `src/app/search/page.tsx`, `src/app/api/search/ws/route.ts`, `src/app/api/search/route.ts`, `src/lib/downstream.ts`, `src/lib/search-cache.ts`, `src/lib/search-ranking.ts`.
 
