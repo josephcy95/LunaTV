@@ -334,6 +334,19 @@ At minimum, cover:
 - Two deterministic regressions reproduced both cache defects before the fixes and pass afterwards (`pnpm exec jest --runInBand src/lib/__tests__/search-cache.test.ts`). This remains instance-local page caching, not shared personalized response caching or a byte-size bound.
 - Rollback: revert the bounded-cache milestone independently; no persistent data migration is required.
 
+### Homepage ready-content milestone (P1-04 partial)
+
+- Confirmed five homepage rows used an aggregate loading flag that hid their ready arrays while another query remained pending. Each now shows skeletons only while loading **and its own rendered array is empty**, including the Bangumi `todayAnimes` array.
+- Modules, favorites/reminders, enrichment and request scheduling are unchanged. This removes a rendering gate; viewport prioritization and independent empty/error states remain open.
+- Typecheck passed and all 16 tests in 4 suites passed. These tests do not exercise homepage visual behavior; slow-provider browser validation remains pending.
+- Rollback: revert the five loading predicates in `src/app/HomeClient.tsx` or the dedicated homepage milestone commit.
+
+### Search rendering batches and homepage state follow-up
+
+- `88eba649` adds 60-result rendering batches to nonvirtualized card/list views, after full-set aggregation/filtering/sorting. VirtualGrid retains all results. Accessible Load more keeps every discovered match reachable; this does not add server pagination or stabilize incoming ranking.
+- Nine hook regressions cover 1,003 results, scope changes, incremental arrivals and rapid load actions. Combined validation: 25 tests in 5 suites and typecheck passed before the homepage state follow-up.
+- Homepage commit hooks exposed existing render-time ref cache violations. Removed redundant `prevHot*Ref` caches: fixed-key TanStack Query retains data through refresh/errors, while successful empty responses must replace old data. Existing enrichment precedence remains. Targeted homepage lint now passes with existing warnings; browser checks remain pending.
+
 ## Next action
 
 Start **P0-01**, then implement the first measured navigation/search improvements. Keep the user-facing progress updates short: what improved, how it was verified, what remains, and whether any production validation needs deployment access.
