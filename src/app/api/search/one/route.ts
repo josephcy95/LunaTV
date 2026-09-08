@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getAvailableApiSites, getCacheTime, getConfig } from '@/lib/config';
+import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
 import {
   buildResolutionFilterFromSearchParams,
@@ -24,17 +24,9 @@ export async function GET(request: NextRequest) {
   const resolutionFilter = buildResolutionFilterFromSearchParams(searchParams);
 
   if (!query || !resourceId) {
-    const cacheTime = await getCacheTime();
     return NextResponse.json(
       { result: null, error: '缺少必要参数: q 或 resourceId' },
-      {
-        headers: {
-          'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
-          'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-          'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-          'Netlify-Vary': 'query',
-        },
-      }
+      { status: 400, headers: { 'Cache-Control': 'no-store' } },
     );
   }
 
@@ -50,7 +42,7 @@ export async function GET(request: NextRequest) {
           error: `未找到指定的视频源: ${resourceId}`,
           result: null,
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -65,27 +57,18 @@ export async function GET(request: NextRequest) {
 
     // 分辨率过滤（resolution 已在 downstream 解析阶段装饰）
     result = filterSearchResultsByResolution(result, resolutionFilter);
-    const cacheTime = await getCacheTime();
-
     if (result.length === 0) {
       return NextResponse.json(
         {
           error: '未找到结果',
           result: null,
         },
-        { status: 404 }
+        { status: 404, headers: { 'Cache-Control': 'no-store' } },
       );
     } else {
       return NextResponse.json(
         { results: result },
-        {
-          headers: {
-            'Cache-Control': `public, max-age=${cacheTime}, s-maxage=${cacheTime}`,
-            'CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-            'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheTime}`,
-            'Netlify-Vary': 'query',
-          },
-        }
+        { headers: { 'Cache-Control': 'no-store' } },
       );
     }
   } catch (error) {
@@ -94,7 +77,7 @@ export async function GET(request: NextRequest) {
         error: '搜索失败',
         result: null,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

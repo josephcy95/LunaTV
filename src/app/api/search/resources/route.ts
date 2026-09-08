@@ -20,7 +20,9 @@ export async function GET(request: NextRequest) {
   try {
     const apiSites = await getAvailableApiSites(authInfo.username);
 
-    return NextResponse.json(apiSites);
+    return NextResponse.json(apiSites, {
+      headers: { 'Cache-Control': 'no-store' },
+    });
   } catch (error) {
     return NextResponse.json({ error: '获取资源失败' }, { status: 500 });
   }
