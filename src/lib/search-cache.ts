@@ -24,8 +24,12 @@ let lastCleanupTime = 0;
 /**
  * 生成搜索缓存键：source + query + page
  */
-function makeSearchCacheKey(sourceKey: string, query: string, page: number): string {
-  return `v2::${sourceKey}::${query.trim()}::${page}`;
+function makeSearchCacheKey(
+  sourceKey: string,
+  query: string,
+  page: number,
+): string {
+  return JSON.stringify(['v3', sourceKey, query.trim(), page]);
 }
 
 /**
@@ -34,7 +38,7 @@ function makeSearchCacheKey(sourceKey: string, query: string, page: number): str
 export function getCachedSearchPage(
   sourceKey: string,
   query: string,
-  page: number
+  page: number,
 ): CachedPageEntry | null {
   const key = makeSearchCacheKey(sourceKey, query, page);
   const entry = SEARCH_CACHE.get(key);
@@ -58,7 +62,7 @@ export function setCachedSearchPage(
   page: number,
   status: CachedPageStatus,
   data: SearchResult[],
-  pageCount?: number
+  pageCount?: number,
 ): void {
   // 惰性启动自动清理
   ensureAutoCleanupStarted();
@@ -76,6 +80,9 @@ export function setCachedSearchPage(
     data,
     pageCount,
   });
+  // Enforce the bound on every write; hourly cleanup alone allows an
+  // arbitrarily large cache during a burst of distinct searches.
+  if (SEARCH_CACHE.size > MAX_CACHE_SIZE) performCacheCleanup();
 }
 
 /**
@@ -90,7 +97,11 @@ function ensureAutoCleanupStarted(): void {
 /**
  * 智能清理过期的缓存条目
  */
-function performCacheCleanup(): { expired: number; total: number; sizeLimited: number } {
+function performCacheCleanup(): {
+  expired: number;
+  total: number;
+  sizeLimited: number;
+} {
   const now = Date.now();
   const keysToDelete: string[] = [];
   let sizeLimitedDeleted = 0;
@@ -103,7 +114,7 @@ function performCacheCleanup(): { expired: number; total: number; sizeLimited: n
   });
 
   const expiredCount = keysToDelete.length;
-  keysToDelete.forEach(key => SEARCH_CACHE.delete(key));
+  keysToDelete.forEach((key) => SEARCH_CACHE.delete(key));
 
   // 2. 如果缓存大小超限，清理最老的条目（LRU策略）
   if (SEARCH_CACHE.size > MAX_CACHE_SIZE) {
@@ -123,7 +134,7 @@ function performCacheCleanup(): { expired: number; total: number; sizeLimited: n
   return {
     expired: expiredCount,
     total: SEARCH_CACHE.size,
-    sizeLimited: sizeLimitedDeleted
+    sizeLimited: sizeLimitedDeleted,
   };
 }
 

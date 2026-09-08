@@ -327,6 +327,13 @@ At minimum, cover:
 - Earlier checked measurement/query-scope/test items were reopened where acceptance evidence was incomplete. Request IDs and setup timing are groundwork, not measured time-to-first-result.
 - Rollback: revert the search milestone commit as a unit because the route and consumer event contracts changed together. Do not restore public caching for personalized search responses.
 
+### Production build and bounded-cache milestone
+
+- Production `pnpm build` passed for search milestone `7922e941` (Next.js 16.1.0/Turbopack; compilation 11.7 s). Local Kvrocks connection refusals remained during page-data collection; this does not establish runtime database-backed workflows or deployed performance.
+- Search page cache now enforces its 1,000-entry bound on every write rather than waiting up to an hour. Structured tuple keys prevent delimiter collisions between source and query.
+- Two deterministic regressions reproduced both cache defects before the fixes and pass afterwards (`pnpm exec jest --runInBand src/lib/__tests__/search-cache.test.ts`). This remains instance-local page caching, not shared personalized response caching or a byte-size bound.
+- Rollback: revert the bounded-cache milestone independently; no persistent data migration is required.
+
 ## Next action
 
 Start **P0-01**, then implement the first measured navigation/search improvements. Keep the user-facing progress updates short: what improved, how it was verified, what remains, and whether any production validation needs deployment access.
