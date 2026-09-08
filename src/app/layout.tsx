@@ -3,29 +3,31 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
-import { Suspense } from 'react';
+import { cache, Suspense } from 'react';
 import { Toaster } from 'sonner';
 
 import './globals.css';
 
 import { getConfig } from '@/lib/config';
 
-import { GlobalErrorIndicator } from '../components/GlobalErrorIndicator';
-import { GlobalDOMErrorHandler } from '../components/GlobalDOMErrorHandler';
-import { DOMErrorBoundary } from '../components/DOMErrorBoundary';
 import { ChunkErrorGuard } from '../components/ChunkErrorGuard';
-import { TranslationWarningToast } from '../components/TranslationWarningToast';
+import { DOMErrorBoundary } from '../components/DOMErrorBoundary';
+import DownloadPanelGate from '../components/download/DownloadPanelGate';
+import { GlobalDOMErrorHandler } from '../components/GlobalDOMErrorHandler';
+import { GlobalErrorIndicator } from '../components/GlobalErrorIndicator';
 import NavigationShell from '../components/NavigationShell';
+import QueryProvider from '../components/QueryProvider';
+import RouteWarmup from '../components/RouteWarmup';
 import { SessionTracker } from '../components/SessionTracker';
 import { SiteProvider } from '../components/SiteProvider';
 import { ThemeProvider } from '../components/ThemeProvider';
+import { TranslationWarningToast } from '../components/TranslationWarningToast';
+import ChatFloatingWindowGate from '../components/watch-room/ChatFloatingWindowGate';
 import { WatchRoomProvider } from '../components/WatchRoomProvider';
 import { DownloadProvider } from '../contexts/DownloadContext';
 import { GlobalCacheProvider } from '../contexts/GlobalCacheContext';
-import DownloadPanelGate from '../components/download/DownloadPanelGate';
-import ChatFloatingWindowGate from '../components/watch-room/ChatFloatingWindowGate';
-import QueryProvider from '../components/QueryProvider';
-import RouteWarmup from '../components/RouteWarmup';
+
+const getRequestConfig = cache(getConfig);
 
 const inter = Inter({
   subsets: ['latin'],
@@ -40,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
   await cookies();
 
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
-  const config = await getConfig();
+  const config = await getRequestConfig();
   let siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV';
   if (storageType !== 'localstorage') {
     siteName = config.SiteConfig.SiteName;
@@ -90,7 +92,7 @@ export default async function RootLayout({
     query: string;
   }[];
   if (storageType !== 'localstorage') {
-    const config = await getConfig();
+    const config = await getRequestConfig();
     siteName = config.SiteConfig.SiteName;
     announcement = config.SiteConfig.Announcement;
 

@@ -3,18 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-
-// 信任网络配置缓存（从 API 获取）
-let trustedNetworkCache: {
-  enabled: boolean;
-  trustedIPs: string[];
-  blockAdminAccess: boolean;
-} | null = null;
-let trustedNetworkCacheTime = 0;
-let trustedNetworkFetched = false;
-let trustedNetworkVersion = ''; // 跟踪配置版本，用于立即失效缓存
-
-const CACHE_TTL = 86400000; // 24 小时缓存（配置变化时通过 cookie 版本号立即刷新）
+import { lookupTrustedNetworkFromApi } from '@/lib/trusted-network-lookup';
 
 // 从环境变量获取信任网络配置（优先）
 function getTrustedNetworkFromEnv(): {
@@ -35,85 +24,8 @@ function getTrustedNetworkFromEnv(): {
   };
 }
 
-// 从 API 获取信任网络配置（数据库）
-async function getTrustedNetworkFromAPI(
-  request: NextRequest,
-): Promise<{
-  enabled: boolean;
-  trustedIPs: string[];
-  blockAdminAccess: boolean;
-} | null> {
-  const now = Date.now();
-
-  // 检查缓存是否有效
-  if (trustedNetworkFetched && trustedNetworkCache !== null) {
-    if (now - trustedNetworkCacheTime < CACHE_TTL) {
-      if (!trustedNetworkCache.enabled) {
-        return null;
-      }
-      return trustedNetworkCache;
-    }
-  }
-
-  // 如果已经获取过且结果是"未配置"，使用长缓存时间
-  if (trustedNetworkFetched && trustedNetworkCache === null) {
-    if (now - trustedNetworkCacheTime < CACHE_TTL) {
-      return null;
-    }
-  }
-
-  try {
-    const url = new URL('/api/server-config', request.url);
-    url.searchParams.set('key', 'TrustedNetworkConfig');
-
-    const response = await fetch(url.toString(), {
-      headers: {
-        'x-internal-request': 'true',
-      },
-    });
-
-    trustedNetworkFetched = true;
-    trustedNetworkCacheTime = now;
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.TrustedNetworkConfig) {
-        trustedNetworkCache = {
-          enabled: data.TrustedNetworkConfig.enabled ?? false,
-          trustedIPs: data.TrustedNetworkConfig.trustedIPs || [],
-          blockAdminAccess: data.TrustedNetworkConfig.blockAdminAccess === true,
-        };
-
-        if (!trustedNetworkCache.enabled) {
-          return null;
-        }
-
-        return trustedNetworkCache;
-      }
-    }
-
-    // API 返回但没有配置 - 标记为禁用而不是 null，这样走禁用缓存逻辑
-    trustedNetworkCache = {
-      enabled: false,
-      trustedIPs: [],
-      blockAdminAccess: false,
-    };
-  } catch {
-    // 请求失败时标记为禁用，使用长缓存时间避免频繁重试
-    trustedNetworkCache = {
-      enabled: false,
-      trustedIPs: [],
-      blockAdminAccess: false,
-    };
-  }
-
-  return null;
-}
-
 // 获取信任网络配置（环境变量优先，然后数据库）
-async function getTrustedNetworkConfig(
-  request: NextRequest,
-): Promise<{
+async function getTrustedNetworkConfig(request: NextRequest): Promise<{
   enabled: boolean;
   trustedIPs: string[];
   blockAdminAccess: boolean;
@@ -122,18 +34,7 @@ async function getTrustedNetworkConfig(
   const envConfig = getTrustedNetworkFromEnv();
   if (envConfig) return envConfig;
 
-  // 检查 cookie 中的配置版本号
-  // 管理页面保存配置时会更新这个 cookie，版本号变化时强制刷新缓存
-  const cookieVersion = request.cookies.get('tn-version')?.value || '';
-  if (cookieVersion && cookieVersion !== trustedNetworkVersion) {
-    // 版本号变了，强制清除缓存，立即重新获取
-    trustedNetworkCache = null;
-    trustedNetworkFetched = false;
-    trustedNetworkVersion = cookieVersion;
-  }
-
-  // 尝试从数据库获取（内部已处理禁用状态的缓存优化）
-  return await getTrustedNetworkFromAPI(request);
+  return lookupTrustedNetworkFromApi(request);
 }
 
 // 获取客户端 IP

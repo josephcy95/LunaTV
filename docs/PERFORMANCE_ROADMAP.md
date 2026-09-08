@@ -127,8 +127,8 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 
 - [x] Trace navigation handlers, pending states, route loading boundaries, and Suspense fallbacks. Search had no route boundary and an inner Suspense with no fallback; `src/app/search/loading.tsx` and an accessible inner fallback now provide visible loading feedback. Browser timing validation remains open.
 - [x] Keep navigation controls responsive and visibly acknowledge clicks while the destination loads; search now has destination-appropriate skeleton/status feedback without artificial minimum waits. Cross-route browser validation remains open.
-- [ ] Trace the proxy's trusted-network config lookup and root layout/config reads. The proxy contains an internal `/api/server-config` fetch; measure whether this creates a serial dependency on cold requests.
-- [ ] Where verified, remove redundant config round trips, coalesce concurrent reads, and bound latency without weakening trusted-network/authentication behavior.
+- [x] Trace the proxy's trusted-network config lookup and root layout/config reads. The proxy contains an internal `/api/server-config` fetch; measure whether this creates a serial dependency on cold requests. Confirmed: cache-miss navigations waited on that internal fetch, concurrent misses stampeded, and `generateMetadata` plus `RootLayout` each called `getConfig()` (full DB + user list). Env `TRUSTED_NETWORK_IPS` still short-circuits the fetch.
+- [x] Where verified, remove redundant config round trips, coalesce concurrent reads, and bound latency without weakening trusted-network/authentication behavior. Layout now shares one per-request `getConfig()` via React `cache()`. `getConfig()` coalesces in-flight DB reads without a durable memory TTL. Proxy lookups share one fetch, abort after 2s, and retry failed lookups after 3s instead of caching failure as disabled for 24h. Trusted-network allow/deny semantics are unchanged.
 - [ ] Verify direct entry, login redirects, disabled features, back/forward, and rapid repeated navigation.
 
 **Done when:** Feedback is immediate, route-specific loading is visible, and unnecessary blocking dependencies are removed or documented. Existing auth and trusted-network semantics remain intact.
@@ -370,9 +370,15 @@ At minimum, cover:
 - Root layout demand-loads `DownloadPanel` with `ssr: false` only after the panel is opened. Download tasks/sessions remain in `DownloadProvider`. React Query Devtools is development-only and no longer statically imported on the production path.
 - Browser first-viewport, tab-switch, and download-panel activation checks remain open.
 
+### P1-01 config round-trip milestone
+
+- Cold proxy lookups no longer stampede `/api/server-config`; the in-flight fetch is shared, aborted after 2s, and failed lookups retry after 3s instead of being cached as disabled for 24h. Successful and explicitly disabled configs still use the 24h cache and `tn-version` invalidation.
+- `getConfig()` coalesces concurrent DB reads without bringing back a durable memory TTL. Root layout metadata and body share one per-request config read via React `cache()`.
+- Targeted tests: `src/lib/__tests__/trusted-network-lookup.test.ts` and `src/lib/__tests__/config-coalesce.test.ts`. Direct-entry / login-redirect / rapid-navigation browser checks remain open.
+
 ## Next action
 
-Next actionable unchecked item: **P0-01 — measure home → search and return navigation in a production server with browser waterfall evidence**. Do not claim completion without cold/warm, desktop/mobile, and deployed evidence. After that, continue **P1-02/P1-03** query-scope, cancellation, partial-cache, and deeper-provider pagination work. Homepage first-viewport scheduling is implemented locally; production waterfall proof is still required.
+Next actionable unchecked item in P1-01: **verify direct entry, login redirects, disabled features, back/forward, and rapid repeated navigation**. Remaining P0-01 browser/deployed waterfalls are still open. After P1-01 verification, continue **P1-02** search cancellation and slow-provider retry.
 
 Search navigation inspection found no route loading boundary and an inner Suspense without a fallback. Added `src/app/search/loading.tsx` and reused it in the inner boundary: visible status plus responsive poster placeholders, with animation limited to motion-safe preferences. This adds feedback, not proof of improved navigation latency; browser navigation/auth checks remain pending.
 
