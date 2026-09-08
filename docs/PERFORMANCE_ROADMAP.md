@@ -340,6 +340,7 @@ At minimum, cover:
 - Modules, favorites/reminders, enrichment and request scheduling are unchanged. This removes a rendering gate; viewport prioritization and independent empty/error states remain open.
 - Typecheck passed and all 16 tests in 4 suites passed. These tests do not exercise homepage visual behavior; slow-provider browser validation remains pending.
 - Rollback: revert the five loading predicates in `src/app/HomeClient.tsx` or the dedicated homepage milestone commit.
+- The follow-up removes render-time ref reads/writes that React's lint correctly rejects; fixed-key TanStack Query data retention is now the refresh-preservation mechanism.
 
 ### Search rendering batches and homepage state follow-up
 
