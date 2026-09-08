@@ -301,10 +301,7 @@ function HomeClient({
     const dataToUse = homeData?.hotTvShows || [];
 
     if (state.hotTvShows.length > 0 && dataToUse.length > 0) {
-      return dataToUse.map((s) => {
-        const local = state.hotTvShows.find((ls) => ls.id === s.id);
-        return local ? { ...s, ...local } : s;
-      });
+      return mergeLocalDetails(dataToUse, state.hotTvShows);
     }
     return dataToUse;
   }, [homeData?.hotTvShows, state.hotTvShows]);
@@ -313,10 +310,7 @@ function HomeClient({
     const dataToUse = homeData?.hotVarietyShows || [];
 
     if (state.hotVarietyShows.length > 0 && dataToUse.length > 0) {
-      return dataToUse.map((s) => {
-        const local = state.hotVarietyShows.find((ls) => ls.id === s.id);
-        return local ? { ...s, ...local } : s;
-      });
+      return mergeLocalDetails(dataToUse, state.hotVarietyShows);
     }
     return dataToUse;
   }, [homeData?.hotVarietyShows, state.hotVarietyShows]);
@@ -325,10 +319,7 @@ function HomeClient({
     const dataToUse = homeData?.hotAnime || [];
 
     if (state.hotAnime.length > 0 && dataToUse.length > 0) {
-      return dataToUse.map((a) => {
-        const local = state.hotAnime.find((la) => la.id === a.id);
-        return local ? { ...a, ...local } : a;
-      });
+      return mergeLocalDetails(dataToUse, state.hotAnime);
     }
     return dataToUse;
   }, [homeData?.hotAnime, state.hotAnime]);
@@ -337,10 +328,7 @@ function HomeClient({
     const dataToUse = homeData?.hotShortDramas || [];
 
     if (state.hotShortDramas.length > 0 && dataToUse.length > 0) {
-      return dataToUse.map((d) => {
-        const local = state.hotShortDramas.find((ld) => ld.id === d.id);
-        return local ? { ...d, ...local } : d;
-      });
+      return mergeLocalDetails(dataToUse, state.hotShortDramas);
     }
     return dataToUse;
   }, [homeData?.hotShortDramas, state.hotShortDramas]);
