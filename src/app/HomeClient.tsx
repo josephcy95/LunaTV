@@ -30,6 +30,31 @@ import { getDoubanDetails } from '@/lib/douban.client';
 import { DoubanItem } from '@/lib/types';
 
 /** Merge locally enriched items without repeatedly scanning the local array. */
+function SectionError({
+  error,
+  onRetry,
+}: {
+  error?: Error;
+  onRetry: () => void;
+}) {
+  if (!error) return null;
+  return (
+    <div
+      role='alert'
+      className='mb-3 flex items-center justify-between rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200'
+    >
+      <span>此模块暂时加载失败</span>
+      <button
+        type='button'
+        onClick={onRetry}
+        className='rounded-md px-2 py-1 font-medium text-red-100 underline hover:bg-red-500/20'
+      >
+        重试
+      </button>
+    </div>
+  );
+}
+
 function mergeLocalDetails<T extends { id: string | number }>(
   remote: T[],
   local: T[],
@@ -277,7 +302,9 @@ function HomeClient({
     data: homeData,
     isLoading: homeLoading,
     errors: homeErrors,
+    sectionErrors,
     refetch: refetchHomeData,
+    refetchSection,
   } = useHomePageQueries(stableConfig);
 
   const { announcement } = useSite();
@@ -1604,6 +1631,10 @@ function HomeClient({
                     eyebrow='Trending Films'
                     href='/douban?type=movie'
                   >
+                    <SectionError
+                      error={sectionErrors.hotMovies}
+                      onRetry={() => refetchSection('hotMovies')}
+                    />
                     <ScrollableRow edgeBleed showControls={false} compact>
                       {loading && hotMovies.length === 0
                         ? // 加载状态显示灰色占位数据
@@ -1641,6 +1672,10 @@ function HomeClient({
                     eyebrow='Trending Series'
                     href='/douban?type=tv'
                   >
+                    <SectionError
+                      error={sectionErrors.hotTvShows}
+                      onRetry={() => refetchSection('hotTvShows')}
+                    />
                     <ScrollableRow edgeBleed showControls={false} compact>
                       {loading && hotTvShows.length === 0
                         ? // 加载状态显示灰色占位数据
