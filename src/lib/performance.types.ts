@@ -10,7 +10,8 @@ export interface RequestMetrics {
   statusCode: number; // 响应状态码
   duration: number; // 请求耗时（毫秒）
   memoryUsed: number; // 内存使用（MB）
-  dbQueries: number; // 数据库查询次数
+  /** Per-request DB queries when scoped tracking is available; omitted when not safely attributable. */
+  dbQueries?: number;
   requestSize: number; // 请求大小（字节）
   responseSize: number; // 响应大小（字节）
   filter?: string; // 过滤条件（仅允许安全的分类标签，不记录原始查询）

@@ -6,11 +6,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
 import { generateSearchVariants } from '@/lib/downstream';
-import {
-  recordRequest,
-  getDbQueryCount,
-  resetDbQueryCount,
-} from '@/lib/performance-monitor';
+import { recordRequest, resetDbQueryCount } from '@/lib/performance-monitor';
 import {
   buildResolutionFilterFromSearchParams,
   filterSearchResultsByResolution,
@@ -51,7 +47,6 @@ export async function GET(request: NextRequest) {
       statusCode: 401,
       duration: Date.now() - startTime,
       memoryUsed: (process.memoryUsage().heapUsed - startMemory) / 1024 / 1024,
-      dbQueries: getDbQueryCount(),
       requestSize: 0,
       responseSize: errorSize,
     });
@@ -81,7 +76,6 @@ export async function GET(request: NextRequest) {
       statusCode: 200,
       duration: Date.now() - startTime,
       memoryUsed: (process.memoryUsage().heapUsed - startMemory) / 1024 / 1024,
-      dbQueries: getDbQueryCount(),
       requestSize: 0,
       responseSize,
       filter: 'empty-query',
@@ -153,7 +147,7 @@ export async function GET(request: NextRequest) {
         duration: Date.now() - startTime,
         memoryUsed:
           (process.memoryUsage().heapUsed - startMemory) / 1024 / 1024,
-        dbQueries: getDbQueryCount(),
+
         requestSize: 0,
         responseSize,
         filter: 'search-results',
@@ -179,7 +173,6 @@ export async function GET(request: NextRequest) {
       statusCode: 200,
       duration: Date.now() - startTime,
       memoryUsed: (process.memoryUsage().heapUsed - startMemory) / 1024 / 1024,
-      dbQueries: getDbQueryCount(),
       requestSize: 0,
       responseSize,
       filter: 'search-results',
@@ -201,7 +194,6 @@ export async function GET(request: NextRequest) {
       statusCode: 500,
       duration: Date.now() - startTime,
       memoryUsed: (process.memoryUsage().heapUsed - startMemory) / 1024 / 1024,
-      dbQueries: getDbQueryCount(),
       requestSize: 0,
       responseSize: errorSize,
     });
