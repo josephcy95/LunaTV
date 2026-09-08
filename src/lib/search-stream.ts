@@ -73,6 +73,9 @@ function parseEvent(data: string): SSEChunk | null {
 
 /** Fetch rather than EventSource: HTTP failures and premature EOF are errors,
  * and the query's AbortSignal owns both the request and body consumption. */
+const STREAM_BATCH_MAX = 8;
+
+/** Fetch and coalesce bursts of source_result events without delaying the first result. */
 export async function* searchStream(
   url: string,
   signal?: AbortSignal,
@@ -109,8 +112,35 @@ export async function* searchStream(
         if (!data) continue; // Heartbeats/comments.
         const event = parseEvent(data);
         if (!event) continue;
-        yield event;
-        if (event.type === 'complete') return;
+        // Coalesce consecutive result frames. Terminal events are always emitted
+        // after the pending batch, so source status and completion ordering is stable.
+        if (event.type === 'source_result') {
+          const results = [...event.results];
+          let next: SSEChunk | undefined;
+          while (results.length < STREAM_BATCH_MAX) {
+            const nextBoundary = buffer.indexOf('\n\n');
+            if (nextBoundary < 0) break;
+            const nextFrame = buffer.slice(0, nextBoundary);
+            const nextData = nextFrame
+              .split('\n')
+              .filter((line) => line.startsWith('data:'))
+              .map((line) => line.slice(5).trimStart())
+              .join('\n');
+            buffer = buffer.slice(nextBoundary + 2);
+            if (!nextData) continue;
+            next = parseEvent(nextData) ?? undefined;
+            if (!next || next.type !== 'source_result') break;
+            results.push(...next.results);
+          }
+          yield { ...event, results };
+          if (next) {
+            // Preserve the first non-result event for the normal ordering path.
+            buffer = `data: ${JSON.stringify(next)}\n\n${buffer}`;
+          }
+        } else {
+          yield event;
+          if (event.type === 'complete') return;
+        }
       }
     }
   } finally {
