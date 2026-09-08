@@ -29,7 +29,11 @@ interface TMDBData {
 /**
  * Fetch TMDB data including logo for a single item
  */
-async function fetchTMDBData(title: string, year?: string, type?: string): Promise<TMDBData | null> {
+async function fetchTMDBData(
+  title: string,
+  year?: string,
+  type?: string,
+): Promise<TMDBData | null> {
   const params = new URLSearchParams({ title });
   if (year) params.set('year', year);
   if (type) params.set('stype', type);
@@ -54,17 +58,23 @@ async function fetchTMDBData(title: string, year?: string, type?: string): Promi
  * // logos = { '肖申克的救赎': 'https://...', '权力的游戏': 'https://...' }
  * ```
  */
-export function useTMDBLogos(items: Array<{ title: string; year?: string; type?: string }>): Record<string, string | null> {
+export function useTMDBLogos(
+  items: Array<{ title: string; year?: string; type?: string }>,
+  enabled = true,
+): Record<string, string | null> {
   // 使用 useCallback 缓存 combine 函数，避免每次渲染都重新创建
-  const combine = useCallback((results: any[]) => {
-    // Build a map of title -> logo
-    const logosMap: Record<string, string | null> = {};
-    items.forEach((item, index) => {
-      const result = results[index];
-      logosMap[item.title] = result.data?.logo || null;
-    });
-    return logosMap;
-  }, [items]);
+  const combine = useCallback(
+    (results: any[]) => {
+      // Build a map of title -> logo
+      const logosMap: Record<string, string | null> = {};
+      items.forEach((item, index) => {
+        const result = results[index];
+        logosMap[item.title] = result.data?.logo || null;
+      });
+      return logosMap;
+    },
+    [items],
+  );
 
   // 使用 useQueries 并行获取所有 TMDB logos
   return useQueries({
@@ -74,7 +84,7 @@ export function useTMDBLogos(items: Array<{ title: string; year?: string; type?:
       staleTime: 24 * 60 * 60 * 1000, // 24 hours - TMDB data rarely changes
       gcTime: 7 * 24 * 60 * 60 * 1000, // 7 days
       retry: 1, // 失败重试1次
-      enabled: !!item.title, // Only fetch if title exists
+      enabled: enabled && !!item.title, // Only fetch when enrichment is enabled and title exists
     })),
     combine,
   });
