@@ -23,26 +23,17 @@ import {
 import { SearchResult } from '@/lib/types';
 
 import { searchStream, type SSEChunk } from '@/lib/search-stream';
+import {
+  STREAMED_SEARCH_INITIAL,
+  type StreamedSearchState as StreamedState,
+} from '@/lib/search-stream-state';
 import SearchLoading from './loading';
 import {
   SEARCH_RESULT_BATCH_SIZE,
   useSearchResultBatch,
 } from '@/hooks/useSearchResultBatch';
 
-type StreamedState = {
-  results: SearchResult[];
-  totalSources: number;
-  completedSources: number;
-  failedSources: number;
-  totalResults?: number;
-};
-const STREAMED_INITIAL: StreamedState = {
-  results: [],
-  totalSources: 0,
-  completedSources: 0,
-  failedSources: 0,
-  totalResults: 0,
-};
+const STREAMED_INITIAL = STREAMED_SEARCH_INITIAL;
 
 import PageLayout from '@/components/PageLayout';
 import SearchResultFilter, {
