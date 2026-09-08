@@ -23,7 +23,7 @@ import { WatchRoomProvider } from '../components/WatchRoomProvider';
 import { DownloadProvider } from '../contexts/DownloadContext';
 import { GlobalCacheProvider } from '../contexts/GlobalCacheContext';
 import { DownloadPanel } from '../components/download/DownloadPanel';
-import ChatFloatingWindow from '../components/watch-room/ChatFloatingWindow';
+import ChatFloatingWindowGate from '../components/watch-room/ChatFloatingWindowGate';
 import QueryProvider from '../components/QueryProvider';
 import RouteWarmup from '../components/RouteWarmup';
 
@@ -218,7 +218,7 @@ export default async function RootLayout({
                   </SiteProvider>
                   <Suspense fallback={null}>
                     <DownloadPanel />
-                    <ChatFloatingWindow />
+                    <ChatFloatingWindowGate />
                   </Suspense>
                 </WatchRoomProvider>
               </DownloadProvider>
