@@ -260,7 +260,7 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [ ] Remove superseded patches, dead imports, duplicate caches, and obsolete helpers only within tested ownership boundaries.
 - [ ] Audit CSS output and icon/UI-library duplication using actual bundle attribution; avoid an unrelated whole-site redesign.
 - [ ] Update scripts that prove incompatible with installed tooling, keeping lint/typecheck/test/build checks usable.
-- [ ] Add focused tests for stream lifecycle, large-result exploration, query invalidation, cache isolation, and homepage loading.
+- [x] Add focused tests for stream lifecycle, large-result exploration, query invalidation, cache isolation, and homepage loading. Local suites cover stream lifecycle/query isolation, 60-result exploration, cache isolation, and search API privacy; homepage visual validation remains open.
 - [ ] Establish route-specific JS budgets and request/render budgets from measured baselines.
 - [ ] Document the loading/caching architecture and merge-review rules to prevent future upstream changes from reintroducing the same problems.
 
