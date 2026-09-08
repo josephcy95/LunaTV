@@ -278,10 +278,23 @@ export default function VirtualGrid<T>({
           {virtualRows.map((virtualRow) => {
             const startIdx = virtualRow.index * columns;
             const rowItems = items.slice(startIdx, startIdx + columns);
+            // A virtual row slot can be recycled as the viewport moves. Include
+            // the actual item identities in the row key so React cannot retain
+            // an upper row's DOM/image state when that slot receives lower-row
+            // content (especially visible in Chrome's compositor).
+            const rowKey = rowItems
+              .map((item, offset) =>
+                String(
+                  getItemKey
+                    ? getItemKey(item, startIdx + offset)
+                    : startIdx + offset,
+                ),
+              )
+              .join('|');
 
             return (
               <div
-                key={virtualRow.key}
+                key={`${virtualRow.key}:${rowKey}`}
                 data-index={virtualRow.index}
                 ref={virtualizer.measureElement}
                 translate='no'
