@@ -354,6 +354,7 @@ At minimum, cover:
 
 - `72cf25c6` demand-loads the watch-room chat/voice window with `ssr: false` and mounts it only when `currentRoom` exists; the persistent provider remains in the root layout, preserving active sessions. Download panel and playback paths remain unchanged. Browser/watch-room regression validation remains open.
 - `dbab6668` deduplicates concurrent identical provider/query/page cache misses. Each caller can abort its own wait without aborting the shared upstream request or poisoning the successful cache. The downstream suite now has 9 deterministic cases.
+- `4ee59f5f` documents search-cache TTL, bounded eviction, abort behavior, and private/public endpoint cache policy, with deterministic expiration tests. The player audit found HLS demand-loading is nontrivial because playback subclasses `Hls.DefaultConfig.loader`; live Artplayer/flv loading is already dynamic, so no risky player rewrite was made.
 
 ## Next action
 
