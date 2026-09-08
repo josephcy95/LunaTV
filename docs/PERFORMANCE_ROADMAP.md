@@ -114,7 +114,7 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [ ] Test a representative mobile viewport/network and desktop, using the production server rather than development compilation timings.
 - [ ] Capture request waterfalls, transferred JS/CSS, long tasks, render/commit timings, and visible loading behavior.
 - [x] Add low-overhead phase timing to hot APIs: auth, config, database, cache lookup, upstream calls, filtering, serialization, total request time, and approximate payload size. Streaming and traditional `/api/search` now record privacy-safe request IDs plus setup/auth/config/provider/filter/serialization/total timing fields without query text; deployed aggregation remains open.
-- [ ] For streaming, measure time to first useful result separately from stream completion. The SSE start frame now carries a request ID and setup timing; provider/completion timing is already emitted without query contents. Production aggregation remains pending.
+- [ ] For streaming, measure time to first useful result separately from stream completion. The SSE start frame now carries a request ID and setup timing; provider/completion timing is already emitted without query contents. Local instrumentation exists; browser/deployed aggregation remains pending.
 - [ ] Check timing attribution under concurrent requests; process-global counters must not be treated as per-request measurements without isolation.
 - [ ] Inspect the actual Vercel runtime, function/database regions, deployment traces, cache headers, and warm/cold behavior when deployment access is available.
 - [ ] Record baseline measurements in the table below; unavailable measurements stay explicitly unmeasured. Browser waterfall and deployed Vercel measurements are still pending.
@@ -145,7 +145,7 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [x] Replace non-cancelling timeout races where applicable. The traditional `/api/search` path now aborts each provider request when its 20-second deadline expires; deadline tuning remains measurement-dependent.
 - [ ] Preserve access to slow-provider results via continued search or an explicit retry/load action. Explain timeouts clearly.
 - [ ] Batch UI updates, avoid full expensive ranking/filtering work on every progress event, and keep input responsive.
-- [ ] Define cache behavior for completed versus partial/aborted searches. Partial results must not be cached as a complete successful search.
+- [x] Define cache behavior for completed versus partial/aborted searches. Complete failure-free streams retain the normal freshness window; incomplete streams are immediately stale but keep visible partial results, and explicit retry is required.
 - [x] Keep non-streaming aggregation deduplicated by source/id, matching the streamed client behavior.
 - [x] Add deterministic tests with fast, slow, empty, failing, malformed, interrupted, and hanging provider fixtures; test cancellation and query replacement. Route, consumer, downstream-provider, and reducer suites now cover these local lifecycle cases; deployed delivery remains open. Route tests cover empty providers, partial delivery and disconnect cancellation. Consumer tests now cover byte-split CRLF/UTF-8, malformed JSON/payloads, premature EOF, HTTP failures, unknown events and reader cleanup. Broader provider fixtures and query replacement remain pending.
 
@@ -161,7 +161,7 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [ ] Preserve stable result identity, useful source grouping, scroll position, keyboard focus, and playback actions as new batches arrive.
 - [ ] Define ordering while streaming so incoming results do not repeatedly move the item the user is about to click.
 - [ ] Use existing virtualization where it helps; verify row measurement and responsive grids rather than replacing it blindly.
-- [ ] Distinguish client rendering batches from server/provider pagination. UI Load more alone does not reduce payload size or retained browser data.
+- [x] Distinguish client rendering batches from server/provider pagination. The 60-result client slice is documented as rendering-only; it does not claim to reduce upstream payloads or retained discovered results.
 - [ ] Where upstream providers support pagination, expose deeper pages through explicit requests with deduplication and honest “more available/unknown” states. Keep cursors scoped to query, filters, and authorized provider set.
 - [ ] Avoid pagination designs that depend solely on an in-memory serverless instance retaining the previous request.
 - [ ] Test large fixtures, duplicates, filter/sort changes, incremental arrivals, deep paging, mobile, and empty results. Verify every supplied result remains reachable.
@@ -240,7 +240,7 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [x] **Security gate:** `/api/search` selects authorized sources per username. All JSON branches now use `private, no-store`, without CDN cache overrides. Regression tests cover authenticated success, empty-query and empty-result responses. Raw query metric labels were removed; upstream cancellation includes the request signal.
 - [ ] Keep account/admin/session data private. Share public upstream metadata only after separating it from authorization and personalized results.
 - [ ] Define cache keys, TTLs, stale behavior, size limits, invalidation, and error/partial-result policy per endpoint. Do not blanket-remove `no-store` or force all routes static.
-- [ ] Reduce hot-path DB round trips and batch operations where supported; do not load every storage adapter eagerly if analysis proves it costly.
+- [ ] Reduce hot-path DB round trips and batch operations where supported; do not load every storage adapter eagerly if analysis proves it costly. Request metrics no longer report the process-global DB counter as per-request data; attribution remains an open measurement task.
 - [ ] Measure image proxy traffic, upstream image sizes, and cache behavior. Consider appropriately sized assets without breaking proxy functionality or unexpectedly increasing hosting costs.
 - [ ] Verify cache hits/misses, stale refresh, user isolation, revoked access, provider outages, warm/cold requests, and existing non-Vercel storage/deployment modes.
 
