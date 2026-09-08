@@ -17,6 +17,7 @@
 
 import { useQueries } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
+
 import {
   BangumiCalendarData,
   GetBangumiCalendarData,
@@ -35,6 +36,10 @@ export interface HomePageConfig {
   showHotVariety?: boolean;
   showNewAnime?: boolean;
   showHotShortDramas?: boolean;
+  /** Hero and first-viewport rows. Defaults to true. */
+  loadPrimaryModules?: boolean;
+  /** Bangumi calendar and short dramas. Defaults to true. */
+  loadNearbyModules?: boolean;
 }
 
 export interface HomePageData {
@@ -53,6 +58,8 @@ export interface HomePageQueriesResult {
   errors: Error[];
   /** Errors keyed by the homepage module, so one failure does not mask others. */
   sectionErrors: Partial<Record<keyof HomePageData, Error>>;
+  /** True until that module has data or has finished, including deferred queries. */
+  sectionPending: Record<keyof HomePageData, boolean>;
   hasError: boolean;
   refetch: () => void;
   refetchSection: (section: keyof HomePageData) => void;
@@ -108,6 +115,8 @@ export function useHomePageQueries(
       showHotVariety: config?.showHotVariety ?? true,
       showNewAnime: config?.showNewAnime ?? true,
       showHotShortDramas: config?.showHotShortDramas ?? true,
+      loadPrimaryModules: config?.loadPrimaryModules ?? true,
+      loadNearbyModules: config?.loadNearbyModules ?? true,
     }),
     [config],
   );
@@ -155,6 +164,14 @@ export function useHomePageQueries(
     }, {});
     const errors = Object.values(sectionErrors).filter(Boolean) as Error[];
     const hasError = errors.length > 0;
+    const sectionPending: Record<keyof HomePageData, boolean> = {
+      hotMovies: moviesResult.isPending,
+      hotTvShows: tvResult.isPending,
+      hotVarietyShows: varietyResult.isPending,
+      hotAnime: animeResult.isPending,
+      hotShortDramas: shortDramasResult.isPending,
+      bangumiCalendar: bangumiResult.isPending,
+    };
 
     const refetch = () => {
       results.forEach((r) => r.refetch());
@@ -170,6 +187,7 @@ export function useHomePageQueries(
       isFetching,
       errors,
       sectionErrors,
+      sectionPending,
       hasError,
       refetch,
       refetchSection,
@@ -191,7 +209,8 @@ export function useHomePageQueries(
         staleTime: 2 * 60 * 1000, // 2分钟 - 热门内容更新较频繁
         gcTime: 10 * 60 * 1000, // 10分钟
         retry: 2, // 失败重试2次
-        enabled: enabledConfig.showHotMovies, // 🔥 根据配置决定是否执行查询
+        enabled:
+          enabledConfig.loadPrimaryModules && enabledConfig.showHotMovies,
       },
       // 2. 热门电视剧
       {
@@ -201,7 +220,8 @@ export function useHomePageQueries(
         staleTime: 2 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
         retry: 2,
-        enabled: enabledConfig.showHotTvShows, // 🔥 根据配置决定是否执行查询
+        enabled:
+          enabledConfig.loadPrimaryModules && enabledConfig.showHotTvShows,
       },
       // 3. 热门综艺
       {
@@ -211,7 +231,8 @@ export function useHomePageQueries(
         staleTime: 2 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
         retry: 2,
-        enabled: enabledConfig.showHotVariety, // 🔥 根据配置决定是否执行查询
+        enabled:
+          enabledConfig.loadPrimaryModules && enabledConfig.showHotVariety,
       },
       // 4. 热门动漫
       {
@@ -225,7 +246,7 @@ export function useHomePageQueries(
         staleTime: 2 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
         retry: 2,
-        enabled: enabledConfig.showNewAnime, // 🔥 根据配置决定是否执行查询
+        enabled: enabledConfig.loadPrimaryModules && enabledConfig.showNewAnime,
       },
       // 5. 短剧推荐
       {
@@ -234,16 +255,22 @@ export function useHomePageQueries(
         staleTime: 5 * 60 * 1000, // 5分钟 - 短剧推荐更新较慢
         gcTime: 15 * 60 * 1000, // 15分钟
         retry: 2,
-        enabled: enabledConfig.showHotShortDramas, // 🔥 根据配置决定是否执行查询
+        enabled:
+          enabledConfig.loadPrimaryModules &&
+          enabledConfig.loadNearbyModules &&
+          enabledConfig.showHotShortDramas,
       },
-      // 6. 番剧日历 - 总是启用，因为新番放送模块需要它
+      // 6. 番剧日历 - 新番放送行使用，可延后到接近视口时再请求
       {
         queryKey: ['bangumi', 'calendar'],
         queryFn: () => GetBangumiCalendarData(),
         staleTime: 10 * 60 * 1000, // 10分钟 - 每日更新，可以缓存更久
         gcTime: 30 * 60 * 1000, // 30分钟
         retry: 2,
-        enabled: enabledConfig.showNewAnime, // 🔥 番剧日历跟随新番放送模块
+        enabled:
+          enabledConfig.loadPrimaryModules &&
+          enabledConfig.loadNearbyModules &&
+          enabledConfig.showNewAnime,
       },
     ],
     combine,

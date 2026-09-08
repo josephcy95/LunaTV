@@ -22,7 +22,7 @@ import { ThemeProvider } from '../components/ThemeProvider';
 import { WatchRoomProvider } from '../components/WatchRoomProvider';
 import { DownloadProvider } from '../contexts/DownloadContext';
 import { GlobalCacheProvider } from '../contexts/GlobalCacheContext';
-import { DownloadPanel } from '../components/download/DownloadPanel';
+import DownloadPanelGate from '../components/download/DownloadPanelGate';
 import ChatFloatingWindowGate from '../components/watch-room/ChatFloatingWindowGate';
 import QueryProvider from '../components/QueryProvider';
 import RouteWarmup from '../components/RouteWarmup';
@@ -217,7 +217,7 @@ export default async function RootLayout({
                     <GlobalErrorIndicator />
                   </SiteProvider>
                   <Suspense fallback={null}>
-                    <DownloadPanel />
+                    <DownloadPanelGate />
                     <ChatFloatingWindowGate />
                   </Suspense>
                 </WatchRoomProvider>

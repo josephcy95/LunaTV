@@ -296,6 +296,39 @@ function HomeClient({
     homePageConfig: initialConfig, // 🔥 使用服务端配置
   });
 
+  const [nearbyFallback, setNearbyFallback] = useState(false);
+  const { ref: nearbyRef, isInView: nearbyInView } = useInView<HTMLDivElement>({
+    rootMargin: '400px',
+    triggerOnce: true,
+  });
+  useEffect(() => {
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (
+        callback: () => void,
+        options?: { timeout?: number },
+      ) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (typeof idleWindow.requestIdleCallback === 'function') {
+      const id = idleWindow.requestIdleCallback(() => setNearbyFallback(true), {
+        timeout: 2500,
+      });
+      return () => idleWindow.cancelIdleCallback?.(id);
+    }
+    const timeoutId = window.setTimeout(() => setNearbyFallback(true), 2500);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  const queryConfig = useMemo(
+    () => ({
+      ...stableConfig,
+      loadPrimaryModules: state.activeTab === 'home',
+      loadNearbyModules:
+        state.activeTab === 'home' && (nearbyInView || nearbyFallback),
+    }),
+    [stableConfig, state.activeTab, nearbyInView, nearbyFallback],
+  );
+
   // 🚀 TanStack Query - 首页数据查询（替代 GlobalCache）
   // 🔥 传入配置，只加载需要显示的模块数据
   const {
@@ -303,9 +336,10 @@ function HomeClient({
     isLoading: homeLoading,
     errors: homeErrors,
     sectionErrors,
+    sectionPending,
     refetch: refetchHomeData,
     refetchSection,
-  } = useHomePageQueries(stableConfig);
+  } = useHomePageQueries(queryConfig);
 
   const { announcement } = useSite();
 
@@ -523,7 +557,10 @@ function HomeClient({
   }, [announcement]);
 
   // 🚀 TanStack Query - 使用 useQuery 获取收藏数据（自动缓存，跨页面持久化）
-  const { data: allFavorites = {} } = useQuery(allFavoritesOptions());
+  const { data: allFavorites = {}, isPending: favoritesPending } = useQuery({
+    ...allFavoritesOptions(),
+    enabled: activeTab === 'favorites',
+  });
 
   // 🚀 TanStack Query - 追番更新后台检查（30分钟自动刷新）
   // 在主页启用，让 query 保持 active 状态，refetchInterval 才能工作
@@ -537,10 +574,16 @@ function HomeClient({
   });
 
   // 🚀 TanStack Query - 使用 useQuery 获取播放记录（自动缓存，跨页面持久化）
-  const { data: allPlayRecords = {} } = useQuery(allPlayRecordsOptions());
+  const { data: allPlayRecords = {} } = useQuery({
+    ...allPlayRecordsOptions(),
+    enabled: activeTab === 'favorites',
+  });
 
   // 🚀 TanStack Query - 使用 useQuery 获取提醒数据（自动缓存，跨页面持久化）
-  const { data: allReminders = {} } = useQuery(allRemindersOptions());
+  const { data: allReminders = {}, isPending: remindersPending } = useQuery({
+    ...allRemindersOptions(),
+    enabled: activeTab === 'reminders',
+  });
 
   // 收藏夹数据
   type FavoriteItem = {
@@ -1072,7 +1115,15 @@ function HomeClient({
                     );
                   });
                 })()}
-                {reminderItems.length === 0 && (
+                {remindersPending && reminderItems.length === 0 && (
+                  <p
+                    role='status'
+                    className='col-span-full py-16 text-center text-sm text-gray-500 dark:text-gray-400'
+                  >
+                    正在加载想看…
+                  </p>
+                )}
+                {!remindersPending && reminderItems.length === 0 && (
                   <div className='col-span-full flex flex-col items-center justify-center py-16 px-4'>
                     <div className='mb-6 relative'>
                       <div className='absolute inset-0 bg-linear-to-r from-orange-300 to-red-300 dark:from-orange-600 dark:to-red-600 opacity-20 blur-3xl rounded-full'></div>
@@ -1387,7 +1438,15 @@ function HomeClient({
                     );
                   });
                 })()}
-                {favoriteItems.length === 0 && (
+                {favoritesPending && favoriteItems.length === 0 && (
+                  <p
+                    role='status'
+                    className='col-span-full py-16 text-center text-sm text-gray-500 dark:text-gray-400'
+                  >
+                    正在加载收藏…
+                  </p>
+                )}
+                {!favoritesPending && favoriteItems.length === 0 && (
                   <div className='col-span-full flex flex-col items-center justify-center py-16 px-4'>
                     {/* SVG 插画 - 空收藏夹 */}
                     <div className='mb-6 relative'>
@@ -1636,7 +1695,7 @@ function HomeClient({
                       onRetry={() => refetchSection('hotMovies')}
                     />
                     <ScrollableRow edgeBleed showControls={false} compact>
-                      {loading && hotMovies.length === 0
+                      {sectionPending.hotMovies && hotMovies.length === 0
                         ? // 加载状态显示灰色占位数据
                           Array.from({ length: 8 }).map((_, index) => (
                             <SkeletonCard key={index} />
@@ -1677,7 +1736,7 @@ function HomeClient({
                       onRetry={() => refetchSection('hotTvShows')}
                     />
                     <ScrollableRow edgeBleed showControls={false} compact>
-                      {loading && hotTvShows.length === 0
+                      {sectionPending.hotTvShows && hotTvShows.length === 0
                         ? // 加载状态显示灰色占位数据
                           Array.from({ length: 8 }).map((_, index) => (
                             <SkeletonCard key={index} />
@@ -1706,6 +1765,12 @@ function HomeClient({
                   </HomeSection>
                 )}
 
+                <div
+                  ref={nearbyRef}
+                  aria-hidden='true'
+                  className='h-px w-full'
+                />
+
                 {/* 每日新番放送 */}
                 {state.homePageConfig.showNewAnime && (
                   <HomeSection
@@ -1718,7 +1783,8 @@ function HomeClient({
                       onRetry={() => refetchSection('hotAnime')}
                     />
                     <ScrollableRow edgeBleed showControls={false} compact>
-                      {loading && todayAnimes.length === 0
+                      {sectionPending.bangumiCalendar &&
+                      todayAnimes.length === 0
                         ? // 加载状态显示灰色占位数据
                           Array.from({ length: 8 }).map((_, index) => (
                             <SkeletonCard key={index} />
@@ -1766,7 +1832,8 @@ function HomeClient({
                       onRetry={() => refetchSection('hotVarietyShows')}
                     />
                     <ScrollableRow edgeBleed showControls={false} compact>
-                      {loading && hotVarietyShows.length === 0
+                      {sectionPending.hotVarietyShows &&
+                      hotVarietyShows.length === 0
                         ? // 加载状态显示灰色占位数据
                           Array.from({ length: 8 }).map((_, index) => (
                             <SkeletonCard key={index} />
@@ -1807,7 +1874,8 @@ function HomeClient({
                       onRetry={() => refetchSection('hotShortDramas')}
                     />
                     <ScrollableRow edgeBleed showControls={false} compact>
-                      {loading && hotShortDramas.length === 0
+                      {sectionPending.hotShortDramas &&
+                      hotShortDramas.length === 0
                         ? // 加载状态显示灰色占位数据
                           Array.from({ length: 8 }).map((_, index) => (
                             <SkeletonCard key={index} />

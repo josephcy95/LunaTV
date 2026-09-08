@@ -1,7 +1,7 @@
 # Performance, usability, and UX roadmap
 
 **Created:** 2026-09-08
-**Status:** Pass 1 in progress — search transport/security and optional bundle changes implemented locally; production measurements and broad regression validation pending
+**Status:** Pass 1 in progress — search transport/security, homepage first-viewport query gating, and download-panel demand-loading implemented locally; production measurements and broad regression validation pending
 **Scope:** Navigation, search, homepage, shared application shell, client bundles, server requests, caching, and maintainability. Vercel Hobby is a primary deployment target; other supported deployments must continue working.
 
 ## Goal
@@ -171,10 +171,10 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 ## P1-04 — Homepage priority loading
 
 - [ ] Map which requests support the first viewport, nearby sections, and optional enrichment; account for mobile and desktop layouts and enabled homepage modules.
-- [ ] Render the shell immediately and let each section reveal its ready data independently. Audit aggregate loading flags that may hide ready content.
-- [ ] Prioritize hero/first visible rows and locally cached continue-watching information; do not wait for unrelated sections.
-- [ ] Load nearby sections ahead of entry using an intersection margin, with sensible fallbacks. Fast scrolling must not expose permanently empty sections.
-- [x] Defer below-fold requests and optional logos/detail enrichment until needed or idle. Hero TMDB logo requests now use a 200px `IntersectionObserver` margin and trigger once; layout reservation and browser validation remain open.
+- [x] Render the shell immediately and let each section reveal its ready data independently. Audit aggregate loading flags that may hide ready content. Rows now skeleton on their own `sectionPending` flag, not the aggregate homepage loading bit.
+- [x] Prioritize hero/first visible rows and locally cached continue-watching information; do not wait for unrelated sections. Douban hero/first-row queries run on the home tab only; favorites, reminders, and HomeClient play-record fetches wait for those tabs. Continue Watching still loads play records itself.
+- [x] Load nearby sections ahead of entry using an intersection margin, with sensible fallbacks. Fast scrolling must not expose permanently empty sections. Bangumi and short-drama queries start within 400px of their sentinel or after a 2.5s idle fallback; deferred rows keep skeletons until then.
+- [x] Defer below-fold requests and optional logos/detail enrichment until needed or idle. Hero TMDB logo requests now use a 200px `IntersectionObserver` margin and trigger once; bangumi/short-drama list requests are similarly deferred. Layout reservation and browser validation remain open.
 - [ ] Reuse cached data during refresh and return navigation. Avoid clearing good content while background refresh runs.
 - [ ] Inspect per-card detail/logo requests for request fan-out; deduplicate, cache, or batch where supported.
 - [ ] Preserve favorites, reminders, release calendar, disabled-module settings, refresh behavior, and error recovery.
@@ -213,7 +213,7 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [ ] Inventory global providers/components: imported modules, mount effects, queries, intervals, subscriptions, and context update frequency.
 - [ ] Keep essential shell/query/theme/site state lightweight and persistent.
 - [ ] Defer expensive feature UI until opened or relevant. Check hidden desktop/mobile component copies for duplicate work.
-- [ ] Separate persistent download/watch-room controllers from their demand-loaded panels. Keep active sessions alive across routes.
+- [x] Separate persistent download/watch-room controllers from their demand-loaded panels. Keep active sessions alive across routes. Download UI now mounts only when the panel is opened; `DownloadProvider` remains in the root layout. Watch-room chat was already gated. Playback paths are unchanged.
 - [ ] Start expensive feature resources only when needed, with an explicit activation/lifecycle model where appropriate.
 - [ ] Consider route groups only where they meaningfully isolate code; verify layout transitions do not reset caches, downloads, rooms, or playback unexpectedly.
 - [ ] Test auth pages, normal browsing, active downloads, room participation, logout, and cross-route navigation.
@@ -261,7 +261,7 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [ ] Remove superseded patches, dead imports, duplicate caches, and obsolete helpers only within tested ownership boundaries.
 - [ ] Audit CSS output and icon/UI-library duplication using actual bundle attribution; avoid an unrelated whole-site redesign.
 - [ ] Update scripts that prove incompatible with installed tooling, keeping lint/typecheck/test/build checks usable.
-- [x] Add focused tests for stream lifecycle, large-result exploration, query invalidation, cache isolation, and homepage loading. Local suites cover stream lifecycle/query isolation, 60-result exploration, cache isolation, and search API privacy; homepage visual validation remains open.
+- [x] Add focused tests for stream lifecycle, large-result exploration, query invalidation, cache isolation, and homepage loading. Local suites cover stream lifecycle/query isolation, 60-result exploration, cache isolation, search API privacy, and homepage first-viewport vs nearby query gating; homepage visual validation remains open.
 - [ ] Establish route-specific JS budgets and request/render budgets from measured baselines.
 - [ ] Document the loading/caching architecture and merge-review rules to prevent future upstream changes from reintroducing the same problems.
 
@@ -363,9 +363,16 @@ At minimum, cover:
 - `10272e8c` makes authenticated search responses private and non-cacheable across the affected JSON routes; `86bb05ca` removes process-global database counters from per-request metrics. The same targeted test command passed (3 suites, 14 tests); this is local evidence only and does not establish deployment behavior.
 - `a3865941` preserves explicit provider page metadata in downstream search results. The search-stream route regression suite passed as part of the targeted command above. Deeper provider pagination is not marked complete because cursor/query scoping and end-to-end browser access remain open.
 
+### Homepage first-viewport and download-panel milestones
+
+- Homepage primary Douban queries run only on the home tab. Bangumi calendar and short-drama lists wait for a 400px intersection sentinel or a 2.5s idle fallback, and keep per-section skeletons so fast scrolling cannot leave a permanently empty row. Favorites/reminders/HomeClient play-record requests start when those tabs are opened; Continue Watching still fetches play records on the home tab.
+- Deterministic hook coverage: disabled home tab fetches nothing; nearby modules stay idle until enabled, then fetch and clear `sectionPending`.
+- Root layout demand-loads `DownloadPanel` with `ssr: false` only after the panel is opened. Download tasks/sessions remain in `DownloadProvider`. React Query Devtools is development-only and no longer statically imported on the production path.
+- Browser first-viewport, tab-switch, and download-panel activation checks remain open.
+
 ## Next action
 
-Next actionable unchecked item: **P0-01 — measure home → search and return navigation in a production server with browser waterfall evidence**. Do not claim completion without cold/warm, desktop/mobile, and deployed evidence. After that, continue **P1-02/P1-03** query-scope, cancellation, partial-cache, and deeper-provider pagination work. Homepage ready-content/state changes are committed as `56f47396`; viewport scheduling and full workflow validation remain open.
+Next actionable unchecked item: **P0-01 — measure home → search and return navigation in a production server with browser waterfall evidence**. Do not claim completion without cold/warm, desktop/mobile, and deployed evidence. After that, continue **P1-02/P1-03** query-scope, cancellation, partial-cache, and deeper-provider pagination work. Homepage first-viewport scheduling is implemented locally; production waterfall proof is still required.
 
 Search navigation inspection found no route loading boundary and an inner Suspense without a fallback. Added `src/app/search/loading.tsx` and reused it in the inner boundary: visible status plus responsive poster placeholders, with animation limited to motion-safe preferences. This adds feedback, not proof of improved navigation latency; browser navigation/auth checks remain pending.
 
