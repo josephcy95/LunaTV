@@ -15,6 +15,7 @@
     "format": "prettier -w .",
     "format:check": "prettier -c .",
     "gen:manifest": "node scripts/generate-manifest.js",
+    "measure:p0-01": "node scripts/measure-p0-01.mjs",
     "edgeone:build": "node scripts/edgeone-build.mjs",
     "postbuild": "echo 'Build completed - sitemap generation disabled'",
     "prepare": "husky install"

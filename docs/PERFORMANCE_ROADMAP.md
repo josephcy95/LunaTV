@@ -106,7 +106,8 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 
 ## P0-01 — Establish the baseline
 
-- [ ] Inspect existing performance tooling and reuse it where reliable.
+- [x] Inspect existing performance tooling and reuse it where reliable. `src/lib/performance-monitor.ts` remains the runtime collector; this milestone adds a local metadata/build harness without changing request capture.
+- [x] Add a reproducible local evidence command: `pnpm measure:p0-01` (metadata only) or `pnpm measure:p0-01 -- --build` (runs the production build and records duration/status). Output is JSON with schema, timestamp, Node/platform, package version, build status/duration, and a short evidence ID. It never prints URLs, query strings, headers, response bodies, or raw search terms.
 - [x] Produce a fresh production build; record commit, dependency versions, build command, and environment characteristics without exposing secrets. Build succeeded on 2026-09-08 using Next.js 16.1.0/Turbopack; build emitted repeated local Kvrocks `ECONNREFUSED 127.0.0.1:6666` warnings during page-data collection.
 - [ ] Measure home → search, search → another section, return navigation, direct deep links, and browser back/forward.
 - [ ] Separate cold browser assets, warm browser assets, cold function invocation, warm function invocation, and upstream cache hit/miss. Do not label them all “cold load.”
