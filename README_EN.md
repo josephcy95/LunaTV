@@ -95,7 +95,6 @@ This project is for educational purposes only. Do not use for commercial purpose
 - **TanStack Query Full Integration**:
   - Smart data caching and automatic revalidation
   - Infinite scroll optimization (Douban, ShortDrama pages)
-  - Virtual scrolling for large list performance
   - Unified API cache strategy (2 hours)
   - Reduced unnecessary network requests and re-renders
 
@@ -145,7 +144,6 @@ pnpm dev
 
 - 🤖 [AI Features](docs/features/AI_FEATURES.md)
 - 📥 [Download Features](docs/features/DOWNLOAD_FEATURES.md)
-- 📺 [Virtual Scroll Guide](docs/features/VIRTUAL_SCROLL_GUIDE.md)
 
 ### Integration Guides
 
@@ -214,7 +212,6 @@ Based on [MoonTV](https://github.com/MoonTechLab/LunaTV).
 - [Next.js](https://nextjs.org/) — React framework
 - [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) — Powerful web video player
 - [HLS.js](https://github.com/video-dev/hls.js) — HLS streaming support
-- [TanStack Virtual](https://github.com/TanStack/virtual) — Virtual scrolling component
 - [Tailwind CSS](https://tailwindcss.com/) — CSS framework
 
 ### Data Sources & Services

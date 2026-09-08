@@ -22,7 +22,6 @@ import DoubanCustomSelector from '@/components/DoubanCustomSelector';
 import DoubanSelector from '@/components/DoubanSelector';
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
-import VirtualGrid from '@/components/VirtualGrid';
 
 const PAGE_SIZE = 25;
 
@@ -157,14 +156,6 @@ function DoubanPageClient() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [useVirtualization, setUseVirtualization] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('useDoubanVirtualization');
-      return saved !== null ? JSON.parse(saved) : true;
-    }
-    return true;
-  });
-
   const type = searchParams.get('type') || 'movie';
 
   const [customCategories, setCustomCategories] = useState<
@@ -228,39 +219,25 @@ function DoubanPageClient() {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Non-virtualized mode has no VirtualGrid endReached, so the bottom sentinel
-  // must drive pagination. Virtualized mode uses endReached only.
+  // 使用底部哨兵触发加载更多
   const bindLoadMoreSentinel = useCallback(
     (node: HTMLDivElement | null) => {
       loadingRef.current = node;
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-        observerRef.current = null;
-      }
-      if (useVirtualization || !node) return;
+      observerRef.current?.disconnect();
+      observerRef.current = null;
+      if (!node) return;
 
       const observer = new IntersectionObserver(
         (entries) => {
-          if (entries[0]?.isIntersecting) {
-            handleEndReached();
-          }
+          if (entries[0]?.isIntersecting) handleEndReached();
         },
         { rootMargin: '800px 0px', threshold: 0 },
       );
       observer.observe(node);
       observerRef.current = observer;
     },
-    [useVirtualization, handleEndReached],
+    [handleEndReached],
   );
-
-  // 保存虚拟化设置
-  const toggleVirtualization = () => {
-    const newValue = !useVirtualization;
-    setUseVirtualization(newValue);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('useDoubanVirtualization', JSON.stringify(newValue));
-    }
-  };
 
   // 获取自定义分类数据
   useEffect(() => {
@@ -529,400 +506,184 @@ function DoubanPageClient() {
               </div>
             </div>
           )}
-
-          {/* 虚拟化开关 */}
-          <div className='flex items-center justify-end gap-3 px-2'>
-            <label className='flex items-center gap-2 cursor-pointer group'>
-              <span className='text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'>
-                ⚡ 虚拟滑动
-              </span>
-              <div className='relative'>
-                <input
-                  type='checkbox'
-                  className='sr-only peer'
-                  checked={useVirtualization}
-                  onChange={toggleVirtualization}
-                />
-                <div className='w-11 h-6 bg-linear-to-r from-gray-200 to-gray-300 rounded-full peer-checked:from-blue-400 peer-checked:to-purple-500 transition-all duration-300 dark:from-gray-600 dark:to-gray-700 dark:peer-checked:from-blue-500 dark:peer-checked:to-purple-600 shadow-inner'></div>
-                <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-all duration-300 peer-checked:translate-x-5 shadow-lg peer-checked:shadow-blue-300 dark:peer-checked:shadow-blue-500/50 peer-checked:scale-105'></div>
-                <div className='absolute top-1.5 left-1.5 w-3 h-3 flex items-center justify-center pointer-events-none transition-all duration-300 peer-checked:translate-x-5'>
-                  <span className='text-[10px] peer-checked:text-white text-gray-500'>
-                    {useVirtualization ? '✨' : '○'}
-                  </span>
-                </div>
-              </div>
-            </label>
-          </div>
         </div>
 
         {/* 内容展示区域 */}
         <div className='max-w-[95%] mx-auto mt-8 overflow-visible'>
-          {/* 条件渲染：虚拟化 vs 传统网格 */}
-          {useVirtualization ? (
-            <>
-              {isLoading || !selectorsReady ? (
-                <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
-                  {skeletonData.map((index) => (
-                    <DoubanCardSkeleton key={index} />
-                  ))}
-                </div>
-              ) : (
-                <VirtualGrid
-                  items={allItems}
-                  className='grid-cols-3 gap-x-2 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8'
-                  rowGapClass='pb-12 sm:pb-20'
-                  estimateRowHeight={320}
-                  endReached={handleEndReached}
-                  endReachedThreshold={3}
-                  restoreKey={`douban:${type}:${primarySelection}:${secondarySelection}:${selectedWeekday}:${JSON.stringify(multiLevelValues)}`}
-                  getItemKey={(item, index) => `${item.id}-${index}`}
-                  renderItem={(item, index) => {
-                    const mappedType =
-                      type === 'movie'
-                        ? 'movie'
-                        : type === 'show'
-                          ? 'variety'
-                          : type === 'tv'
-                            ? 'tv'
-                            : type === 'anime'
-                              ? 'anime'
-                              : '';
-                    return (
-                      <div key={`${item.title}-${index}`} className='w-full'>
-                        <VideoCard
-                          from='douban'
-                          source='douban'
-                          id={item.id}
-                          source_name='豆瓣'
-                          title={item.title}
-                          poster={item.poster}
-                          douban_id={Number(item.id)}
-                          rate={item.rate}
-                          year={item.year}
-                          type={mappedType}
-                          isBangumi={
-                            type === 'anime' && primarySelection === '每日放送'
-                          }
-                          aiEnabled={aiEnabled}
-                          aiCheckComplete={aiCheckComplete}
-                          priority={index < 30}
-                        />
-                      </div>
-                    );
-                  }}
-                />
-              )}
-
-              {/* 加载更多指示器 */}
-              {hasNextPage && !isLoading && (
-                <div
-                  ref={(el) => {
-                    if (el && el.offsetParent !== null) {
-                      (
-                        loadingRef as React.MutableRefObject<HTMLDivElement | null>
-                      ).current = el;
-                    }
-                  }}
-                  className='flex justify-center mt-12 py-8'
-                >
-                  {isFetchingNextPage && (
-                    <div className='relative px-8 py-4 rounded-2xl bg-linear-to-r from-green-50 via-emerald-50 to-green-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-green-900/20 border border-green-200/50 dark:border-green-700/50 shadow-lg backdrop-blur-sm overflow-hidden'>
-                      <div className='absolute inset-0 bg-linear-to-r from-green-400/10 via-emerald-400/10 to-green-400/10 animate-pulse'></div>
-                      <div className='relative flex items-center gap-3'>
-                        <div className='relative'>
-                          <div className='animate-spin rounded-full h-8 w-8 border-[3px] border-green-200 dark:border-green-800'></div>
-                          <div className='absolute inset-0 animate-spin rounded-full h-8 w-8 border-[3px] border-transparent border-t-green-500 dark:border-t-green-400'></div>
-                        </div>
-                        <div className='flex items-center gap-1'>
-                          <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                            加载中
-                          </span>
-                          <span className='flex gap-0.5'>
-                            <span
-                              className='animate-bounce'
-                              style={{ animationDelay: '0ms' }}
-                            >
-                              .
-                            </span>
-                            <span
-                              className='animate-bounce'
-                              style={{ animationDelay: '150ms' }}
-                            >
-                              .
-                            </span>
-                            <span
-                              className='animate-bounce'
-                              style={{ animationDelay: '300ms' }}
-                            >
-                              .
-                            </span>
-                          </span>
-                        </div>
-                      </div>
+          {/* 传统网格渲染 */}
+          <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
+            {isLoading || !selectorsReady
+              ? skeletonData.map((index) => <DoubanCardSkeleton key={index} />)
+              : allItems.map((item, index) => {
+                  const mappedType =
+                    type === 'movie'
+                      ? 'movie'
+                      : type === 'show'
+                        ? 'variety'
+                        : type === 'tv'
+                          ? 'tv'
+                          : type === 'anime'
+                            ? 'anime'
+                            : '';
+                  return (
+                    <div key={`${item.title}-${index}`} className='w-full'>
+                      <VideoCard
+                        from='douban'
+                        source='douban'
+                        id={item.id}
+                        source_name='豆瓣'
+                        title={item.title}
+                        poster={item.poster}
+                        douban_id={Number(item.id)}
+                        rate={item.rate}
+                        year={item.year}
+                        type={mappedType}
+                        isBangumi={
+                          type === 'anime' && primarySelection === '每日放送'
+                        }
+                        aiEnabled={aiEnabled}
+                        aiCheckComplete={aiCheckComplete}
+                      />
                     </div>
-                  )}
-                </div>
-              )}
+                  );
+                })}
+          </div>
 
-              {/* 没有更多数据提示 */}
-              {!hasNextPage && allItems.length > 0 && (
-                <div className='flex justify-center mt-8 py-8'>
-                  <div className='relative px-8 py-5 rounded-2xl bg-linear-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 border border-blue-200/50 dark:border-blue-700/50 shadow-lg backdrop-blur-sm overflow-hidden'>
-                    <div className='absolute inset-0 bg-linear-to-br from-blue-100/20 to-purple-100/20 dark:from-blue-800/10 dark:to-purple-800/10'></div>
-                    <div className='absolute inset-0 bg-linear-to-br from-blue-100/20 to-purple-100/20 dark:from-blue-800/10 dark:to-purple-800/10'></div>
-                    <div className='relative flex flex-col items-center gap-2'>
-                      <div className='relative'>
-                        <div className='w-12 h-12 rounded-full bg-linear-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg'>
-                          <svg
-                            className='w-7 h-7 text-white'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth='2.5'
-                              d='M5 13l4 4L19 7'
-                            ></path>
-                          </svg>
-                        </div>
-                        <div className='absolute inset-0 rounded-full bg-blue-400/30 animate-ping'></div>
-                      </div>
-                      <div className='text-center'>
-                        <p className='text-base font-semibold text-gray-800 dark:text-gray-200 mb-1'>
-                          已加载全部内容
-                        </p>
-                        <p className='text-xs text-gray-600 dark:text-gray-400'>
-                          共 {allItems.length} 项
-                        </p>
-                      </div>
+          {/* 加载更多指示器 */}
+          {hasNextPage && !isLoading && (
+            <div
+              ref={bindLoadMoreSentinel}
+              className='flex justify-center mt-12 py-8'
+            >
+              {isFetchingNextPage && (
+                <div className='relative px-8 py-4 rounded-2xl bg-linear-to-r from-green-50 via-emerald-50 to-green-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-green-900/20 border border-green-200/50 dark:border-green-700/50 shadow-lg backdrop-blur-sm overflow-hidden'>
+                  {/* 动画背景 */}
+                  <div className='absolute inset-0 bg-linear-to-r from-green-400/10 via-emerald-400/10 to-green-400/10 animate-pulse'></div>
+
+                  {/* 内容 */}
+                  <div className='relative flex items-center gap-3'>
+                    {/* 旋转圈 */}
+                    <div className='relative'>
+                      <div className='animate-spin rounded-full h-8 w-8 border-[3px] border-green-200 dark:border-green-800'></div>
+                      <div className='absolute inset-0 animate-spin rounded-full h-8 w-8 border-[3px] border-transparent border-t-green-500 dark:border-t-green-400'></div>
+                    </div>
+
+                    {/* 文字和点动画 */}
+                    <div className='flex items-center gap-1'>
+                      <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                        加载中
+                      </span>
+                      <span className='flex gap-0.5'>
+                        <span
+                          className='animate-bounce'
+                          style={{ animationDelay: '0ms' }}
+                        >
+                          .
+                        </span>
+                        <span
+                          className='animate-bounce'
+                          style={{ animationDelay: '150ms' }}
+                        >
+                          .
+                        </span>
+                        <span
+                          className='animate-bounce'
+                          style={{ animationDelay: '300ms' }}
+                        >
+                          .
+                        </span>
+                      </span>
                     </div>
                   </div>
                 </div>
               )}
+            </div>
+          )}
 
-              {/* 空状态 */}
-              {!isLoading && selectorsReady && allItems.length === 0 && (
-                <div className='flex justify-center py-16'>
-                  <div className='relative px-12 py-10 rounded-3xl bg-linear-to-br from-gray-50 via-slate-50 to-gray-100 dark:from-gray-800/40 dark:via-slate-800/40 dark:to-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 shadow-xl backdrop-blur-sm overflow-hidden max-w-md'>
-                    <div className='absolute top-0 left-0 w-32 h-32 bg-linear-to-br from-blue-200/20 to-purple-200/20 rounded-full blur-3xl'></div>
-                    <div className='absolute bottom-0 right-0 w-32 h-32 bg-linear-to-br from-pink-200/20 to-orange-200/20 rounded-full blur-3xl'></div>
-                    <div className='relative flex flex-col items-center gap-4'>
-                      <div className='relative'>
-                        <div className='w-24 h-24 rounded-full bg-linear-to-br from-gray-100 to-slate-200 dark:from-gray-700 dark:to-slate-700 flex items-center justify-center shadow-lg'>
-                          <svg
-                            className='w-12 h-12 text-gray-400 dark:text-gray-500'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth='1.5'
-                              d='M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4'
-                            ></path>
-                          </svg>
-                        </div>
-                        <div className='absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full animate-ping'></div>
-                        <div className='absolute -bottom-1 -left-1 w-2 h-2 bg-purple-400 rounded-full animate-pulse'></div>
-                      </div>
-                      <div className='text-center space-y-2'>
-                        <h3 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                          暂无相关内容
-                        </h3>
-                        <p className='text-sm text-gray-600 dark:text-gray-400 max-w-xs'>
-                          尝试调整筛选条件或切换其他分类查看更多内容
-                        </p>
-                      </div>
-                      <div className='w-16 h-1 bg-linear-to-r from-transparent via-gray-300 to-transparent dark:via-gray-600 rounded-full'></div>
+          {/* 没有更多数据提示 */}
+          {!hasNextPage && allItems.length > 0 && (
+            <div className='flex justify-center mt-12 py-8'>
+              <div className='relative px-8 py-5 rounded-2xl bg-linear-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 border border-blue-200/50 dark:border-blue-700/50 shadow-lg backdrop-blur-sm overflow-hidden'>
+                <div className='absolute inset-0 bg-linear-to-br from-blue-100/20 to-purple-100/20 dark:from-blue-800/10 dark:to-purple-800/10'></div>
+                <div className='relative flex flex-col items-center gap-2'>
+                  <div className='relative'>
+                    <div className='w-12 h-12 rounded-full bg-linear-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg'>
+                      <svg
+                        className='w-7 h-7 text-white'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth='2.5'
+                          d='M5 13l4 4L19 7'
+                        ></path>
+                      </svg>
                     </div>
+                    <div className='absolute inset-0 rounded-full bg-blue-400/30 animate-ping'></div>
+                  </div>
+                  <div className='text-center'>
+                    <p className='text-base font-semibold text-gray-800 dark:text-gray-200 mb-1'>
+                      已加载全部内容
+                    </p>
+                    <p className='text-xs text-gray-600 dark:text-gray-400'>
+                      共 {allItems.length} 项
+                    </p>
                   </div>
                 </div>
-              )}
-            </>
-          ) : (
-            <>
-              {/* 传统网格渲染 */}
-              <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
-                {isLoading || !selectorsReady
-                  ? skeletonData.map((index) => (
-                      <DoubanCardSkeleton key={index} />
-                    ))
-                  : allItems.map((item, index) => {
-                      const mappedType =
-                        type === 'movie'
-                          ? 'movie'
-                          : type === 'show'
-                            ? 'variety'
-                            : type === 'tv'
-                              ? 'tv'
-                              : type === 'anime'
-                                ? 'anime'
-                                : '';
-                      return (
-                        <div key={`${item.title}-${index}`} className='w-full'>
-                          <VideoCard
-                            from='douban'
-                            source='douban'
-                            id={item.id}
-                            source_name='豆瓣'
-                            title={item.title}
-                            poster={item.poster}
-                            douban_id={Number(item.id)}
-                            rate={item.rate}
-                            year={item.year}
-                            type={mappedType}
-                            isBangumi={
-                              type === 'anime' &&
-                              primarySelection === '每日放送'
-                            }
-                            aiEnabled={aiEnabled}
-                            aiCheckComplete={aiCheckComplete}
-                          />
-                        </div>
-                      );
-                    })}
               </div>
+            </div>
+          )}
 
-              {/* 加载更多指示器 */}
-              {hasNextPage && !isLoading && (
-                <div
-                  ref={bindLoadMoreSentinel}
-                  className='flex justify-center mt-12 py-8'
-                >
-                  {isFetchingNextPage && (
-                    <div className='relative px-8 py-4 rounded-2xl bg-linear-to-r from-green-50 via-emerald-50 to-green-50 dark:from-green-900/20 dark:via-emerald-900/20 dark:to-green-900/20 border border-green-200/50 dark:border-green-700/50 shadow-lg backdrop-blur-sm overflow-hidden'>
-                      {/* 动画背景 */}
-                      <div className='absolute inset-0 bg-linear-to-r from-green-400/10 via-emerald-400/10 to-green-400/10 animate-pulse'></div>
+          {/* 空状态 */}
+          {!isLoading && allItems.length === 0 && (
+            <div className='flex justify-center py-16'>
+              <div className='relative px-12 py-10 rounded-3xl bg-linear-to-br from-gray-50 via-slate-50 to-gray-100 dark:from-gray-800/40 dark:via-slate-800/40 dark:to-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 shadow-xl backdrop-blur-sm overflow-hidden max-w-md'>
+                {/* 装饰性元素 */}
+                <div className='absolute top-0 left-0 w-32 h-32 bg-linear-to-br from-blue-200/20 to-purple-200/20 rounded-full blur-3xl'></div>
+                <div className='absolute bottom-0 right-0 w-32 h-32 bg-linear-to-br from-pink-200/20 to-orange-200/20 rounded-full blur-3xl'></div>
 
-                      {/* 内容 */}
-                      <div className='relative flex items-center gap-3'>
-                        {/* 旋转圈 */}
-                        <div className='relative'>
-                          <div className='animate-spin rounded-full h-8 w-8 border-[3px] border-green-200 dark:border-green-800'></div>
-                          <div className='absolute inset-0 animate-spin rounded-full h-8 w-8 border-[3px] border-transparent border-t-green-500 dark:border-t-green-400'></div>
-                        </div>
-
-                        {/* 文字和点动画 */}
-                        <div className='flex items-center gap-1'>
-                          <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                            加载中
-                          </span>
-                          <span className='flex gap-0.5'>
-                            <span
-                              className='animate-bounce'
-                              style={{ animationDelay: '0ms' }}
-                            >
-                              .
-                            </span>
-                            <span
-                              className='animate-bounce'
-                              style={{ animationDelay: '150ms' }}
-                            >
-                              .
-                            </span>
-                            <span
-                              className='animate-bounce'
-                              style={{ animationDelay: '300ms' }}
-                            >
-                              .
-                            </span>
-                          </span>
-                        </div>
-                      </div>
+                {/* 内容 */}
+                <div className='relative flex flex-col items-center gap-4'>
+                  {/* 插图图标 */}
+                  <div className='relative'>
+                    <div className='w-24 h-24 rounded-full bg-linear-to-br from-gray-100 to-slate-200 dark:from-gray-700 dark:to-slate-700 flex items-center justify-center shadow-lg'>
+                      <svg
+                        className='w-12 h-12 text-gray-400 dark:text-gray-500'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth='1.5'
+                          d='M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4'
+                        ></path>
+                      </svg>
                     </div>
-                  )}
-                </div>
-              )}
-
-              {/* 没有更多数据提示 */}
-              {!hasNextPage && allItems.length > 0 && (
-                <div className='flex justify-center mt-12 py-8'>
-                  <div className='relative px-8 py-5 rounded-2xl bg-linear-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 border border-blue-200/50 dark:border-blue-700/50 shadow-lg backdrop-blur-sm overflow-hidden'>
-                    <div className='absolute inset-0 bg-linear-to-br from-blue-100/20 to-purple-100/20 dark:from-blue-800/10 dark:to-purple-800/10'></div>
-                    <div className='relative flex flex-col items-center gap-2'>
-                      <div className='relative'>
-                        <div className='w-12 h-12 rounded-full bg-linear-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg'>
-                          <svg
-                            className='w-7 h-7 text-white'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth='2.5'
-                              d='M5 13l4 4L19 7'
-                            ></path>
-                          </svg>
-                        </div>
-                        <div className='absolute inset-0 rounded-full bg-blue-400/30 animate-ping'></div>
-                      </div>
-                      <div className='text-center'>
-                        <p className='text-base font-semibold text-gray-800 dark:text-gray-200 mb-1'>
-                          已加载全部内容
-                        </p>
-                        <p className='text-xs text-gray-600 dark:text-gray-400'>
-                          共 {allItems.length} 项
-                        </p>
-                      </div>
-                    </div>
+                    {/* 浮动小点装饰 */}
+                    <div className='absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full animate-ping'></div>
+                    <div className='absolute -bottom-1 -left-1 w-2 h-2 bg-purple-400 rounded-full animate-pulse'></div>
                   </div>
-                </div>
-              )}
 
-              {/* 空状态 */}
-              {!isLoading && allItems.length === 0 && (
-                <div className='flex justify-center py-16'>
-                  <div className='relative px-12 py-10 rounded-3xl bg-linear-to-br from-gray-50 via-slate-50 to-gray-100 dark:from-gray-800/40 dark:via-slate-800/40 dark:to-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 shadow-xl backdrop-blur-sm overflow-hidden max-w-md'>
-                    {/* 装饰性元素 */}
-                    <div className='absolute top-0 left-0 w-32 h-32 bg-linear-to-br from-blue-200/20 to-purple-200/20 rounded-full blur-3xl'></div>
-                    <div className='absolute bottom-0 right-0 w-32 h-32 bg-linear-to-br from-pink-200/20 to-orange-200/20 rounded-full blur-3xl'></div>
-
-                    {/* 内容 */}
-                    <div className='relative flex flex-col items-center gap-4'>
-                      {/* 插图图标 */}
-                      <div className='relative'>
-                        <div className='w-24 h-24 rounded-full bg-linear-to-br from-gray-100 to-slate-200 dark:from-gray-700 dark:to-slate-700 flex items-center justify-center shadow-lg'>
-                          <svg
-                            className='w-12 h-12 text-gray-400 dark:text-gray-500'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth='1.5'
-                              d='M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4'
-                            ></path>
-                          </svg>
-                        </div>
-                        {/* 浮动小点装饰 */}
-                        <div className='absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full animate-ping'></div>
-                        <div className='absolute -bottom-1 -left-1 w-2 h-2 bg-purple-400 rounded-full animate-pulse'></div>
-                      </div>
-
-                      {/* 文字内容 */}
-                      <div className='text-center space-y-2'>
-                        <h3 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                          暂无相关内容
-                        </h3>
-                        <p className='text-sm text-gray-600 dark:text-gray-400 max-w-xs'>
-                          尝试调整筛选条件或切换其他分类查看更多内容
-                        </p>
-                      </div>
-
-                      {/* 装饰线 */}
-                      <div className='w-16 h-1 bg-linear-to-r from-transparent via-gray-300 to-transparent dark:via-gray-600 rounded-full'></div>
-                    </div>
+                  {/* 文字内容 */}
+                  <div className='text-center space-y-2'>
+                    <h3 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                      暂无相关内容
+                    </h3>
+                    <p className='text-sm text-gray-600 dark:text-gray-400 max-w-xs'>
+                      尝试调整筛选条件或切换其他分类查看更多内容
+                    </p>
                   </div>
+
+                  {/* 装饰线 */}
+                  <div className='w-16 h-1 bg-linear-to-r from-transparent via-gray-300 to-transparent dark:via-gray-600 rounded-full'></div>
                 </div>
-              )}
-            </>
+              </div>
+            </div>
           )}
         </div>
       </div>

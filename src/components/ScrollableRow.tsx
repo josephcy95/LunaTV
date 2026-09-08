@@ -1,5 +1,14 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Children, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  Children,
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { MouseEvent, PointerEvent } from 'react';
 
 import AnimatedCardGrid from '@/components/AnimatedCardGrid';
@@ -8,7 +17,6 @@ interface ScrollableRowProps {
   children: React.ReactNode;
   scrollDistance?: number;
   enableAnimation?: boolean;
-  enableVirtualization?: boolean; // 启用虚拟化（仅当子元素很多时）
   edgeBleed?: boolean;
   showControls?: boolean;
   compact?: boolean;
@@ -18,7 +26,6 @@ function ScrollableRow({
   children,
   scrollDistance = 1000,
   enableAnimation = false,
-  enableVirtualization = false,
   edgeBleed = false,
   showControls = true,
   compact = false,
@@ -30,7 +37,9 @@ function ScrollableRow({
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [edgeLeadingOffset, setEdgeLeadingOffset] = useState(0);
-  const checkScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const checkScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const dragStateRef = useRef({
     active: false,
     pointerId: -1,
@@ -38,7 +47,6 @@ function ScrollableRow({
     scrollLeft: 0,
     moved: false,
   });
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
 
   // 使用 useMemo 缓存 children 数量，减少不必要的 effect 触发
   const childrenCount = useMemo(() => Children.count(children), [children]);
@@ -53,7 +61,9 @@ function ScrollableRow({
         const parent = wrapperRef.current?.parentElement;
         if (!parent) return;
         const sectionLeft = parent.getBoundingClientRect().left;
-        const titleInset = window.matchMedia('(min-width: 640px)').matches ? 24 : 16;
+        const titleInset = window.matchMedia('(min-width: 640px)').matches
+          ? 24
+          : 16;
         setEdgeLeadingOffset(Math.max(0, Math.round(sectionLeft + titleInset)));
       });
     };
@@ -83,63 +93,14 @@ function ScrollableRow({
         scrollWidth - (scrollLeft + clientWidth) > threshold;
       const canScrollLeft = scrollLeft > threshold;
 
-      setShowRightScroll((prev) => (prev !== canScrollRight ? canScrollRight : prev));
-      setShowLeftScroll((prev) => (prev !== canScrollLeft ? canScrollLeft : prev));
-
-      // 虚拟化：精确计算可见范围（参考 react-window 实现）
-      if (enableVirtualization && containerRef.current.children.length > 0) {
-        const overscan = 2;
-        const viewportStart = scrollLeft;
-        const viewportEnd = scrollLeft + clientWidth;
-
-        let startIndexVisible = 0;
-        let stopIndexVisible = childrenCount - 1;
-
-        // 查找第一个可见元素
-        for (let i = 0; i < containerRef.current.children.length; i++) {
-          const child = containerRef.current.children[i] as HTMLElement;
-          const offsetLeft = child.offsetLeft;
-          const offsetWidth = child.offsetWidth;
-
-          if (offsetLeft + offsetWidth > viewportStart) {
-            startIndexVisible = i;
-            break;
-          }
-        }
-
-        // 查找最后一个可见元素
-        for (let i = startIndexVisible; i < containerRef.current.children.length; i++) {
-          const child = containerRef.current.children[i] as HTMLElement;
-          const offsetLeft = child.offsetLeft;
-
-          if (offsetLeft >= viewportEnd) {
-            stopIndexVisible = i - 1;
-            break;
-          }
-        }
-
-        const start = Math.max(0, startIndexVisible - overscan);
-        const end = Math.min(childrenCount, stopIndexVisible + overscan + 1);
-
-        setVisibleRange(prev => {
-          if (prev.start !== start || prev.end !== end) {
-            return { start, end };
-          }
-          return prev;
-        });
-      }
+      setShowRightScroll((prev) =>
+        prev !== canScrollRight ? canScrollRight : prev,
+      );
+      setShowLeftScroll((prev) =>
+        prev !== canScrollLeft ? canScrollLeft : prev,
+      );
     }
-  }, [enableVirtualization, childrenCount]);
-
-  // 虚拟化：只渲染可见范围内的子元素
-  const visibleChildren = useMemo(() => {
-    if (!enableVirtualization || childrenCount <= 20) {
-      return children; // 少于20个元素，不需要虚拟化
-    }
-
-    const childArray = Children.toArray(children);
-    return childArray.slice(visibleRange.start, visibleRange.end);
-  }, [enableVirtualization, children, childrenCount, visibleRange]);
+  }, []);
 
   useEffect(() => {
     // 延迟检查，确保内容已完全渲染
@@ -209,39 +170,53 @@ function ScrollableRow({
     }
   }, [scrollDistance]);
 
-  const handlePointerDown = useCallback((event: PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType !== 'mouse' || event.button !== 0 || !containerRef.current) {
-      return;
-    }
+  const handlePointerDown = useCallback(
+    (event: PointerEvent<HTMLDivElement>) => {
+      if (
+        event.pointerType !== 'mouse' ||
+        event.button !== 0 ||
+        !containerRef.current
+      ) {
+        return;
+      }
 
-    dragStateRef.current = {
-      active: true,
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      scrollLeft: containerRef.current.scrollLeft,
-      moved: false,
-    };
-  }, []);
+      dragStateRef.current = {
+        active: true,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        scrollLeft: containerRef.current.scrollLeft,
+        moved: false,
+      };
+    },
+    [],
+  );
 
-  const handlePointerMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
-    const drag = dragStateRef.current;
-    if (!drag.active || drag.pointerId !== event.pointerId || !containerRef.current) {
-      return;
-    }
+  const handlePointerMove = useCallback(
+    (event: PointerEvent<HTMLDivElement>) => {
+      const drag = dragStateRef.current;
+      if (
+        !drag.active ||
+        drag.pointerId !== event.pointerId ||
+        !containerRef.current
+      ) {
+        return;
+      }
 
-    const delta = event.clientX - drag.startX;
-    if (!drag.moved && Math.abs(delta) > 6) {
-      drag.moved = true;
-      setIsDragging(true);
-      containerRef.current.setPointerCapture(event.pointerId);
-    }
+      const delta = event.clientX - drag.startX;
+      if (!drag.moved && Math.abs(delta) > 6) {
+        drag.moved = true;
+        setIsDragging(true);
+        containerRef.current.setPointerCapture(event.pointerId);
+      }
 
-    if (drag.moved) {
-      containerRef.current.scrollLeft = drag.scrollLeft - delta;
-      event.preventDefault();
-      return;
-    }
-  }, []);
+      if (drag.moved) {
+        containerRef.current.scrollLeft = drag.scrollLeft - delta;
+        event.preventDefault();
+        return;
+      }
+    },
+    [],
+  );
 
   const endDrag = useCallback((event: PointerEvent<HTMLDivElement>) => {
     const drag = dragStateRef.current;
@@ -261,13 +236,16 @@ function ScrollableRow({
     }
   }, []);
 
-  const handleClickCapture = useCallback((event: MouseEvent<HTMLDivElement>) => {
-    if (dragStateRef.current.moved) {
-      event.preventDefault();
-      event.stopPropagation();
-      dragStateRef.current.moved = false;
-    }
-  }, []);
+  const handleClickCapture = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      if (dragStateRef.current.moved) {
+        event.preventDefault();
+        event.stopPropagation();
+        dragStateRef.current.moved = false;
+      }
+    },
+    [],
+  );
 
   return (
     <div
@@ -293,9 +271,7 @@ function ScrollableRow({
         ref={containerRef}
         className={`flex space-x-6 overflow-x-auto scrollbar-hide pt-3 sm:pt-4 ${
           compact ? 'pb-7 sm:pb-8' : 'pb-12 sm:pb-14'
-        } ${
-          edgeBleed ? 'pr-0' : 'px-4 sm:px-6'
-        } ${
+        } ${edgeBleed ? 'pr-0' : 'px-4 sm:px-6'} ${
           isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'
         }`}
         onScroll={checkScroll}
@@ -312,11 +288,11 @@ function ScrollableRow({
         }}
       >
         {enableAnimation ? (
-          <AnimatedCardGrid className="flex space-x-6">
-            {visibleChildren}
+          <AnimatedCardGrid className='flex space-x-6'>
+            {children}
           </AnimatedCardGrid>
         ) : (
-          visibleChildren
+          children
         )}
       </div>
       {showControls && showLeftScroll && (

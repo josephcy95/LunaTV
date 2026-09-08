@@ -18,7 +18,7 @@ describe('useSearchResultBatch', () => {
     expect(discovered).toHaveLength(1003);
   });
 
-  it.each(['query', 'filter', 'sort', 'view', 'exact', 'virtualization'])(
+  it.each(['query', 'filter', 'sort', 'view', 'display', 'exact'])(
     'resets when the %s scope changes and does not resurrect an old limit',
     (change) => {
       const { result, rerender } = renderHook(

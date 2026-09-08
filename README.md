@@ -95,7 +95,6 @@
 - **TanStack Query 全面集成**：
   - 智能数据缓存和自动重新验证
   - 无限滚动优化（豆瓣、短剧页面）
-  - 虚拟滚动提升大列表性能
   - 统一的 API 缓存策略（2小时）
   - 减少不必要的网络请求和重复渲染
 
@@ -145,7 +144,6 @@ pnpm dev
 
 - 🤖 [AI 功能详解](docs/features/AI_FEATURES.md)
 - 📥 [下载功能](docs/features/DOWNLOAD_FEATURES.md)
-- 📺 [虚拟滚动指南](docs/features/VIRTUAL_SCROLL_GUIDE.md)
 
 ### 集成指南
 
@@ -214,7 +212,6 @@ pnpm dev
 - [Next.js](https://nextjs.org/) — React 框架
 - [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) — 强大的网页视频播放器
 - [HLS.js](https://github.com/video-dev/hls.js) — HLS 流媒体支持
-- [TanStack Virtual](https://github.com/TanStack/virtual) — 虚拟滚动组件
 - [Tailwind CSS](https://tailwindcss.com/) — CSS 框架
 
 ### 数据源与服务

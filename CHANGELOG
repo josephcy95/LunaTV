@@ -1,3 +1,9 @@
+## [Unreleased] - 2026-09-09
+
+### Changed
+
+- Removed application-wide list virtualization from Douban, search, Emby, short-drama, and shared horizontal rows. Preserved normal responsive grids, lazy posters, pagination, and search result batching; long lists now keep more loaded cards mounted and no longer use virtualization-specific scroll restoration.
+
 ## [6.6.4] - 2026-08-22
 
 ### Fixed

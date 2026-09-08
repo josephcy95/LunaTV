@@ -160,7 +160,7 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [x] Keep all discovered results searchable/filterable. Filtering and aggregation run over the complete discovered set before the rendering slice.
 - [ ] Preserve stable result identity, useful source grouping, scroll position, keyboard focus, and playback actions as new batches arrive.
 - [ ] Define ordering while streaming so incoming results do not repeatedly move the item the user is about to click.
-- [ ] Use existing virtualization where it helps; verify row measurement and responsive grids rather than replacing it blindly.
+- [ ] Verify ordinary grid pagination, lazy posters and long-list performance after removal of list virtualization.
 - [x] Distinguish client rendering batches from server/provider pagination. The 60-result client slice is documented as rendering-only; it does not claim to reduce upstream payloads or retained discovered results.
 - [ ] Where upstream providers support pagination, expose deeper pages through explicit requests with deduplication and honest “more available/unknown” states. Keep cursors scoped to query, filters, and authorized provider set.
 - [ ] Avoid pagination designs that depend solely on an in-memory serverless instance retaining the previous request.
@@ -347,7 +347,7 @@ At minimum, cover:
 
 ### Search rendering batches and homepage state follow-up
 
-- `88eba649` adds 60-result rendering batches to nonvirtualized card/list views, after full-set aggregation/filtering/sorting. VirtualGrid retains all results. Accessible Load more keeps every discovered match reachable; this does not add server pagination or stabilize incoming ranking.
+- `88eba649` adds 60-result rendering batches to nonvirtualized card/list views, after full-set aggregation/filtering/sorting. This historical implementation was superseded by global virtualization removal; all views now use rendering batches. Accessible Load more keeps every discovered match reachable; this does not add server pagination or stabilize incoming ranking.
 - Nine hook regressions cover 1,003 results, scope changes, incremental arrivals and rapid load actions. Downstream provider tests add 8 deterministic cases for early callbacks, variant/page deduplication, cancellation during fetch/body parsing, no negative cache on abort, partial streaming failures, and traditional partial results. Combined validation: 33 tests in 6 suites and typecheck passed before the homepage state follow-up.
 - Homepage commit hooks exposed existing render-time ref cache violations. Removed redundant `prevHot*Ref` caches: fixed-key TanStack Query retains data through refresh/errors, while successful empty responses must replace old data. Existing enrichment precedence remains. Targeted homepage lint now passes with existing warnings; browser checks remain pending.
 
