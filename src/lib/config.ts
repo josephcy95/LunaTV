@@ -5,6 +5,7 @@ import { unstable_noStore } from 'next/cache';
 import { db } from '@/lib/db';
 
 import { AdminConfig } from './admin.types';
+import { isPrivateOrLocalApiUrl } from './private-api-url';
 import { DEFAULT_USER_AGENT } from './user-agent';
 
 export interface ApiSite {
@@ -745,6 +746,13 @@ function applyVideoProxy(sites: ApiSite[], config: AdminConfig): ApiSite[] {
       console.log(
         `[Video Proxy] ${source.name}: Detected old proxy, replacing with new proxy`,
       );
+    }
+
+    if (isPrivateOrLocalApiUrl(realApiUrl)) {
+      console.log(
+        `[Video Proxy] ${source.name}: skipped (LAN/Tailscale/private API)`,
+      );
+      return { ...source, api: realApiUrl };
     }
 
     // Extract source ID from real API URL
