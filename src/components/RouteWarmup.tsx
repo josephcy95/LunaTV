@@ -42,7 +42,8 @@ function shouldSkipWarmup() {
   return (
     connection?.saveData === true ||
     connection?.effectiveType === 'slow-2g' ||
-    connection?.effectiveType === '2g'
+    connection?.effectiveType === '2g' ||
+    connection?.effectiveType === '3g'
   );
 }
 
@@ -52,7 +53,11 @@ export default function RouteWarmup() {
 
   useEffect(() => {
     // Skip warmup on auth pages
-    if (pathname === '/login' || pathname === '/register' || pathname === '/oidc-register') {
+    if (
+      pathname === '/login' ||
+      pathname === '/register' ||
+      pathname === '/oidc-register'
+    ) {
       return;
     }
 
