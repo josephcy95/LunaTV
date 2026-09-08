@@ -57,8 +57,14 @@ export async function GET(request: NextRequest) {
       let totalResults = 0;
       // Do not return the task from start(): the response must remain cancellable
       // while providers are running, including during additional-page requests.
-      void Promise.allSettled(
-        apiSites.map(async (site) => {
+      // Bound fan-out so a large provider list cannot exhaust connections/resources.
+      const providerConcurrency = Math.min(4, Math.max(1, apiSites.length));
+      let nextProvider = 0;
+      const runProvider = async () => {
+        while (!signal.aborted) {
+          const index = nextProvider++;
+          const site = apiSites[index];
+          if (!site) return;
           const providerStart = performance.now();
           const deadline = new AbortController();
           const timer = setTimeout(() => deadline.abort(), 20000);
@@ -105,7 +111,10 @@ export async function GET(request: NextRequest) {
           } finally {
             clearTimeout(timer);
           }
-        }),
+        }
+      };
+      void Promise.all(
+        Array.from({ length: providerConcurrency }, () => runProvider()),
       ).then(() => {
         send({
           type: 'complete',

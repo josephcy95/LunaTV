@@ -62,3 +62,30 @@ test('first page is emitted before provider completion and disconnect aborts ups
   await reader.cancel();
   expect(upstreamSignal?.aborted).toBe(true);
 });
+
+test('limits concurrent providers while preserving all results', async () => {
+  const sites = Array.from({ length: 6 }, (_, i) => ({
+    key: `p${i}`,
+    name: `P${i}`,
+  }));
+  (getAvailableApiSites as jest.Mock).mockResolvedValue(sites);
+  let active = 0;
+  let maxActive = 0;
+  (searchFromApi as jest.Mock).mockImplementation(
+    async (site, _q, _v, options) => {
+      active++;
+      maxActive = Math.max(maxActive, active);
+      options.onResults([{ id: site.key, source: site.key, title: site.name }]);
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      active--;
+    },
+  );
+  const response = await GET(
+    new NextRequest('http://localhost/api/search/ws?q=test'),
+  );
+  const text = await response.text();
+  expect(maxActive).toBeLessThanOrEqual(4);
+  for (const site of sites)
+    expect(text).toContain(`\"source\":\"${site.key}\"`);
+  expect(text).toContain('"completedSources":6');
+});
