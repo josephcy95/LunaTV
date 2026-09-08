@@ -25,9 +25,6 @@ import NetDiskButton from '@/components/play/NetDiskButton';
 import BackToTopButton from '@/components/play/BackToTopButton';
 import PlayInfoPanel from '@/components/play/PlayInfoPanel';
 import VideoLoadingOverlay from '@/components/play/VideoLoadingOverlay';
-import WatchRoomSyncBanner from '@/components/play/WatchRoomSyncBanner';
-import SourceSwitchDialog from '@/components/play/SourceSwitchDialog';
-import OwnerChangeDialog from '@/components/play/OwnerChangeDialog';
 import PlayErrorDisplay from '@/components/play/PlayErrorDisplay';
 import { ClientCache } from '@/lib/client-cache';
 import { getPlayerDeviceInfo } from '@/lib/player/device';
@@ -56,9 +53,7 @@ import {
   processImageUrl,
   VideoSourceTestResult,
 } from '@/lib/utils';
-import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 import { useSite } from '@/components/SiteProvider';
-import { useWatchRoomSync } from './hooks/useWatchRoomSync';
 import {
   useSavePlayRecordMutation,
   useSaveFavoriteMutation,
@@ -357,7 +352,6 @@ function PlayPageClient() {
   const searchParams = useSearchParams();
   const { createTask, setShowDownloadPanel } = useDownload();
   const { siteName } = useSite();
-  const watchRoom = useWatchRoomContextSafe();
 
   // TanStack Query mutations
   const savePlayRecordMutation = useSavePlayRecordMutation();
@@ -631,7 +625,7 @@ function PlayPageClient() {
     return indexParam ? parseInt(indexParam, 10) : 0;
   });
 
-  // 监听 URL index 参数变化（观影室切集同步）
+  // 监听 URL index 参数变化
   useEffect(() => {
     const indexParam = searchParams.get('index');
     const newIndex = indexParam ? parseInt(indexParam, 10) : 0;
@@ -645,7 +639,7 @@ function PlayPageClient() {
   const [reloadTrigger, setReloadTrigger] = useState(0);
   const reloadFlagRef = useRef<string | null>(null);
 
-  // 监听 URL source/id 参数变化（观影室切换源同步）
+  // 监听 URL source/id 参数变化
   useEffect(() => {
     const newSource = searchParams.get('source') || '';
     const newId = searchParams.get('id') || '';
@@ -676,7 +670,6 @@ function PlayPageClient() {
       setError(null);
       setLoading(true);
       setNeedPrefer(false);
-      setPlayerReady(false);
 
       // 触发重新加载（通过更新 reloadTrigger 来触发 initAll 重新执行）
       setReloadTrigger((prev) => prev + 1);
@@ -976,41 +969,8 @@ function PlayPageClient() {
   const pendingSwitchRef = useRef<any>(null); // 保存待处理的切换请求
   const switchPromiseRef = useRef<Promise<void> | null>(null); // 当前切换的Promise
 
-  // 播放器就绪状态
-  const [playerReady, setPlayerReady] = useState(false);
-
   // Wake Lock 相关
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
-
-  // 观影室同步
-  const {
-    isInRoom: isInWatchRoom,
-    isOwner: isWatchRoomOwner,
-    syncPaused,
-    pauseSync,
-    resumeSync,
-    isSameVideoAsOwner,
-    pendingOwnerChange,
-    confirmFollowOwner,
-    rejectFollowOwner,
-    showSourceSwitchDialog,
-    pendingOwnerState,
-    handleConfirmSourceSwitch,
-    handleCancelSourceSwitch,
-  } = useWatchRoomSync({
-    watchRoom,
-    artPlayerRef,
-    detail,
-    episodeIndex: currentEpisodeIndex,
-    playerReady,
-    videoId: currentId, // 传入URL参数的id
-    currentSource: currentSource, // 传入当前播放源
-    videoTitle: videoTitle, // 传入视频标题（来自 state，初始值来自 URL）
-    videoYear: videoYear, // 传入视频年份（来自 state，初始值来自 URL）
-    videoDoubanId: videoDoubanId, // 传入豆瓣ID
-    searchTitle: searchTitle, // 传入搜索标题
-    setCurrentEpisodeIndex, // 传入切换集数的函数
-  });
 
   // 🚀 数据预取 - 下一集预取（当播放进度达到80%时）
   usePrefetchNextEpisode({
@@ -2451,7 +2411,6 @@ function PlayPageClient() {
         // 1. 先销毁 ArtPlayer，停止所有控制
         artPlayerRef.current.destroy(false);
         artPlayerRef.current = null;
-        setPlayerReady(false);
         console.log('[Cleanup] ArtPlayer已销毁');
 
         // 2. 然后清理 video 和 HLS
@@ -2482,7 +2441,6 @@ function PlayPageClient() {
       } catch (err) {
         console.warn('清理播放器资源时出错:', err);
         artPlayerRef.current = null;
-        setPlayerReady(false);
       }
     }
   };
@@ -4730,12 +4688,11 @@ function PlayPageClient() {
         // 监听播放器事件
         artPlayerRef.current.on('ready', () => {
           setError(null);
-          setPlayerReady(true); // 标记播放器已就绪，启用观影室同步
 
           // 应用记忆的字幕字号缩放（range 默认值不会触发 onChange，需手动写入 CSS 变量）
           applySubtitleScale(artPlayerRef.current, getStoredSubtitleScale());
 
-          // 观影室时间同步：从URL参数读取初始播放时间。
+          // 从 URL 参数读取初始播放时间。
           // 只在本次挂载的第一次 ready 应用，避免播放器重建时把用户拉回旧时间点
           const timeParam = searchParams.get('t') || searchParams.get('time');
           if (
@@ -5384,34 +5341,6 @@ function PlayPageClient() {
 
         {/* 返回顶部悬浮按钮 - 使用独立组件优化性能 */}
         <BackToTopButton show={showBackToTop} onClick={scrollToTop} />
-
-        {/* 观影室同步暂停提示条 */}
-        <WatchRoomSyncBanner
-          show={
-            isInWatchRoom &&
-            !isWatchRoomOwner &&
-            syncPaused &&
-            !pendingOwnerChange
-          }
-          onResumeSync={resumeSync}
-        />
-
-        {/* 源切换确认对话框 */}
-        <SourceSwitchDialog
-          show={showSourceSwitchDialog && !!pendingOwnerState}
-          ownerSource={pendingOwnerState?.source || ''}
-          onConfirm={handleConfirmSourceSwitch}
-          onCancel={handleCancelSourceSwitch}
-        />
-
-        {/* 房主切换视频/集数确认框 */}
-        <OwnerChangeDialog
-          show={!!pendingOwnerChange}
-          videoName={pendingOwnerChange?.videoName || ''}
-          episode={pendingOwnerChange?.episode || 0}
-          onConfirm={confirmFollowOwner}
-          onReject={rejectFollowOwner}
-        />
       </PageLayout>
 
       {/* 网盘资源模态框 */}

@@ -25,7 +25,6 @@ const STANDALONE_ROUTES = [
   '/oidc-register',
   '/warning',
   '/source-test',
-  '/watch-room/screen',
 ];
 
 function isStandaloneRoute(pathname: string) {

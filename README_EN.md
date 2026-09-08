@@ -43,7 +43,6 @@ This project is for educational purposes only. Do not use for commercial purpose
 
 ### 🎥 Content Ecosystem
 
-- **Multi-User Watch Room**: Synchronized playback, screen sharing, real-time chat, voice calls, WebRTC streaming, adjustable quality presets → [Documentation](docs/deployment/WATCH_ROOM_DEPLOYMENT.md)
 - **Emby Private Library**: Complete Emby media server integration with passwordless login, auth mode switcher, and multi-audio track playback → [Documentation](docs/integration/EMBY_GUIDE.md)
 - **YouTube Integration**: Full YouTube search, playback, live streaming, popular videos with region selector
 - **Bilibili Integration**: Bilibili search and playback with UP主 videos, popular videos, QR code login, cookie management
@@ -147,7 +146,6 @@ pnpm dev
 - 🤖 [AI Features](docs/features/AI_FEATURES.md)
 - 📥 [Download Features](docs/features/DOWNLOAD_FEATURES.md)
 - 📺 [Virtual Scroll Guide](docs/features/VIRTUAL_SCROLL_GUIDE.md)
-- 🎥 [Watch Room Deployment](docs/deployment/WATCH_ROOM_DEPLOYMENT.md)
 
 ### Integration Guides
 
@@ -229,7 +227,7 @@ Based on [MoonTV](https://github.com/MoonTechLab/LunaTV).
 
 This project references design ideas and implementations from these excellent open-source projects:
 
-- **[MoonTVPlus](https://github.com/mtvpls/MoonTVPlus)** — Watch room sync playback, mobile optimization
+- **[MoonTVPlus](https://github.com/mtvpls/MoonTVPlus)** — Mobile optimization
 - **[DecoTV](https://github.com/Decohererk/DecoTV)** — TVBox security strategy, performance optimization, UI design
 
 Thanks to these projects and their authors for their open-source contributions!

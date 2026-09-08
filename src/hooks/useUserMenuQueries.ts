@@ -84,28 +84,6 @@ export function useSaveEmbyConfigMutation() {
 }
 
 /**
- * Query options for watch room config
- */
-const watchRoomConfigOptions = () =>
-  queryOptions({
-    queryKey: ['watchRoomConfig'],
-    queryFn: async () => {
-      const response = await fetch('/api/watch-room/config');
-      const config = await response.json();
-      return config.enabled === true;
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes - config rarely changes
-    gcTime: 30 * 60 * 1000,
-  });
-
-/**
- * Fetch watch room config
- */
-export function useWatchRoomConfigQuery() {
-  return useQuery(watchRoomConfigOptions());
-}
-
-/**
  * Query options for server config
  */
 const serverConfigOptions = () =>

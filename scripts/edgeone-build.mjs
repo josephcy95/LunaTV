@@ -53,7 +53,7 @@ const skipPaths = [
   '/api/server-config', '/api/tvbox', '/api/tvbox-config',
   '/api/live/merged', '/api/parse', '/api/bing-wallpaper',
   '/api/proxy/', '/api/telegram/', '/api/auth/oidc/',
-  '/api/watch-room/', '/api/cache/', '/api/client-log',
+  '/api/cache/', '/api/client-log',
 ];
 
 // 用于 layout 注入时过滤掉 API 路径（API 认证由 edge middleware 处理）

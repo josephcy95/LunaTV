@@ -17,7 +17,7 @@ This is the working source of truth for implementation. Work through the priorit
 - **No permanent result trimming.** Use “Load more” or provider pagination so users can explore deeper results. A rendering batch size is not a total result cap.
 - **No premature provider cancellation just because enough results arrived.** Cancellation is appropriate for abandoned searches, explicit user actions, or actual deadlines. Slower providers must remain discoverable and retryable.
 - **Keep the homepage rich.** Prioritize visible content and prepare nearby sections before scrolling reaches them; do not remove sections to improve metrics.
-- **Keep background features working.** Active downloads and watch-room sessions must survive navigation. Do not move their state into disposable page components.
+- **Keep background features working.** Active downloads must survive navigation. Do not move their state into disposable page components.
 - **Prefer measured improvements over optimization folklore.** No broad rewrites, blanket memoization, or dependency removals without evidence.
 - **Preserve security.** Never improve cache hit rates by sharing private/user-specific responses between users.
 
@@ -70,7 +70,7 @@ This is the first major implementation pass. Complete these in order, with inter
 
 #### Live deployment sanity check
 
-After Pass 1, deploy once and manually check navigation, search, homepage loading, playback, downloads, favorites/reminders, authentication, and watch rooms. Record the result in the delivery log. This is a sanity check, not a requirement to inspect every intermediate commit.
+After Pass 1, deploy once and manually check navigation, search, homepage loading, playback, downloads, favorites/reminders, and authentication. Record the result in the delivery log. This is a sanity check, not a requirement to inspect every intermediate commit.
 
 #### Pass 2 — deeper architectural cleanup
 
@@ -213,10 +213,10 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [ ] Inventory global providers/components: imported modules, mount effects, queries, intervals, subscriptions, and context update frequency.
 - [ ] Keep essential shell/query/theme/site state lightweight and persistent.
 - [ ] Defer expensive feature UI until opened or relevant. Check hidden desktop/mobile component copies for duplicate work.
-- [x] Separate persistent download/watch-room controllers from their demand-loaded panels. Keep active sessions alive across routes. Download UI now mounts only when the panel is opened; `DownloadProvider` remains in the root layout. Watch-room chat was already gated. Playback paths are unchanged.
+- [x] Separate persistent download controllers from their demand-loaded panels. Keep active sessions alive across routes. Download UI now mounts only when the panel is opened; `DownloadProvider` remains in the root layout. Playback paths are unchanged. Watch room was removed from the product.
 - [ ] Start expensive feature resources only when needed, with an explicit activation/lifecycle model where appropriate.
-- [ ] Consider route groups only where they meaningfully isolate code; verify layout transitions do not reset caches, downloads, rooms, or playback unexpectedly.
-- [ ] Test auth pages, normal browsing, active downloads, room participation, logout, and cross-route navigation.
+- [ ] Consider route groups only where they meaningfully isolate code; verify layout transitions do not reset caches, downloads, or playback unexpectedly.
+- [ ] Test auth pages, normal browsing, active downloads, logout, and cross-route navigation.
 
 **Done when:** Ordinary browsing avoids unused feature work and background capabilities still survive navigation exactly as users expect.
 
@@ -225,7 +225,7 @@ P2-05 can be pulled forward if measurements identify server/config/database work
 - [ ] Trace player-related libraries through shared cards, utilities, providers, and previews; inspect the build before asserting leakage.
 - [ ] Load playback engines/plugins at playback activation, selecting only the required engine/protocol where possible.
 - [ ] Keep a useful player shell/metadata visible while engine code loads.
-- [ ] Verify HLS/FLV paths, source switching, subtitles/danmu, downloads, fullscreen, mobile controls, watch-room sync, and optional enhancements.
+- [ ] Verify HLS/FLV paths, source switching, subtitles/danmu, downloads, fullscreen, mobile controls, and optional enhancements.
 - [ ] Remove duplicate or unused dependencies only after proving they are not required by supported paths.
 
 **Done when:** Browse/search routes avoid unnecessary player code and supported playback features pass regression tests.
@@ -310,7 +310,7 @@ At minimum, cover:
 - Search mode/provider selection, filters, ordering, grid/list view, load more, query replacement, cancellation, back/forward, and playback from deep results.
 - Homepage all modules enabled and selectively disabled; cached/uncached data; favorites/reminders/continue watching; fast scrolling.
 - Guest/login states, ordinary/admin users, account switch, trusted networks, and cache isolation.
-- Active downloads and watch rooms during navigation; representative playback formats and source switching.
+- Active downloads during navigation; representative playback formats and source switching.
 - Vercel deployment and relevant supported self-hosted/storage paths touched by a change.
 
 ## Delivery log
@@ -353,7 +353,7 @@ At minimum, cover:
 
 ### Shared-shell and cache-stampede milestones
 
-- `72cf25c6` demand-loads the watch-room chat/voice window with `ssr: false` and mounts it only when `currentRoom` exists; the persistent provider remains in the root layout, preserving active sessions. Download panel and playback paths remain unchanged. Browser/watch-room regression validation remains open.
+- Watch room was removed from the product (provider, chat/voice, play/live sync, admin, `/watch-room`, socket.io-client). Downloads still use a persistent provider and demand-loaded panel.
 - `dbab6668` deduplicates concurrent identical provider/query/page cache misses. Each caller can abort its own wait without aborting the shared upstream request or poisoning the successful cache. The downstream suite now has 9 deterministic cases.
 - `4ee59f5f` documents search-cache TTL, bounded eviction, abort behavior, and private/public endpoint cache policy, with deterministic expiration tests. The player audit found HLS demand-loading is nontrivial because playback subclasses `Hls.DefaultConfig.loader`; live Artplayer/flv loading is already dynamic, so no risky player rewrite was made.
 

@@ -22,8 +22,6 @@ import { SessionTracker } from '../components/SessionTracker';
 import { SiteProvider } from '../components/SiteProvider';
 import { ThemeProvider } from '../components/ThemeProvider';
 import { TranslationWarningToast } from '../components/TranslationWarningToast';
-import ChatFloatingWindowGate from '../components/watch-room/ChatFloatingWindowGate';
-import { WatchRoomProvider } from '../components/WatchRoomProvider';
 import { DownloadProvider } from '../contexts/DownloadContext';
 import { GlobalCacheProvider } from '../contexts/GlobalCacheContext';
 
@@ -199,30 +197,27 @@ export default async function RootLayout({
           <QueryProvider>
             <GlobalCacheProvider>
               <DownloadProvider>
-                <WatchRoomProvider>
-                  <SiteProvider siteName={siteName} announcement={announcement}>
-                    <GlobalDOMErrorHandler />
-                    <ChunkErrorGuard />
-                    <TranslationWarningToast />
-                    <SessionTracker />
-                    <RouteWarmup />
-                    {/* 导航栏在 layout 层，自动持久化 */}
-                    <NavigationShell />
-                    {/* 主内容区域 - 只有这部分会在路由切换时重新渲染 */}
-                    <main className='w-full min-h-screen pt-[calc(44px+env(safe-area-inset-top))] md:pt-16 pb-16 md:pb-8'>
-                      <div className='w-full max-w-[2560px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20'>
-                        <DOMErrorBoundary componentName='PageContent'>
-                          <Suspense fallback={null}>{children}</Suspense>
-                        </DOMErrorBoundary>
-                      </div>
-                    </main>
-                    <GlobalErrorIndicator />
-                  </SiteProvider>
-                  <Suspense fallback={null}>
-                    <DownloadPanelGate />
-                    <ChatFloatingWindowGate />
-                  </Suspense>
-                </WatchRoomProvider>
+                <SiteProvider siteName={siteName} announcement={announcement}>
+                  <GlobalDOMErrorHandler />
+                  <ChunkErrorGuard />
+                  <TranslationWarningToast />
+                  <SessionTracker />
+                  <RouteWarmup />
+                  {/* 导航栏在 layout 层，自动持久化 */}
+                  <NavigationShell />
+                  {/* 主内容区域 - 只有这部分会在路由切换时重新渲染 */}
+                  <main className='w-full min-h-screen pt-[calc(44px+env(safe-area-inset-top))] md:pt-16 pb-16 md:pb-8'>
+                    <div className='w-full max-w-[2560px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20'>
+                      <DOMErrorBoundary componentName='PageContent'>
+                        <Suspense fallback={null}>{children}</Suspense>
+                      </DOMErrorBoundary>
+                    </div>
+                  </main>
+                  <GlobalErrorIndicator />
+                </SiteProvider>
+                <Suspense fallback={null}>
+                  <DownloadPanelGate />
+                </Suspense>
               </DownloadProvider>
             </GlobalCacheProvider>
           </QueryProvider>

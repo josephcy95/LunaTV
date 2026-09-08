@@ -78,7 +78,6 @@ import BilibiliConfig from '@/components/BilibiliConfig';
 import DownloadConfig from '@/components/OfflineDownloadConfig';
 import EmbyConfig from '@/components/EmbyConfig';
 import CustomAdFilterConfig from '@/components/CustomAdFilterConfig';
-import WatchRoomConfig from '@/components/WatchRoomConfig';
 import HomePageConfig from '@/components/HomePageConfig';
 import PerformanceMonitor from '@/components/admin/PerformanceMonitor';
 import InviteCodeManager from '@/components/InviteCodeManager';
@@ -9248,7 +9247,6 @@ function AdminPageClient() {
     embyConfig: false,
     downloadConfig: false,
     customAdFilter: false,
-    watchRoomConfig: false,
     tvboxSecurityConfig: false,
     trustedNetworkConfig: false,
     danmuApiConfig: false,
@@ -9403,7 +9401,6 @@ function AdminPageClient() {
                     { id: 'admin-embyConfig', label: 'Emby' },
                     { id: 'admin-downloadConfig', label: '下载配置' },
                     { id: 'admin-customAdFilter', label: '去广告' },
-                    { id: 'admin-watchRoomConfig', label: '观影室' },
                     { id: 'admin-tvboxSecurityConfig', label: 'TVBox安全' },
                     {
                       id: 'admin-trustedNetworkConfig',
@@ -9735,22 +9732,6 @@ function AdminPageClient() {
                   config={config}
                   refreshConfig={fetchConfig}
                 />
-              </CollapsibleTab>
-
-              {/* 观影室配置标签 */}
-              <CollapsibleTab
-                id='admin-watchRoomConfig'
-                title='观影室配置'
-                icon={
-                  <Users
-                    size={20}
-                    className='text-indigo-600 dark:text-indigo-400'
-                  />
-                }
-                isExpanded={expandedTabs.watchRoomConfig}
-                onToggle={() => toggleTab('watchRoomConfig')}
-              >
-                <WatchRoomConfig config={config} refreshConfig={fetchConfig} />
               </CollapsibleTab>
 
               {/* TVBox安全配置标签 */}

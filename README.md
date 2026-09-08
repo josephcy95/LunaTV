@@ -43,7 +43,6 @@
 
 ### 🎥 内容生态扩展
 
-- **多人观影房**：支持同步播放、屏幕共享、实时聊天、语音通话，WebRTC 实时传输，画质预设可调 → [详细文档](docs/deployment/WATCH_ROOM_DEPLOYMENT.md)
 - **Emby 私有库**：完整的 Emby 媒体服务器集成，支持免密登录、认证模式切换和多音轨播放 → [详细文档](docs/integration/EMBY_GUIDE.md)
 - **YouTube 集成**：完整的 YouTube 搜索、播放、直播功能，支持热门视频和地区选择器
 - **Bilibili 集成**：Bilibili 搜索和播放功能，支持 UP主视频、热门视频、QR码登录、Cookie管理
@@ -147,7 +146,6 @@ pnpm dev
 - 🤖 [AI 功能详解](docs/features/AI_FEATURES.md)
 - 📥 [下载功能](docs/features/DOWNLOAD_FEATURES.md)
 - 📺 [虚拟滚动指南](docs/features/VIRTUAL_SCROLL_GUIDE.md)
-- 🎥 [观影房部署](docs/deployment/WATCH_ROOM_DEPLOYMENT.md)
 
 ### 集成指南
 
@@ -229,7 +227,7 @@ pnpm dev
 
 本项目在开发过程中参考了以下优秀开源项目的设计思路和实现方案：
 
-- **[MoonTVPlus](https://github.com/mtvpls/MoonTVPlus)** — 观影室同步播放、移动端优化等功能实现参考
+- **[MoonTVPlus](https://github.com/mtvpls/MoonTVPlus)** — 移动端优化等功能实现参考
 - **[DecoTV](https://github.com/Decohererk/DecoTV)** — TVBox 安全策略、性能优化、UI 设计等实现参考
 
 感谢这些项目及其作者的开源贡献和优秀实现！
