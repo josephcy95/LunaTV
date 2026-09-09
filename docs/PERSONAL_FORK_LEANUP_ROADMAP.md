@@ -563,3 +563,18 @@ This roadmap is complete only when:
   play-stats queries were not changed.
 - Follow-up: continue the HomeClient audit with measurement before changing
   delayed detail enrichment or other shared card behavior.
+
+### HomeClient delayed-detail lifecycle cleanup — September 9, 2026
+
+- [x] Track the four delayed homepage detail-enrichment timers and clear them
+      when the effect is replaced or HomeClient unmounts.
+- [x] Ignore late detail responses after cleanup so stale requests cannot
+      dispatch updates into a newer homepage state.
+- Verification: `pnpm typecheck`, full Jest (`13` suites / `66` tests), targeted
+  ESLint, and `git diff --check` passed. ESLint retained six existing
+  warnings in `HomeClient.tsx` and no errors.
+- Impact: prevents delayed work from firing after tab/config/data changes and
+  avoids stale UI updates; detail enrichment behavior is unchanged while
+  the effect remains active.
+- Follow-up: do not rewrite the enrichment strategy without runtime/request
+  measurements; the requests may still be useful for visible metadata.

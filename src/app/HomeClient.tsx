@@ -733,9 +733,16 @@ function HomeClient({
   useEffect(() => {
     if (!homeData) return;
 
+    let cancelled = false;
+    const timeoutIds: number[] = [];
+    const schedule = (callback: () => void, delay: number) => {
+      const timeoutId = window.setTimeout(callback, delay);
+      timeoutIds.push(timeoutId);
+    };
+
     // 延迟加载电影详情 - 只在显示电影模块时加载
     if (state.homePageConfig.showHotMovies && homeData.hotMovies.length > 0) {
-      setTimeout(() => {
+      schedule(() => {
         Promise.all(
           homeData.hotMovies.slice(0, 2).map(async (movie) => {
             try {
@@ -754,6 +761,7 @@ function HomeClient({
             return null;
           }),
         ).then((results) => {
+          if (cancelled) return;
           dispatch({
             type: 'UPDATE_HOT_MOVIES',
             payload: (prev) => {
@@ -770,7 +778,7 @@ function HomeClient({
 
     // 延迟加载剧集详情 - 只在显示剧集模块时加载
     if (state.homePageConfig.showHotTvShows && homeData.hotTvShows.length > 0) {
-      setTimeout(() => {
+      schedule(() => {
         Promise.all(
           homeData.hotTvShows.slice(0, 2).map(async (show) => {
             try {
@@ -789,6 +797,7 @@ function HomeClient({
             return null;
           }),
         ).then((results) => {
+          if (cancelled) return;
           dispatch({
             type: 'UPDATE_HOT_TV_SHOWS',
             payload: (prev) => {
@@ -805,11 +814,12 @@ function HomeClient({
 
     // 延迟加载动漫详情 - 只在显示动漫模块时加载
     if (state.homePageConfig.showNewAnime && homeData.hotAnime.length > 0) {
-      setTimeout(() => {
+      schedule(() => {
         const anime = homeData.hotAnime[0];
         getDoubanDetails(anime.id)
           .then((detailsRes) => {
             if (detailsRes.code === 200 && detailsRes.data) {
+              if (cancelled) return;
               dispatch({
                 type: 'UPDATE_HOT_ANIME',
                 payload: (prev) => {
@@ -832,11 +842,12 @@ function HomeClient({
       state.homePageConfig.showHotVariety &&
       homeData.hotVarietyShows.length > 0
     ) {
-      setTimeout(() => {
+      schedule(() => {
         const show = homeData.hotVarietyShows[0];
         getDoubanDetails(show.id)
           .then((detailsRes) => {
             if (detailsRes.code === 200 && detailsRes.data) {
+              if (cancelled) return;
               dispatch({
                 type: 'UPDATE_HOT_VARIETY_SHOWS',
                 payload: (prev) => {
@@ -951,7 +962,11 @@ function HomeClient({
         dispatch({ type: 'SET_UPCOMING_RELEASES', payload: [] });
       });
 
-    return () => releaseCalendarController.abort();
+    return () => {
+      cancelled = true;
+      timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
+      releaseCalendarController.abort();
+    };
   }, [homeData, state.homePageConfig]);
 
   // 🚀 TanStack Query - 使用 useMutation 管理清空收藏操作
