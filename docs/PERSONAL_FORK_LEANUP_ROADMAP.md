@@ -850,3 +850,11 @@ remove the buttons). Deferred to avoid silently changing visible behavior.
 - Verification: typecheck, Prettier, and diff check passed.
 - Impact: removes dead server-module references; active request, authentication,
   and verification behavior is unchanged.
+
+### API validation/Telegram dead imports — September 9, 2026
+
+- [x] Removed unused `getConfig` imports from source validation and Telegram
+      verification routes.
+- Verification: typecheck, Prettier, and diff check passed.
+- Impact: removes dead server references; source validation and Telegram token
+  verification behavior remain unchanged.

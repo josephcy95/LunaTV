@@ -6,7 +6,7 @@ import {
   verifyAndConsumeTelegramToken,
 } from '@/lib/telegram-tokens';
 import { db } from '@/lib/db';
-import { clearConfigCache, getConfig } from '@/lib/config';
+import { clearConfigCache } from '@/lib/config';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
