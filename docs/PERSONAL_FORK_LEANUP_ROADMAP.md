@@ -77,7 +77,7 @@ features to retire.
 - [x] Measure current static/server route artifacts and inspect client entry
       references before changing client boundaries.
 - [x] Audit and defer-load `VersionPanel`'s full changelog fallback until the panel opens.
-- [>] Audit `VideoCard` imports and per-card queries/effects for render cost.
+- [!] Audit `VideoCard` imports and per-card queries/effects for render cost.
 - [ ] Audit `HomeClient` for unnecessary client-only work and repeated queries.
 - [ ] Audit oversized admin/play/live/search modules after measurements.
 - [ ] Review decorative animation and blur/shadow cost after functional audits.
@@ -112,7 +112,9 @@ features to retire.
   favorites, history, reminders, aggregate results, live content, AI, and mobile
   actions. No safe deletion was identified from static inspection alone.
 - The next safe action is profiling card mount/update counts and query/subscription
-  behavior on a real catalog page before changing this shared component.
+  behavior on a real catalog page before changing this shared component. Local
+  profiling is currently blocked because the configured Kvrocks endpoint times out;
+  a working backend or controlled fixture is required for trustworthy measurements.
 
 ### Current evidence and first performance target
 
@@ -495,6 +497,8 @@ After each dependency or feature cleanup:
 | 2026-09-09 | `aed24217` | Removed application-wide list virtualization | Typecheck, 60 Jest tests, build, targeted ESLint, formatting, diff check | Simpler DOM path; long lists keep more cards mounted; virtual scroll restoration removed |
 
 ## Skipped or deferred work
+
+| 2026-09-09 | VideoCard runtime optimization | Blocked | Local Kvrocks endpoint timed out during browser profiling, so render/query measurements would be contaminated by backend failure. | Provide working Kvrocks or approve a controlled fixture/mock mode |
 
 Record every deliberate skip here. Use a separate row for each decision.
 
