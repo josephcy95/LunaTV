@@ -4311,6 +4311,7 @@ const VideoSourceConfig = ({
         </td>
         <td className='px-6 py-4 whitespace-nowrap text-center'>
           <button
+            type='button'
             onClick={() => handleToggleAdult(source.key, !source.is_adult)}
             disabled={isLoading(`toggleAdult_${source.key}`)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
@@ -4378,6 +4379,7 @@ const VideoSourceConfig = ({
         </td>
         <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
           <button
+            type='button'
             onClick={() => handleToggleEnable(source.key)}
             disabled={isLoading(`toggleSource_${source.key}`)}
             className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
@@ -4389,6 +4391,7 @@ const VideoSourceConfig = ({
             {!source.disabled ? '禁用' : '启用'}
           </button>
           <button
+            type='button'
             onClick={() => handleEditSource(source)}
             className={buttonStyles.roundedPrimary}
           >
@@ -4396,6 +4399,7 @@ const VideoSourceConfig = ({
           </button>
           {source.from !== 'config' && (
             <button
+              type='button'
               onClick={() => handleDelete(source.key)}
               disabled={isLoading(`deleteSource_${source.key}`)}
               className={`${buttonStyles.roundedSecondary} ${isLoading(`deleteSource_${source.key}`) ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -4836,6 +4840,7 @@ const VideoSourceConfig = ({
 
         <div className='flex justify-end gap-2'>
           <button
+            type='button'
             onClick={handleCheckProxyStatus}
             disabled={
               !videoProxySettings.enabled || isLoading('checkProxyStatus')
@@ -4849,6 +4854,7 @@ const VideoSourceConfig = ({
             {isLoading('checkProxyStatus') ? '检测中...' : '🔍 检测代理状态'}
           </button>
           <button
+            type='button'
             onClick={handleSaveVideoProxy}
             disabled={isLoading('saveVideoProxy')}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -4946,6 +4952,7 @@ const VideoSourceConfig = ({
                   </span>
                 </span>
                 <button
+                  type='button'
                   onClick={() => handleBatchOperation('batch_enable')}
                   disabled={isLoading('batchSource_batch_enable')}
                   className={`px-3 py-1 text-sm ${isLoading('batchSource_batch_enable') ? buttonStyles.disabled : buttonStyles.success}`}
@@ -4955,6 +4962,7 @@ const VideoSourceConfig = ({
                     : '批量启用'}
                 </button>
                 <button
+                  type='button'
                   onClick={() => handleBatchOperation('batch_disable')}
                   disabled={isLoading('batchSource_batch_disable')}
                   className={`px-3 py-1 text-sm ${isLoading('batchSource_batch_disable') ? buttonStyles.disabled : buttonStyles.warning}`}
@@ -4964,6 +4972,7 @@ const VideoSourceConfig = ({
                     : '批量禁用'}
                 </button>
                 <button
+                  type='button'
                   onClick={() => handleBatchOperation('batch_delete')}
                   disabled={isLoading('batchSource_batch_delete')}
                   className={`px-3 py-1 text-sm ${isLoading('batchSource_batch_delete') ? buttonStyles.disabled : buttonStyles.danger}`}
@@ -4973,6 +4982,7 @@ const VideoSourceConfig = ({
                     : '批量删除'}
                 </button>
                 <button
+                  type='button'
                   onClick={() => handleBatchMarkAdult(true)}
                   disabled={isLoading('batchSource_batch_mark_adult')}
                   className={`px-3 py-1 text-sm ${isLoading('batchSource_batch_mark_adult') ? buttonStyles.disabled : 'bg-linear-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white rounded-lg transition-colors'}`}
@@ -4983,6 +4993,7 @@ const VideoSourceConfig = ({
                     : '标记成人'}
                 </button>
                 <button
+                  type='button'
                   onClick={() => handleBatchMarkAdult(false)}
                   disabled={isLoading('batchSource_batch_unmark_adult')}
                   className={`px-3 py-1 text-sm ${isLoading('batchSource_batch_unmark_adult') ? buttonStyles.disabled : buttonStyles.secondary}`}
@@ -4993,6 +5004,7 @@ const VideoSourceConfig = ({
                     : '取消标记'}
                 </button>
                 <button
+                  type='button'
                   onClick={() => handleBatchMarkType('shortdrama')}
                   disabled={isLoading('batchSource_batch_mark_shortdrama')}
                   className={`px-3 py-1 text-sm ${isLoading('batchSource_batch_mark_shortdrama') ? buttonStyles.disabled : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-colors'}`}
@@ -5003,6 +5015,7 @@ const VideoSourceConfig = ({
                     : '标记短剧'}
                 </button>
                 <button
+                  type='button'
                   onClick={() => handleBatchMarkType('vod')}
                   disabled={isLoading('batchSource_batch_mark_vod')}
                   className={`px-3 py-1 text-sm ${isLoading('batchSource_batch_mark_vod') ? buttonStyles.disabled : buttonStyles.secondary}`}
@@ -5018,6 +5031,7 @@ const VideoSourceConfig = ({
           )}
           <div className='flex items-center gap-2 order-1 sm:order-2'>
             <button
+              type='button'
               onClick={() =>
                 setImportExportModal({ isOpen: true, mode: 'import' })
               }
@@ -5029,6 +5043,7 @@ const VideoSourceConfig = ({
               <span className='sm:hidden'>导入</span>
             </button>
             <button
+              type='button'
               onClick={() =>
                 setImportExportModal({ isOpen: true, mode: 'export' })
               }
@@ -5048,6 +5063,7 @@ const VideoSourceConfig = ({
               <span className='sm:hidden'>导出</span>
             </button>
             <button
+              type='button'
               onClick={() => setShowValidationModal(true)}
               disabled={isValidating}
               className={`group px-4 py-2 text-sm rounded-xl font-medium flex items-center space-x-2 ${
@@ -5083,6 +5099,7 @@ const VideoSourceConfig = ({
             {/* 选中失效源按钮 - 只在有检测结果且存在失效源时显示 */}
             {!isValidating && invalidSourceCount > 0 && (
               <button
+                type='button'
                 onClick={handleSelectInvalidSources}
                 className='group relative px-4 py-2 text-sm rounded-xl font-medium flex items-center space-x-2 bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 hover:from-orange-600 hover:via-red-600 hover:to-pink-700 text-white shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-red-500/40 hover:-translate-y-0.5 active:scale-95 transition-all duration-300 backdrop-blur-sm border border-white/10'
                 title={`一键选中 ${invalidSourceCount} 个失效或无法搜索的视频源`}
@@ -5107,6 +5124,7 @@ const VideoSourceConfig = ({
               </button>
             )}
             <button
+              type='button'
               onClick={() => setShowAddForm(!showAddForm)}
               className={`group px-4 py-2 text-sm rounded-xl font-medium flex items-center space-x-2 transition-all duration-300 backdrop-blur-sm border border-white/10 ${
                 showAddForm
@@ -5277,6 +5295,7 @@ const VideoSourceConfig = ({
           </div>
           <div className='flex justify-end'>
             <button
+              type='button'
               onClick={handleAddSource}
               disabled={
                 !newSource.name ||
@@ -5430,12 +5449,14 @@ const VideoSourceConfig = ({
                 {/* 操作按钮 */}
                 <div className='flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700'>
                   <button
+                    type='button'
                     onClick={() => setEditingSource(null)}
                     className={buttonStyles.secondary}
                   >
                     取消
                   </button>
                   <button
+                    type='button'
                     onClick={handleSaveEditSource}
                     disabled={
                       !editingSource.name ||
@@ -5535,6 +5556,7 @@ const VideoSourceConfig = ({
       {orderChanged && (
         <div className='flex justify-end'>
           <button
+            type='button'
             onClick={handleSaveOrder}
             disabled={isLoading('saveSourceOrder')}
             className={`px-3 py-1.5 text-sm ${isLoading('saveSourceOrder') ? buttonStyles.disabled : buttonStyles.primary}`}
@@ -5574,12 +5596,14 @@ const VideoSourceConfig = ({
                 />
                 <div className='flex justify-end space-x-3'>
                   <button
+                    type='button'
                     onClick={() => setShowValidationModal(false)}
                     className='px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors'
                   >
                     取消
                   </button>
                   <button
+                    type='button'
                     onClick={handleValidateSources}
                     disabled={!searchKeyword.trim()}
                     className={`px-4 py-2 ${!searchKeyword.trim() ? buttonStyles.disabled : buttonStyles.primary}`}
@@ -5624,6 +5648,7 @@ const VideoSourceConfig = ({
                     {confirmModal.title}
                   </h3>
                   <button
+                    type='button'
                     onClick={confirmModal.onCancel}
                     className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
                   >
@@ -5652,12 +5677,14 @@ const VideoSourceConfig = ({
                 {/* 操作按钮 */}
                 <div className='flex justify-end space-x-3'>
                   <button
+                    type='button'
                     onClick={confirmModal.onCancel}
                     className={`px-4 py-2 text-sm font-medium ${buttonStyles.secondary}`}
                   >
                     取消
                   </button>
                   <button
+                    type='button'
                     onClick={confirmModal.onConfirm}
                     disabled={
                       isLoading('batchSource_batch_enable') ||
