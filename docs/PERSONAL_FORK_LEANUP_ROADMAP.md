@@ -678,3 +678,11 @@ This roadmap is complete only when:
 - Verification: typecheck, Prettier, and diff check passed.
 - Impact: less unused local state plumbing; existing source loading and ad
   filter update behavior remains unchanged.
+
+### Playback page final small dead bindings — September 9, 2026
+
+- [x] Removed the unused parsed `apiSource` value and unused scroll fallback
+      catch binding from the playback page.
+- Verification: typecheck, Prettier, and diff check passed.
+- Impact: source-only cleanup; Emby detail fetching and scroll fallback remain
+  unchanged.

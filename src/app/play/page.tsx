@@ -3217,7 +3217,7 @@ function PlayPageClient() {
           '[Play] Emby source has no episodes after switch, fetching detail...',
         );
         try {
-          const { source: apiSource, embyKey } = parseSourceForApi(newSource);
+          const { embyKey } = parseSourceForApi(newSource);
           const embyKeyParam = embyKey ? `&embyKey=${embyKey}` : '';
           const detailResponse = await fetch(
             `/api/emby/detail?id=${newId}${embyKeyParam}`,
@@ -5109,7 +5109,7 @@ function PlayPageClient() {
         top: 0,
         behavior: 'smooth',
       });
-    } catch (error) {
+    } catch {
       // 如果平滑滚动完全失败，使用立即滚动
       document.body.scrollTop = 0;
     }
