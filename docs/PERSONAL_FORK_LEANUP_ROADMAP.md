@@ -588,3 +588,12 @@ This roadmap is complete only when:
   and now reports only two existing import-order warnings.
 - Impact: smaller source and less misleading component setup; no runtime
   behavior or feature was removed.
+
+### HomeClient import hygiene — September 9, 2026
+
+- [x] Applied the repository import-order rule to `HomeClient.tsx` after dead
+      bindings were removed.
+- Verification: targeted ESLint autofix, `pnpm typecheck`, and `git diff
+    --check` passed.
+- Impact: removes avoidable lint noise and keeps the large client entry point
+  easier to navigate; no runtime behavior changed.

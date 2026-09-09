@@ -2,31 +2,31 @@
 
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import {
   useEffect,
-  useState,
-  useRef,
   useMemo,
   useReducer,
+  useRef,
+  useState,
   useTransition,
 } from 'react';
-import { useQuery } from '@tanstack/react-query';
 
 import { BangumiCalendarData } from '@/lib/bangumi.client';
+import { getDoubanDetails } from '@/lib/douban.client';
 import {
   cleanExpiredCache,
   clearRecommendsCache,
 } from '@/lib/shortdrama-cache';
-import { ShortDramaItem, ReleaseCalendarItem } from '@/lib/types';
-import { useClearFavoritesMutation } from '@/hooks/useFavoritesMutations';
-import { useClearRemindersMutation } from '@/hooks/useRemindersMutations';
-import { useHomePageQueries } from '@/hooks/useHomePageQueries';
-import { useTMDBLogos } from '@/hooks/useTMDBLogo';
-import { getDoubanDetails } from '@/lib/douban.client';
+import { ReleaseCalendarItem, ShortDramaItem } from '@/lib/types';
 import { DoubanItem } from '@/lib/types';
+import { useClearFavoritesMutation } from '@/hooks/useFavoritesMutations';
+import { useHomePageQueries } from '@/hooks/useHomePageQueries';
+import { useClearRemindersMutation } from '@/hooks/useRemindersMutations';
+import { useTMDBLogos } from '@/hooks/useTMDBLogo';
 
 /** Merge locally enriched items without repeatedly scanning the local array. */
 function SectionError({
@@ -66,21 +66,21 @@ function mergeLocalDetails<T extends { id: string | number }>(
   });
 }
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
-import { useWatchingUpdatesQuery } from '@/hooks/useWatchingUpdates';
 import { useInView } from '@/hooks/useInView';
+import { useWatchingUpdatesQuery } from '@/hooks/useWatchingUpdates';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import ContinueWatching from '@/components/ContinueWatching';
 import HeroBanner from '@/components/HeroBanner';
 import PageLayout from '@/components/PageLayout';
 import ScrollableRow from '@/components/ScrollableRow';
 import SectionTitle from '@/components/SectionTitle';
 import ShortDramaCard from '@/components/ShortDramaCard';
-import SkeletonCard from '@/components/SkeletonCard';
 import { useSite } from '@/components/SiteProvider';
+import SkeletonCard from '@/components/SkeletonCard';
 import { TelegramWelcomeModal } from '@/components/TelegramWelcomeModal';
 import VideoCard from '@/components/VideoCard';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 // 🎯 优化：合并状态管理 - 使用 useReducer 减少重渲染
 interface HomeState {
