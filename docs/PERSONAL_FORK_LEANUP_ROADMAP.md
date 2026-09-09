@@ -797,3 +797,12 @@ has dedicated behavior tests and a before/after client-bundle measurement.
 - Impact: removes an unreachable popup/cache code path from play-stats. The
   active TanStack Query watching-updates data path and statistics UI remain
   unchanged.
+
+### Play-stats back-to-top state review — September 9, 2026
+
+- [~] Remove or redesign the unused `setShowBackToTop` state path.
+
+Reason: the setter has no call site, so the rendered back-to-top buttons remain
+hidden while still retaining their click handlers. Removing the state would
+require a product decision (always show the buttons, add a scroll observer, or
+remove the buttons). Deferred to avoid silently changing visible behavior.
