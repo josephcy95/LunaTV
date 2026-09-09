@@ -6,8 +6,6 @@
 
 ### ⚡ 性能与体验改进
 
-- [Performance, usability, and UX roadmap](PERFORMANCE_ROADMAP.md) - 按优先级跟踪性能优化、验收标准与实施进度
-
 ### 🚀 部署与配置
 
 - [部署指南](deployment/DEPLOYMENT.md) - Docker、Vercel、Render 等部署完整指南
