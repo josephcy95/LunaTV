@@ -696,3 +696,11 @@ This roadmap is complete only when:
 - Impact: removes unreachable client code only. The visible audio-track UI was
   already not wired to this handler; active player controls and formatting
   paths were unchanged.
+
+### Playback page parsing/cache dead bindings — September 9, 2026
+
+- [x] Removed an unused season-format suffix binding and an unused
+      localStorage-error catch binding from playback helpers.
+- Verification: typecheck, Prettier, and diff check passed.
+- Impact: source-only cleanup; query parsing and cache fallback behavior remain
+  unchanged.

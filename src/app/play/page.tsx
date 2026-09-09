@@ -1025,7 +1025,7 @@ function PlayPageClient() {
             created: Date.now(),
           };
           localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-        } catch (e) {
+        } catch {
           // localStorage可能满了，忽略错误
         }
       }
@@ -1195,7 +1195,6 @@ function PlayPageClient() {
     if (match) {
       const fullMatch = match[0];
       const number = match[1];
-      const suffix = match[2];
       const arabicNumber = chineseNumbers[number] || number;
       const base = query.replace(fullMatch, '').trim();
 
