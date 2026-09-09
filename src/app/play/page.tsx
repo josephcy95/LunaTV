@@ -40,7 +40,11 @@ import { SearchResult } from '@/lib/types';
 import { searchStream } from '@/lib/search-stream';
 import { getVideoResolutionFromM3u8, VideoSourceTestResult } from '@/lib/utils';
 import { useSite } from '@/components/SiteProvider';
-import { useDanmu } from '@/hooks/useDanmu';
+import { useDanmu, type DanmuManualOverride } from '@/hooks/useDanmu';
+import DanmuSettingsPanel from '@/components/play/DanmuSettingsPanel';
+import DanmuManualMatchModal, {
+  type DanmuManualSelection,
+} from '@/components/DanmuManualMatchModal';
 import {
   useSavePlayRecordMutation,
   useSaveFavoriteMutation,
@@ -675,6 +679,21 @@ function PlayPageClient() {
   const artPlayerRef = useRef<any>(null);
   const [playerReady, setPlayerReady] = useState(false);
   const artRef = useRef<HTMLDivElement | null>(null);
+  const [isDanmuSettingsOpen, setIsDanmuSettingsOpen] = useState(false);
+  const [isDanmuManualOpen, setIsDanmuManualOpen] = useState(false);
+  const [manualDanmuOverride, setManualDanmuOverride] =
+    useState<DanmuManualOverride | null>(null);
+  const [danmuSettings, setDanmuSettings] = useState({
+    enabled: false,
+    fontSize: 25,
+    speed: 5,
+    opacity: 0.8,
+    margin: [10, '75%'] as [number | string, number | string],
+    modes: [0, 1, 2] as Array<0 | 1 | 2>,
+    antiOverlap: false,
+    visible: true,
+  });
+
   const [danmuEnabled, setDanmuEnabled] = useState(
     () =>
       typeof window !== 'undefined' &&
@@ -687,8 +706,67 @@ function PlayPageClient() {
     currentEpisodeIndex,
     currentSource,
     artPlayerRef,
+    manualOverride: manualDanmuOverride,
   });
-  const { danmuList, loadExternalDanmu } = danmu;
+  const {
+    danmuList,
+    loading: danmuLoading,
+    loadMeta: danmuLoadMeta,
+    error: danmuError,
+    loadExternalDanmu,
+    handleDanmuOperationOptimized,
+  } = danmu;
+
+  const updateDanmuSettings = useCallback(
+    (updates: Partial<typeof danmuSettings>) => {
+      const next = { ...danmuSettings, ...updates };
+      setDanmuSettings(next);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('enable_external_danmu', String(next.enabled));
+        localStorage.setItem('danmaku_fontSize', String(next.fontSize));
+        localStorage.setItem('danmaku_speed', String(next.speed));
+        localStorage.setItem('danmaku_opacity', String(next.opacity));
+        localStorage.setItem('danmaku_margin', JSON.stringify(next.margin));
+        localStorage.setItem('danmaku_modes', JSON.stringify(next.modes));
+        localStorage.setItem('danmaku_antiOverlap', String(next.antiOverlap));
+        localStorage.setItem('danmaku_visible', String(next.visible));
+      }
+      const plugin = artPlayerRef.current?.plugins?.artplayerPluginDanmuku;
+      plugin?.config(updates);
+      if (updates.enabled !== undefined) {
+        setDanmuEnabled(updates.enabled);
+        handleDanmuOperationOptimized(updates.enabled);
+      }
+      if (updates.visible !== undefined) {
+        updates.visible ? plugin?.show() : plugin?.hide();
+      }
+    },
+    [danmuSettings, handleDanmuOperationOptimized],
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setDanmuSettings((current) => ({
+      ...current,
+      enabled: localStorage.getItem('enable_external_danmu') === 'true',
+      fontSize: Number(
+        localStorage.getItem('danmaku_fontSize') || current.fontSize,
+      ),
+      speed: Number(localStorage.getItem('danmaku_speed') || current.speed),
+      opacity: Number(
+        localStorage.getItem('danmaku_opacity') || current.opacity,
+      ),
+      margin: JSON.parse(
+        localStorage.getItem('danmaku_margin') ||
+          JSON.stringify(current.margin),
+      ),
+      modes: JSON.parse(
+        localStorage.getItem('danmaku_modes') || JSON.stringify(current.modes),
+      ),
+      antiOverlap: localStorage.getItem('danmaku_antiOverlap') === 'true',
+      visible: localStorage.getItem('danmaku_visible') !== 'false',
+    }));
+  }, []);
 
   // The redesigned player is created asynchronously. Keep danmu loading tied to
   // the actual player instance rather than the old player initialization path.
@@ -714,6 +792,7 @@ function PlayPageClient() {
     videoTitle,
     videoYear,
     videoDoubanId,
+    manualDanmuOverride,
     loadExternalDanmu,
   ]);
 
@@ -4395,6 +4474,17 @@ function PlayPageClient() {
                   artPlayerRef.current?.plugins?.artplayerPluginDanmuku;
                 if (next) void loadExternalDanmu();
                 else plugin?.hide();
+                setDanmuSettings((current) => ({ ...current, enabled: next }));
+              },
+            },
+            {
+              name: 'danmu-settings',
+              position: 'right',
+              index: 34,
+              html: '<span style="font-size:16px">⚙</span>',
+              tooltip: '弹幕设置',
+              click: function () {
+                setIsDanmuSettingsOpen(true);
               },
             },
             {
@@ -5762,6 +5852,38 @@ function PlayPageClient() {
               duration: 5000,
             });
           }
+        }}
+      />
+
+      <DanmuSettingsPanel
+        isOpen={isDanmuSettingsOpen}
+        onClose={() => setIsDanmuSettingsOpen(false)}
+        settings={danmuSettings}
+        onSettingsChange={updateDanmuSettings}
+        danmuCount={danmuList.length}
+        loading={danmuLoading}
+        loadMeta={danmuLoadMeta}
+        error={danmuError}
+        onReload={async () => (await loadExternalDanmu({ force: true })).count}
+        matchInfo={{
+          animeTitle: videoTitle,
+          episodeTitle: `第${currentEpisodeIndex + 1}集`,
+        }}
+        isManualOverridden={!!manualDanmuOverride}
+        onManualMatch={() => {
+          setIsDanmuSettingsOpen(false);
+          setIsDanmuManualOpen(true);
+        }}
+        onClearManualMatch={() => setManualDanmuOverride(null)}
+      />
+      <DanmuManualMatchModal
+        isOpen={isDanmuManualOpen}
+        defaultKeyword={videoTitle}
+        currentEpisode={currentEpisodeIndex + 1}
+        onClose={() => setIsDanmuManualOpen(false)}
+        onApply={async (selection: DanmuManualSelection) => {
+          setManualDanmuOverride(selection);
+          setIsDanmuManualOpen(false);
         }}
       />
     </>
