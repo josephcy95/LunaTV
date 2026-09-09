@@ -778,3 +778,11 @@ loading, authentication, and mutation helpers. No panel boundary can currently
 be extracted without a larger regression surface or changing request ordering.
 The route remains a candidate, but extraction is deferred until a focused panel
 has dedicated behavior tests and a before/after client-bundle measurement.
+
+### Play-stats scroll fallback binding — September 9, 2026
+
+- [x] Removed the unused error binding from the play-stats smooth-scroll
+      fallback.
+- Verification: typecheck, Prettier, and diff check passed.
+- Impact: scroll fallback behavior is unchanged; only the unused catch variable
+  was removed.
