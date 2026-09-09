@@ -842,3 +842,11 @@ remove the buttons). Deferred to avoid silently changing visible behavior.
 - Verification: typecheck, Prettier, and diff check passed.
 - Impact: cron task execution and result handling remain unchanged; only dead
   bindings and an unreachable import were removed.
+
+### API route dead imports — September 9, 2026
+
+- [x] Removed unused `getRandomUserAgent` from the external danmu route and
+      unused `getConfig` from Telegram verification.
+- Verification: typecheck, Prettier, and diff check passed.
+- Impact: removes dead server-module references; active request, authentication,
+  and verification behavior is unchanged.
