@@ -20,7 +20,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, Tab, Box } from '@mui/material';
 
 import { debounce } from '@/lib/channel-search';
-import { isMobile, isTablet, isSafari, devicePerformance } from '@/lib/utils';
+import { isMobile, isSafari, devicePerformance } from '@/lib/utils';
 import {
   deleteFavorite,
   generateStorageKey,
@@ -89,18 +89,12 @@ interface ChannelHealthInfo {
 type GroupSortMode = 'default' | 'count' | 'name';
 
 // 新增：分组摘要
-interface GroupSummary {
-  name: string;
-  count: number;
-  order: number;
-}
 
 // 常量定义
 const RECENT_GROUPS_STORAGE_KEY = 'liveRecentGroups';
 const PINNED_GROUPS_STORAGE_KEY = 'livePinnedGroups';
 const MAX_RECENT_GROUPS = 8;
 const HEALTH_CHECK_CACHE_MS = 3 * 60 * 1000; // 3分钟缓存
-const HEALTH_CHECK_BATCH_SIZE = 12; // 每次检测12个频道
 
 // 工具函数：解析存储的字符串数组
 function parseStoredStringArray(raw: string | null): string[] {

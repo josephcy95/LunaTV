@@ -634,3 +634,12 @@ This roadmap is complete only when:
   used by existing error/loading paths were retained.
 - Impact: avoids loading an unreachable player component and removes dead
   client state/query bindings without changing search behavior.
+
+### Live page dead declarations — September 9, 2026
+
+- [x] Removed the unused `isTablet` import, unused `GroupSummary` interface,
+      and unused `HEALTH_CHECK_BATCH_SIZE` constant from the live page.
+- Verification: typecheck, targeted unused-declaration scan, Prettier, and diff
+  check passed.
+- Impact: source-only cleanup; live channel loading and health-check behavior
+  were not changed.
