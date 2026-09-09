@@ -40,6 +40,7 @@ import { SearchResult } from '@/lib/types';
 import { searchStream } from '@/lib/search-stream';
 import { getVideoResolutionFromM3u8, VideoSourceTestResult } from '@/lib/utils';
 import { useSite } from '@/components/SiteProvider';
+import { useDanmu } from '@/hooks/useDanmu';
 import {
   useSavePlayRecordMutation,
   useSaveFavoriteMutation,
@@ -672,7 +673,57 @@ function PlayPageClient() {
 
   // ArtPlayer ref
   const artPlayerRef = useRef<any>(null);
+  const [playerReady, setPlayerReady] = useState(false);
   const artRef = useRef<HTMLDivElement | null>(null);
+  const [danmuEnabled, setDanmuEnabled] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      localStorage.getItem('enable_external_danmu') === 'true',
+  );
+  const danmu = useDanmu({
+    videoTitle,
+    videoYear,
+    videoDoubanId,
+    currentEpisodeIndex,
+    currentSource,
+    artPlayerRef,
+  });
+  const { danmuList, loadExternalDanmu } = danmu;
+
+  // The redesigned player is created asynchronously. Keep danmu loading tied to
+  // the actual player instance rather than the old player initialization path.
+  useEffect(() => {
+    if (!playerReady || !artPlayerRef.current) return;
+    const plugin = artPlayerRef.current.plugins?.artplayerPluginDanmuku;
+    if (!plugin) return;
+    if (!danmuEnabled) {
+      plugin.hide();
+      return;
+    }
+    void loadExternalDanmu().then(({ data }) => {
+      if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku === plugin) {
+        void plugin.load(data);
+        plugin.show();
+      }
+    });
+  }, [
+    playerReady,
+    danmuEnabled,
+    currentEpisodeIndex,
+    currentSource,
+    videoTitle,
+    videoYear,
+    videoDoubanId,
+    loadExternalDanmu,
+  ]);
+
+  useEffect(() => {
+    const plugin = artPlayerRef.current?.plugins?.artplayerPluginDanmuku;
+    if (!playerReady || !plugin) return;
+    void plugin.load(danmuList);
+    if (danmuEnabled) plugin.show();
+    else plugin.hide();
+  }, [playerReady, danmuList, danmuEnabled]);
   const spacePressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const spaceLongPressConsumedRef = useRef(false);
   const fastForwardActiveRef = useRef(false);
@@ -2343,6 +2394,7 @@ function PlayPageClient() {
 
         // 1. 先销毁 ArtPlayer，停止所有控制
         artPlayerRef.current.destroy(false);
+        setPlayerReady(false);
         artPlayerRef.current = null;
         console.log('[Cleanup] ArtPlayer已销毁');
 
@@ -4330,6 +4382,22 @@ function PlayPageClient() {
           lang: navigator.language.toLowerCase(),
           controls: [
             {
+              name: 'danmu-toggle',
+              position: 'right',
+              index: 33,
+              html: '<span style="font-size:16px">弹</span>',
+              tooltip: danmuEnabled ? '关闭弹幕' : '开启弹幕',
+              click: function () {
+                const next = !danmuEnabled;
+                setDanmuEnabled(next);
+                localStorage.setItem('enable_external_danmu', String(next));
+                const plugin =
+                  artPlayerRef.current?.plugins?.artplayerPluginDanmuku;
+                if (next) void loadExternalDanmu();
+                else plugin?.hide();
+              },
+            },
+            {
               name: 'next-episode',
               position: 'right',
               index: 34,
@@ -4392,14 +4460,43 @@ function PlayPageClient() {
               },
             },
           ],
-          plugins: artplayerPluginSeekButtons
-            ? [
-                artplayerPluginSeekButtons({
-                  seekTime: 10,
-                  mobileLayout: 'both',
-                }),
-              ]
-            : [],
+          plugins: [
+            ...(artplayerPluginSeekButtons
+              ? [
+                  artplayerPluginSeekButtons({
+                    seekTime: 10,
+                    mobileLayout: 'both',
+                  }),
+                ]
+              : []),
+            ...((window as any).DynamicArtplayerPluginDanmuku
+              ? [
+                  (window as any).DynamicArtplayerPluginDanmuku({
+                    danmuku: [],
+                    speed: Number(localStorage.getItem('danmaku_speed') || 5),
+                    opacity: Number(
+                      localStorage.getItem('danmaku_opacity') || 0.8,
+                    ),
+                    fontSize: Number(
+                      localStorage.getItem('danmaku_fontSize') || 25,
+                    ),
+                    margin: JSON.parse(
+                      localStorage.getItem('danmaku_margin') || '[10, "75%"]',
+                    ),
+                    modes: JSON.parse(
+                      localStorage.getItem('danmaku_modes') || '[0, 1, 2]',
+                    ),
+                    visible:
+                      localStorage.getItem('danmaku_visible') !== 'false',
+                    emitter: false,
+                    antiOverlap:
+                      localStorage.getItem('danmaku_antiOverlap') === 'true',
+                    synchronousPlayback: true,
+                    theme: 'dark',
+                  }),
+                ]
+              : []),
+          ],
           moreVideoAttr: {
             crossOrigin: 'anonymous',
           },
@@ -4797,6 +4894,7 @@ function PlayPageClient() {
             }, 1000);
           }
         });
+        setPlayerReady(true);
 
         // 合并的timeupdate监听器 - 更新播放时间并保存进度
         let lastUiSecond = -1;
@@ -4850,15 +4948,18 @@ function PlayPageClient() {
         const [
           { default: Artplayer },
           { default: artplayerPluginSeekButtons },
+          { default: artplayerPluginDanmuku },
         ] = await Promise.all([
           import('artplayer'),
           import('@/lib/artplayer-plugin-seek-buttons'),
+          import('artplayer-plugin-danmuku'),
         ]);
 
         // 将导入的模块设置为全局变量供 initPlayer 使用
         (window as any).DynamicArtplayer = Artplayer;
         (window as any).DynamicArtplayerSeekButtons =
           artplayerPluginSeekButtons;
+        (window as any).DynamicArtplayerPluginDanmuku = artplayerPluginDanmuku;
 
         await initPlayer();
       } catch (error) {
