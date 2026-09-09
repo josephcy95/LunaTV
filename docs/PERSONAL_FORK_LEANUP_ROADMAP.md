@@ -547,3 +547,19 @@ This roadmap is complete only when:
 - [ ] Bundle/install/runtime measurements are recorded for meaningful changes.
 - [ ] The fork is smaller and easier to reason about without unsupported claims
       that every change makes it faster.
+
+### HomeClient release-calendar guard — September 9, 2026
+
+- [x] Prevent the disabled upcoming-releases homepage section from fetching
+      `/api/release-calendar?limit=100` or starting its Web Worker.
+- [x] Abort an in-flight release-calendar request when the effect is replaced
+      or the HomeClient unmounts, avoiding stale work and late state updates.
+- Verification: `pnpm typecheck`, full Jest (`13` suites / `66` tests), and
+  targeted ESLint completed. ESLint reported only pre-existing warnings in
+  `HomeClient.tsx`; no errors.
+- Commit: recorded below after commit/push.
+- Impact: lower network, worker, and client processing cost when the module is
+  disabled; no visible change when it is enabled. Release-calendar page and
+  play-stats queries were not changed.
+- Follow-up: continue the HomeClient audit with measurement before changing
+  delayed detail enrichment or other shared card behavior.

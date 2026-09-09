@@ -855,8 +855,19 @@ function HomeClient({
       }, 3000);
     }
 
+    // Only load release-calendar data when the section is enabled. This keeps
+    // a disabled homepage module from starting a request or Web Worker.
+    if (!state.homePageConfig.showUpcomingReleases) {
+      dispatch({ type: 'SET_UPCOMING_RELEASES', payload: [] });
+      return;
+    }
+
+    const releaseCalendarController = new AbortController();
+
     // 🔄 异步加载即将上映数据
-    fetch('/api/release-calendar?limit=100')
+    fetch('/api/release-calendar?limit=100', {
+      signal: releaseCalendarController.signal,
+    })
       .then((res) => {
         if (!res.ok) {
           console.error('获取即将上映数据失败，状态码:', res.status);
@@ -933,9 +944,14 @@ function HomeClient({
         }
       })
       .catch((error) => {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
         console.warn('获取即将上映数据失败:', error);
         dispatch({ type: 'SET_UPCOMING_RELEASES', payload: [] });
       });
+
+    return () => releaseCalendarController.abort();
   }, [homeData, state.homePageConfig]);
 
   // 🚀 TanStack Query - 使用 useMutation 管理清空收藏操作
