@@ -704,3 +704,13 @@ This roadmap is complete only when:
 - Verification: typecheck, Prettier, and diff check passed.
 - Impact: source-only cleanup; query parsing and cache fallback behavior remain
   unchanged.
+
+### Post-cleanup production build verification — September 9, 2026
+
+- [x] Rebuilt the application after the recent search, live, admin, and
+      playback cleanups.
+- Verification: `pnpm build` passed, including manifest generation, TypeScript,
+  static page generation, and route optimization; full Jest had already
+  passed with 13 suites and 66 tests.
+- Impact: confirms the accumulated source-only cleanups remain compatible with
+  the production build. No additional feature or route changes were made.
