@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, no-console */
+/* eslint-disable react-hooks/exhaustive-deps, no-console */
 
 'use client';
 
@@ -6,7 +6,6 @@ import { ChevronRight, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import {
-  Suspense,
   useEffect,
   useState,
   useRef,
@@ -14,7 +13,7 @@ import {
   useReducer,
   useTransition,
 } from 'react';
-import { useQuery, queryOptions } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { BangumiCalendarData } from '@/lib/bangumi.client';
 import {
@@ -327,7 +326,6 @@ function HomeClient({
   const {
     data: homeData,
     isLoading: homeLoading,
-    errors: homeErrors,
     sectionErrors,
     sectionPending,
     refetch: refetchHomeData,

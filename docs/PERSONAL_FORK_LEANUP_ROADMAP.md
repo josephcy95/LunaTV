@@ -578,3 +578,13 @@ This roadmap is complete only when:
   the effect remains active.
 - Follow-up: do not rewrite the enrichment strategy without runtime/request
   measurements; the requests may still be useful for visible metadata.
+
+### HomeClient dead-code cleanup — September 9, 2026
+
+- [x] Removed unused `Suspense`, `queryOptions`, and `homeErrors` bindings from
+      `HomeClient.tsx`.
+- [x] Removed the now-unused `@typescript-eslint/no-explicit-any` suppression.
+- Verification: typecheck and diff check passed; targeted ESLint has no errors
+  and now reports only two existing import-order warnings.
+- Impact: smaller source and less misleading component setup; no runtime
+  behavior or feature was removed.
