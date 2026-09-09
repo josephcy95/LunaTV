@@ -76,7 +76,7 @@ features to retire.
 - [x] Inspect client entry points and dynamic imports for obvious heavy modules.
 - [x] Measure current static/server route artifacts and inspect client entry
       references before changing client boundaries.
-- [>] Audit `VersionPanel` and the full changelog fallback for client bundle cost.
+- [x] Audit and defer-load `VersionPanel`'s full changelog fallback until the panel opens.
 - [ ] Audit `VideoCard` imports and per-card queries/effects for render cost.
 - [ ] Audit `HomeClient` for unnecessary client-only work and repeated queries.
 - [ ] Audit oversized admin/play/live/search modules after measurements.
@@ -467,6 +467,8 @@ After each dependency or feature cleanup:
 - Memory/performance observation: \***\*\_\_\*\***
 
 ## Completed work
+
+| 2026-09-09 | Pending commit | Deferred-load the local VersionPanel changelog instead of importing it at module initialization | Typecheck, 60 Jest tests, diff check passed | Keeps offline/local fallback behavior while moving the large changelog out of the initial module path; verify route chunks with analyzer later |
 
 | 2026-09-09 | `8c8ca649` | Deferred feature removal and added measured performance/maintainability workstream | Roadmap committed and pushed | All features remain preserved; next work targets evidence-based client/bundle improvements |
 | 2026-09-09 | Pending commit | Measured current build artifacts and identified VersionPanel/full changelog as first focused target | Production build passed; emitted chunk inventory recorded above | Measurement is a rough baseline; no runtime behavior changed |
