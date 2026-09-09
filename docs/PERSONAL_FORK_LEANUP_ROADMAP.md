@@ -893,3 +893,25 @@ performance improvement.
 - [ ] Use that baseline to select one substantial, low-risk optimization.
 - [ ] Keep formatting-only changes separate from behavior/performance changes.
 - [ ] Run the full relevant verification suite before committing and pushing.
+
+### Reproducible build baseline — September 9, 2026
+
+- [x] Captured a current production-build timing baseline with
+      `pnpm measure:p0-01 --build`.
+- Evidence: build passed in `26,222 ms` on Node `v24.13.1`, Linux x64;
+  evidence ID `p0-01-ac7244160417`.
+- Limitation: this is local wall-clock timing, not browser transfer size or
+  runtime frame performance. It is a comparison baseline only.
+- Next: add route/client chunk attribution before changing a large client
+  boundary.
+
+### Reproducible build baseline — September 9, 2026
+
+- [x] Captured a current production-build timing baseline with
+      `pnpm measure:p0-01 --build`.
+- Evidence: build passed in `26,222 ms` on Node `v24.13.1`, Linux x64;
+  evidence ID `p0-01-ac7244160417`.
+- Limitation: this is local wall-clock timing, not browser transfer size or
+  runtime frame performance. It is a comparison baseline only.
+- Next: add route/client chunk attribution before changing a large client
+  boundary.
