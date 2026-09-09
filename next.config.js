@@ -37,7 +37,6 @@ module.exports = (phase) => {
         'lucide-react',
         '@heroicons/react',
         'framer-motion',
-        'react-icons',
       ],
     },
 
