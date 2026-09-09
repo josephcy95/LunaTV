@@ -816,3 +816,12 @@ remove the buttons). Deferred to avoid silently changing visible behavior.
   diff check passed.
 - Impact: no visible behavior change; the existing back-to-top visibility
   decision remains deferred and only dead plumbing was removed.
+
+### Play-stats cleanup regression verification — September 9, 2026
+
+- [x] Re-ran the full automated suite after the play-stats unreachable-helper
+      and dead-setter cleanup.
+- Verification: 13 Jest suites and 66 tests passed; targeted play-stats ESLint
+  reports no unused-import or unused-variable findings.
+- Impact: confirms the source cleanup remains compatible with the covered
+  search, query, cache, and security regression tests.
