@@ -32,7 +32,7 @@ export const favoritesQueryOptions = queryOptions({
     return data as Record<string, Favorite>;
   },
   staleTime: 5 * 60 * 1000, // 5分钟
-  gcTime: 10 * 60 * 1000,   // 10分钟
+  gcTime: 10 * 60 * 1000, // 10分钟
   retry: 1,
 });
 
@@ -93,7 +93,7 @@ export function useFavoritesArrayQuery(options?: { enabled?: boolean }) {
         throw new Error(`Failed to fetch favorites: ${response.status}`);
       }
 
-      const data = await response.json() as Record<string, Favorite>;
+      const data = (await response.json()) as Record<string, Favorite>;
 
       // 转换为数组并排序
       const favoritesArray = Object.entries(data).map(([key, favorite]) => ({
@@ -134,25 +134,11 @@ export function useFavoritesArrayQuery(options?: { enabled?: boolean }) {
 export function useIsFavoritedQuery(
   source: string,
   id: string,
-  options?: { enabled?: boolean }
+  options?: { enabled?: boolean },
 ) {
   return useQuery({
-    queryKey: ['favorites', 'check', source, id] as const,
-    queryFn: async () => {
-      const response = await fetch('/api/favorites');
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch favorites: ${response.status}`);
-      }
-
-      const data = await response.json() as Record<string, Favorite>;
-      const key = `${source}+${id}`;
-
-      return !!data[key];
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    retry: 1,
+    ...favoritesQueryOptions,
     enabled: options?.enabled,
+    select: (favorites) => !!favorites[`${source}+${id}`],
   });
 }

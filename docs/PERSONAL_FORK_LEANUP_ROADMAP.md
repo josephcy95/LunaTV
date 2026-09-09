@@ -77,7 +77,7 @@ features to retire.
 - [x] Measure current static/server route artifacts and inspect client entry
       references before changing client boundaries.
 - [x] Audit and defer-load `VersionPanel`'s full changelog fallback until the panel opens.
-- [!] Audit `VideoCard` imports and per-card queries/effects for render cost.
+- [x] Replace per-card favorites/reminders fetches with shared cached queries.
 - [ ] Audit `HomeClient` for unnecessary client-only work and repeated queries.
 - [ ] Audit oversized admin/play/live/search modules after measurements.
 - [ ] Review decorative animation and blur/shadow cost after functional audits.
@@ -484,6 +484,8 @@ After each dependency or feature cleanup:
 - Memory/performance observation: \***\*\_\_\*\***
 
 ## Completed work
+
+| 2026-09-09 | Pending commit | Make favorite/reminder status hooks select from shared cached collection queries instead of fetching the full endpoint per card | Typecheck, 60 Jest tests, diff check passed | Catalog pages now share one cached favorites/reminders request per stale period instead of one request per distinct card; behavior and invalidation keys are preserved |
 
 | 2026-09-09 | Pending commit | Deferred-load the local VersionPanel changelog instead of importing it at module initialization | Typecheck, 60 Jest tests, diff check passed | Keeps offline/local fallback behavior while moving the large changelog out of the initial module path; verify route chunks with analyzer later |
 

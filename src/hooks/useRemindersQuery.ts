@@ -32,7 +32,7 @@ export const remindersQueryOptions = queryOptions({
     return data as Record<string, Reminder>;
   },
   staleTime: 5 * 60 * 1000, // 5分钟
-  gcTime: 10 * 60 * 1000,   // 10分钟
+  gcTime: 10 * 60 * 1000, // 10分钟
   retry: 1,
 });
 
@@ -93,7 +93,7 @@ export function useRemindersArrayQuery(options?: { enabled?: boolean }) {
         throw new Error(`Failed to fetch reminders: ${response.status}`);
       }
 
-      const data = await response.json() as Record<string, Reminder>;
+      const data = (await response.json()) as Record<string, Reminder>;
 
       // 转换为数组并排序
       const remindersArray = Object.entries(data).map(([key, reminder]) => ({
@@ -138,25 +138,11 @@ export function useRemindersArrayQuery(options?: { enabled?: boolean }) {
 export function useIsRemindedQuery(
   source: string,
   id: string,
-  options?: { enabled?: boolean }
+  options?: { enabled?: boolean },
 ) {
   return useQuery({
-    queryKey: ['reminders', 'check', source, id] as const,
-    queryFn: async () => {
-      const response = await fetch('/api/reminders');
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch reminders: ${response.status}`);
-      }
-
-      const data = await response.json() as Record<string, Reminder>;
-      const key = `${source}+${id}`;
-
-      return !!data[key];
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    retry: 1,
+    ...remindersQueryOptions,
     enabled: options?.enabled,
+    select: (reminders) => !!reminders[`${source}+${id}`],
   });
 }
