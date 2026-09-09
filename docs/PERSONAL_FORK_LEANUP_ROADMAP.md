@@ -624,3 +624,13 @@ This roadmap is complete only when:
   check passed.
 - Impact: removes dead client-side module references without changing the
   statistics UI, queries, or feature behavior.
+
+### Search page dead bindings — September 9, 2026
+
+- [x] Removed the unused DirectYouTubePlayer dynamic import, unused ACG error
+      value binding, unused YouTube-region loading value binding, and unused
+      Bilibili popular query error/refetch bindings.
+- Verification: typecheck, Prettier, and diff check passed. Setter bindings
+  used by existing error/loading paths were retained.
+- Impact: avoids loading an unreachable player component and removes dead
+  client state/query bindings without changing search behavior.

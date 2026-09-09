@@ -68,10 +68,6 @@ const BilibiliUpuserCard = dynamic(
   () => import('@/components/BilibiliUpuserCard'),
   { loading: optionalLoading },
 );
-const DirectYouTubePlayer = dynamic(
-  () => import('@/components/DirectYouTubePlayer'),
-  { loading: optionalLoading },
-);
 const TMDBFilterPanel = dynamic(() => import('@/components/TMDBFilterPanel'), {
   loading: optionalLoading,
 });
@@ -406,7 +402,7 @@ function SearchPageClient() {
 
   // ACG动漫磁力搜索相关状态
   const [acgTriggerSearch, setAcgTriggerSearch] = useState<boolean>();
-  const [acgError, setAcgError] = useState<string | null>(null);
+  const [, setAcgError] = useState<string | null>(null);
 
   // YouTube搜索相关状态
   const [youtubeResults, setYoutubeResults] = useState<any[] | null>(null);
@@ -422,11 +418,11 @@ function SearchPageClient() {
   const [youtubeMode, setYoutubeMode] = useState<'search' | 'popular'>(
     'popular',
   ); // YouTube模式：搜索或热门推荐
-  const [youtubeRegion, setYoutubeRegion] = useState<string>('US'); // 热门视频地区
+  const [youtubeRegion, setYoutubeRegion] = useState<string>('US');
+  const [, setYoutubeRegionsLoading] = useState(false); // 热门视频地区
   const [youtubeRegions, setYoutubeRegions] = useState<
     Array<{ id: string; name: string }>
   >([]);
-  const [youtubeRegionsLoading, setYoutubeRegionsLoading] = useState(false);
 
   // 使用 useInfiniteQuery 获取 YouTube 热门推荐
   const {
@@ -470,16 +466,12 @@ function SearchPageClient() {
   );
 
   // 使用 useQuery 获取 Bilibili 热门推荐
-  const {
-    data: bilibiliPopular,
-    isLoading: isLoadingBilibiliPopular,
-    error: bilibiliPopularError,
-    refetch: refetchBilibiliPopular,
-  } = useQuery(
-    bilibiliPopularOptions(
-      searchType === 'bilibili' && bilibiliMode === 'popular',
-    ),
-  );
+  const { data: bilibiliPopular, isLoading: isLoadingBilibiliPopular } =
+    useQuery(
+      bilibiliPopularOptions(
+        searchType === 'bilibili' && bilibiliMode === 'popular',
+      ),
+    );
 
   // TMDB演员搜索相关状态
   const [tmdbActorResults, setTmdbActorResults] = useState<any[] | null>(null);
