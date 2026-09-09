@@ -607,3 +607,11 @@ This roadmap is complete only when:
   broader cleanup decisions, not incidental dead code.
 - Impact: smaller admin route source with no change to cache operations or API
   responses.
+
+### Admin page dead catch bindings — September 9, 2026
+
+- [x] Removed three unused error bindings from admin user/group action catches.
+- Verification: typecheck, targeted ESLint unused-variable scan, Prettier, and
+  diff check passed.
+- Impact: source-only cleanup; existing delegated error handling and admin
+  behavior are unchanged.
