@@ -37,6 +37,7 @@ import {
 } from '@/lib/db.client';
 import {} from '@/lib/douban.client';
 import { SearchResult } from '@/lib/types';
+import { searchStream } from '@/lib/search-stream';
 import { getVideoResolutionFromM3u8, VideoSourceTestResult } from '@/lib/utils';
 import { useSite } from '@/components/SiteProvider';
 import {
@@ -2518,6 +2519,8 @@ function PlayPageClient() {
 
   // 进入页面时直接获取全部源信息
   useEffect(() => {
+    const sourceSearchController = new AbortController();
+
     const fetchSourceDetail = async (
       source: string,
       id: string,
@@ -2581,22 +2584,93 @@ function PlayPageClient() {
         const allResults: SearchResult[] = [];
         let bestResults: SearchResult[] = [];
 
-        // 依次尝试每个搜索变体，采用早期退出策略
+        const publishIncrementalMatches = (results: SearchResult[]) => {
+          const queryTitle = videoTitleRef.current
+            .replaceAll(' ', '')
+            .toLowerCase();
+          const matches = results.filter((result) => {
+            if (
+              videoDoubanIdRef.current &&
+              videoDoubanIdRef.current > 0 &&
+              result.douban_id
+            ) {
+              return result.douban_id === videoDoubanIdRef.current;
+            }
+            const resultTitle = result.title.replaceAll(' ', '').toLowerCase();
+            const titleMatch =
+              resultTitle === queryTitle ||
+              resultTitle.includes(queryTitle) ||
+              queryTitle.includes(resultTitle) ||
+              (queryTitle.length > 4 &&
+                checkAllKeywordsMatch(queryTitle, resultTitle));
+            const yearMatch = matchesRequestedYear(
+              result.year || '',
+              videoYearRef.current,
+            );
+            const resultIsMovie = inferIsMovie(
+              result.type_name,
+              result.episodes.length,
+            );
+            const typeMatch =
+              !searchType ||
+              (searchType === 'movie' ? resultIsMovie : !resultIsMovie);
+            return titleMatch && yearMatch && typeMatch;
+          });
+
+          if (!matches.length) return;
+          setAvailableSources((previous) => {
+            const merged = new Map(
+              previous.map((item) => [`${item.source}-${item.id}`, item]),
+            );
+            matches.forEach((item) =>
+              merged.set(`${item.source}-${item.id}`, item),
+            );
+            return Array.from(merged.values());
+          });
+        };
+
+        // Search variants remain sequential, but each variant now streams provider
+        // results so fast alternatives appear without waiting for the slowest source.
         for (const variant of searchVariants) {
           console.log('尝试搜索变体:', variant);
+          const variantResults: SearchResult[] = [];
 
-          const response = await fetch(
-            `/api/search?q=${encodeURIComponent(variant)}`,
-          );
-          if (!response.ok) {
-            console.warn(`搜索变体 "${variant}" 失败:`, response.statusText);
+          try {
+            for await (const chunk of searchStream(
+              `/api/search/ws?q=${encodeURIComponent(variant)}`,
+              sourceSearchController.signal,
+            )) {
+              if (chunk.type !== 'source_result' || !chunk.results.length) {
+                continue;
+              }
+
+              const seen = new Set(
+                variantResults.map((item) => `${item.source}:${item.id}`),
+              );
+              const freshResults = chunk.results.filter((item) => {
+                const key = `${item.source}:${item.id}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              });
+              if (!freshResults.length) continue;
+
+              variantResults.push(...freshResults);
+              allResults.push(...freshResults);
+              publishIncrementalMatches(freshResults);
+            }
+          } catch (err) {
+            if (sourceSearchController.signal.aborted) return [];
+            console.warn(
+              `搜索变体 "${variant}" 失败:`,
+              err instanceof Error ? err.message : err,
+            );
             continue;
           }
-          const data = await response.json();
+
+          const data = { results: variantResults };
 
           if (data.results && data.results.length > 0) {
-            allResults.push(...data.results);
-
             // 移除早期退出策略，让downstream的相关性评分发挥作用
 
             // 处理搜索结果，使用分级匹配：精确匹配优先，避免短标题误匹配
@@ -2886,6 +2960,7 @@ function PlayPageClient() {
         setBackgroundSourcesLoading(true);
         fetchSourcesData(searchTitle || videoTitle)
           .then((sources) => {
+            if (sourceSearchController.signal.aborted) return;
             // 合并当前源和搜索到的其他源
             const allSources = [...sourcesInfo];
             sources.forEach((source) => {
@@ -3033,6 +3108,10 @@ function PlayPageClient() {
     };
 
     initAll();
+
+    return () => {
+      sourceSearchController.abort();
+    };
   }, [reloadTrigger]); // 添加 reloadTrigger 作为依赖，当它变化时重新执行 initAll
 
   // 播放记录处理
