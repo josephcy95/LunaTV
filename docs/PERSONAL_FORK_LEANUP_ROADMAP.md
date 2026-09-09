@@ -806,3 +806,13 @@ Reason: the setter has no call site, so the rendered back-to-top buttons remain
 hidden while still retaining their click handlers. Removing the state would
 require a product decision (always show the buttons, add a scroll observer, or
 remove the buttons). Deferred to avoid silently changing visible behavior.
+
+### Play-stats remaining setter/import cleanup — September 9, 2026
+
+- [x] Removed the unused `setShowBackToTop` setter while retaining the state
+      read used by existing button markup, and removed the now-unused
+      `useCallback` import.
+- Verification: typecheck, targeted ESLint unused-binding scan, Prettier, and
+  diff check passed.
+- Impact: no visible behavior change; the existing back-to-top visibility
+  decision remains deferred and only dead plumbing was removed.

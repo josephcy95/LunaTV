@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChevronUp } from 'lucide-react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
@@ -140,7 +140,7 @@ const PlayStatsPage: React.FC = () => {
     role?: string;
   } | null>(null);
   const isAdmin = false;
-  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [showBackToTop] = useState(false);
   const [activeTab, setActiveTab] = useState<'admin' | 'personal'>('admin'); // 新增Tab状态
 
   // 🚀 TanStack Query - 管理员统计数据
