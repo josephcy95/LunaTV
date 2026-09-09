@@ -7,7 +7,7 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import { X } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { useDownload } from '@/contexts/DownloadContext';
@@ -33,21 +33,11 @@ import {
   generateStorageKey,
   getAllFavorites,
   getAllPlayRecords,
-  saveFavorite,
-  savePlayRecord,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
-import {
-  getDoubanDetails,
-  getDoubanComments,
-  getDoubanActorMovies,
-} from '@/lib/douban.client';
+import {} from '@/lib/douban.client';
 import { SearchResult } from '@/lib/types';
-import {
-  getVideoResolutionFromM3u8,
-  processImageUrl,
-  VideoSourceTestResult,
-} from '@/lib/utils';
+import { getVideoResolutionFromM3u8, VideoSourceTestResult } from '@/lib/utils';
 import { useSite } from '@/components/SiteProvider';
 import {
   useSavePlayRecordMutation,
@@ -343,7 +333,6 @@ interface WakeLockSentinel {
 }
 
 function PlayPageClient() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { createTask, setShowDownloadPanel } = useDownload();
   const { siteName } = useSite();

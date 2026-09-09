@@ -653,3 +653,11 @@ This roadmap is complete only when:
 - Impact: removes dead client module references from the large playback route;
   active playback, download, favorites, and comments behavior remains
   represented by their actually used paths.
+
+### Playback page dead client helpers — September 9, 2026
+
+- [x] Removed unused direct favorite/play-record helpers, unused Douban client
+      helpers, unused image-processing helper, and unused router binding.
+- Verification: typecheck, Prettier, and diff check passed.
+- Impact: removes dead client module references from playback without changing
+  the mutation-based save/delete paths or playback behavior.
