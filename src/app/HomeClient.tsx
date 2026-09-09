@@ -67,9 +67,6 @@ function mergeLocalDetails<T extends { id: string | number }>(
   });
 }
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
-import { useFavoritesQuery } from '@/hooks/useFavoritesQuery';
-import { usePlayRecordsQuery } from '@/hooks/usePlayRecordsQuery';
-import { useRemindersQuery } from '@/hooks/useRemindersQuery';
 import { useWatchingUpdatesQuery } from '@/hooks/useWatchingUpdates';
 import { useInView } from '@/hooks/useInView';
 
@@ -187,10 +184,6 @@ const homeReducer = (state: HomeState, action: HomeAction): HomeState => {
 import { favoritesQueryOptions } from '@/hooks/useFavoritesQuery';
 import { playRecordsQueryOptions } from '@/hooks/usePlayRecordsQuery';
 import { remindersQueryOptions } from '@/hooks/useRemindersQuery';
-
-const allFavoritesOptions = () => favoritesQueryOptions;
-const allPlayRecordsOptions = () => playRecordsQueryOptions;
-const allRemindersOptions = () => remindersQueryOptions;
 
 function HomeSection({
   title,
@@ -558,7 +551,7 @@ function HomeClient({
 
   // 🚀 TanStack Query - 使用 useQuery 获取收藏数据（自动缓存，跨页面持久化）
   const { data: allFavorites = {}, isPending: favoritesPending } = useQuery({
-    ...allFavoritesOptions(),
+    ...favoritesQueryOptions,
     enabled: activeTab === 'favorites',
   });
 
@@ -575,13 +568,13 @@ function HomeClient({
 
   // 🚀 TanStack Query - 使用 useQuery 获取播放记录（自动缓存，跨页面持久化）
   const { data: allPlayRecords = {} } = useQuery({
-    ...allPlayRecordsOptions(),
+    ...playRecordsQueryOptions,
     enabled: activeTab === 'favorites',
   });
 
   // 🚀 TanStack Query - 使用 useQuery 获取提醒数据（自动缓存，跨页面持久化）
   const { data: allReminders = {}, isPending: remindersPending } = useQuery({
-    ...allRemindersOptions(),
+    ...remindersQueryOptions,
     enabled: activeTab === 'reminders',
   });
 

@@ -78,7 +78,7 @@ features to retire.
       references before changing client boundaries.
 - [x] Audit and defer-load `VersionPanel`'s full changelog fallback until the panel opens.
 - [x] Replace per-card favorites/reminders fetches with shared cached queries.
-- [ ] Audit `HomeClient` for unnecessary client-only work and repeated queries.
+- [x] Remove unused HomeClient hook imports and trivial Query options wrappers.
 - [ ] Audit oversized admin/play/live/search modules after measurements.
 - [ ] Review decorative animation and blur/shadow cost after functional audits.
 - [ ] Make one focused, measured improvement at a time; record before/after data.
@@ -484,6 +484,8 @@ After each dependency or feature cleanup:
 - Memory/performance observation: \***\*\_\_\*\***
 
 ## Completed work
+
+| 2026-09-09 | Pending commit | Remove unused HomeClient hook imports and trivial query-options wrapper functions | Typecheck, 13 Jest suites/66 tests, diff check passed | No behavior change; removes dead imports and indirection while retaining the same shared query options and enabled guards |
 
 | 2026-09-09 | Pending commit | Bridge favorites/reminders event payloads into global Query caches and remove per-card subscriptions | Typecheck, 14 Jest suites/67 tests, targeted test, diff check passed | Removes two window listeners per card while preserving immediate payload-driven status updates; direct invalidation fallback is no longer needed for these events |
 
