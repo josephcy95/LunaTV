@@ -686,3 +686,13 @@ This roadmap is complete only when:
 - Verification: typecheck, Prettier, and diff check passed.
 - Impact: source-only cleanup; Emby detail fetching and scroll fallback remain
   unchanged.
+
+### Playback page unreachable helpers — September 9, 2026
+
+- [x] Removed the unused `handleAudioTrackSelect` function and unused
+      `formatTime` helper from the playback page.
+- Verification: typecheck, targeted unused-helper scan, Prettier, and diff
+  check passed.
+- Impact: removes unreachable client code only. The visible audio-track UI was
+  already not wired to this handler; active player controls and formatting
+  paths were unchanged.

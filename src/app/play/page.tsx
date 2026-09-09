@@ -2163,49 +2163,6 @@ function PlayPageClient() {
   }, [currentEpisodeIndex, detail, resetAudioTrackState]);
 
   // 处理音轨切换
-  const handleAudioTrackSelect = async (track: (typeof audioTracks)[0]) => {
-    // HLS音轨切换
-    if (typeof track.hlsIndex === 'number') {
-      const hls = artPlayerRef.current?.video?.hls;
-      if (!hls || hls.audioTrack === track.hlsIndex) return;
-
-      try {
-        hls.audioTrack = track.hlsIndex;
-        setCurrentAudioTrack(track.hlsIndex);
-        savePreferredAudioLang(track.language);
-      } catch (error) {
-        console.warn('切换HLS音轨失败:', error);
-      }
-      return;
-    }
-
-    // Emby音轨切换（通过URL参数）
-    if (
-      !detail ||
-      !detail.source ||
-      !(detail.source === 'emby' || detail.source.startsWith('emby_'))
-    ) {
-      return;
-    }
-
-    if (track.index === currentAudioTrackRef.current) return;
-
-    const currentTime = artPlayerRef.current?.currentTime || 0;
-    resumeTimeRef.current = currentTime;
-    setCurrentAudioTrack(track.index);
-    savePreferredAudioLang(track.language);
-    setIsAudioTrackSwitching(true);
-
-    // 直接修改URL参数，不需要重新请求API
-    const nextUrl = appendAudioStreamIndex(videoUrl, track.index);
-    if (nextUrl && nextUrl !== videoUrl) {
-      setVideoUrl(nextUrl);
-    } else {
-      setIsAudioTrackSwitching(false);
-    }
-  };
-
-  // 更新视频地址
   const updateVideoUrl = async (
     detailData: SearchResult | null,
     episodeIndex: number,
@@ -2514,26 +2471,6 @@ function PlayPageClient() {
 
     return filteredLines.join('\n');
   }
-
-  const formatTime = (seconds: number): string => {
-    if (seconds === 0) return '00:00';
-
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = Math.round(seconds % 60);
-
-    if (hours === 0) {
-      // 不到一小时，格式为 00:00
-      return `${minutes.toString().padStart(2, '0')}:${remainingSeconds
-        .toString()
-        .padStart(2, '0')}`;
-    } else {
-      // 超过一小时，格式为 00:00:00
-      return `${hours.toString().padStart(2, '0')}:${minutes
-        .toString()
-        .padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
-  };
 
   class CustomHlsJsLoader extends Hls.DefaultConfig.loader {
     constructor(config: any) {
