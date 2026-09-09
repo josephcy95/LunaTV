@@ -730,3 +730,11 @@ This roadmap is complete only when:
 - Verification: typecheck, Prettier, and diff check passed.
 - Impact: URL fallback behavior is unchanged; only an unused catch variable was
   removed.
+
+### Search page final dead bindings — September 9, 2026
+
+- [x] Removed the unused smooth-scroll catch binding and unused YouTube tab
+      state snapshot.
+- Verification: typecheck, Prettier, and diff check passed.
+- Impact: search tab switching and scroll fallback behavior are unchanged; only
+  dead local bindings were removed.

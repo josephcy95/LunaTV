@@ -1490,7 +1490,7 @@ function SearchPageClient() {
         top: 0,
         behavior: 'smooth',
       });
-    } catch (error) {
+    } catch {
       // 如果平滑滚动完全失败，使用立即滚动
       window.scrollTo(0, 0);
     }
@@ -1560,7 +1560,6 @@ function SearchPageClient() {
                   <button
                     type='button'
                     onClick={() => {
-                      const wasAlreadyYoutube = searchType === 'youtube';
                       setSearchType('youtube');
                       setYoutubeError(null);
                       setYoutubeWarning(null);
