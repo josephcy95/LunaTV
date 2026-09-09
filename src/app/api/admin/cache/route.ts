@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
         timestamp: new Date().toISOString(),
       },
     });
-  } catch {
+  } catch (error) {
     console.error('获取缓存统计失败:', error);
     return NextResponse.json(
       {
@@ -179,7 +179,7 @@ export async function DELETE(request: NextRequest) {
         message,
       },
     });
-  } catch {
+  } catch (error) {
     console.error('清理缓存失败:', error);
     return NextResponse.json(
       {
@@ -422,7 +422,7 @@ async function clearSearchCache(): Promise<number> {
     await db.clearExpiredCache('cache-');
     console.log('🗑️ 搜索缓存清理完成');
     clearedCount = 1; // 标记操作已执行
-  } catch {
+  } catch (error) {
     console.error('清理搜索缓存失败:', error);
   }
 
