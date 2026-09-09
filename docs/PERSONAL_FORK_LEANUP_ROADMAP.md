@@ -767,3 +767,14 @@ Findings:
 Decision: no speculative route rewrite in this step. The next implementation
 candidate is a narrowly bounded admin-panel extraction only if a panel boundary
 can be identified without changing request or permission behavior.
+
+### Admin extraction safety review — September 9, 2026
+
+- [~] Extract admin feature panels into separate client components.
+
+Reason: static review confirms the page combines user management, configuration,
+provider administration, cache/data tools, and diagnostics behind shared alert,
+loading, authentication, and mutation helpers. No panel boundary can currently
+be extracted without a larger regression surface or changing request ordering.
+The route remains a candidate, but extraction is deferred until a focused panel
+has dedicated behavior tests and a before/after client-bundle measurement.
