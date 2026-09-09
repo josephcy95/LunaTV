@@ -141,7 +141,6 @@ const PlayStatsPage: React.FC = () => {
   } | null>(null);
   const isAdmin = false;
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [showWatchingUpdates, setShowWatchingUpdates] = useState(false);
   const [activeTab, setActiveTab] = useState<'admin' | 'personal'>('admin'); // 新增Tab状态
 
   // 🚀 TanStack Query - 管理员统计数据
@@ -226,61 +225,6 @@ const PlayStatsPage: React.FC = () => {
   };
 
   // 🚀 数据获取由 TanStack Query 自动管理
-
-  // 清理过期缓存
-  const cleanExpiredCache = useCallback(() => {
-    const CACHE_DURATION = 2 * 60 * 60 * 1000; // 2小时
-    const now = Date.now();
-
-    // 检查即将上映缓存
-    const cacheTimeKey = 'upcoming_releases_cache_time';
-    const cachedTime = localStorage.getItem(cacheTimeKey);
-
-    if (cachedTime) {
-      const age = now - parseInt(cachedTime);
-      if (age >= CACHE_DURATION) {
-        localStorage.removeItem('upcoming_releases_cache');
-        localStorage.removeItem(cacheTimeKey);
-        console.log('已清理过期的即将上映缓存');
-      }
-    }
-
-    // 清理其他可能过期的缓存项
-    const keysToCheck = [
-      'moontv_watching_updates',
-      'moontv_last_update_check',
-      'release_calendar_all_data',
-      'release_calendar_all_data_time',
-    ];
-
-    // 检查追番更新缓存（这个有不同的过期时间）
-    const watchingUpdateTime = localStorage.getItem('moontv_last_update_check');
-    if (watchingUpdateTime) {
-      const WATCHING_CACHE_DURATION = 30 * 60 * 1000; // 30分钟
-      const age = now - parseInt(watchingUpdateTime);
-      if (age >= WATCHING_CACHE_DURATION) {
-        localStorage.removeItem('moontv_watching_updates');
-        localStorage.removeItem('moontv_last_update_check');
-        console.log('已清理过期的追番更新缓存');
-      }
-    }
-
-    // 检查发布日历缓存
-    keysToCheck.forEach((key) => {
-      if (key.endsWith('_time')) {
-        const timeStr = localStorage.getItem(key);
-        if (timeStr) {
-          const age = now - parseInt(timeStr);
-          if (age >= CACHE_DURATION) {
-            const dataKey = key.replace('_time', '');
-            localStorage.removeItem(dataKey);
-            localStorage.removeItem(key);
-            console.log(`已清理过期缓存: ${dataKey}`);
-          }
-        }
-      }
-    });
-  }, []);
 
   // 🚀 即将上映由 TanStack Query 自动管理
 
@@ -376,84 +320,6 @@ const PlayStatsPage: React.FC = () => {
       }
     };
   }, [authInfo, invalidatePlayStats]);
-
-  // 处理追番更新卡片点击
-  const handleWatchingUpdatesClick = () => {
-    console.log('点击追番卡片，watchingUpdates:', watchingUpdates);
-    console.log('updatedCount:', watchingUpdates?.updatedCount);
-    console.log(
-      'continueWatchingCount:',
-      watchingUpdates?.continueWatchingCount,
-    );
-
-    if (
-      watchingUpdates &&
-      ((watchingUpdates.updatedCount || 0) > 0 ||
-        (watchingUpdates.continueWatchingCount || 0) > 0)
-    ) {
-      console.log('条件满足，显示弹窗');
-      setShowWatchingUpdates(true);
-      console.log('setShowWatchingUpdates(true) 已调用');
-
-      // 强制刷新状态
-      setTimeout(() => {
-        setShowWatchingUpdates((prev) => {
-          console.log('强制状态更新，当前值:', prev);
-          return true;
-        });
-      }, 100);
-    } else {
-      console.log('条件不满足，不显示弹窗');
-    }
-  };
-
-  // 测试函数：强制显示弹窗
-  const forceShowPopup = () => {
-    console.log('强制显示弹窗');
-    setShowWatchingUpdates(true);
-  };
-
-  // 关闭追番更新详情
-  const handleCloseWatchingUpdates = () => {
-    setShowWatchingUpdates(false);
-  };
-
-  // 格式化更新时间
-  const formatLastUpdate = (timestamp: number): string => {
-    const now = Date.now();
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / (1000 * 60));
-
-    if (minutes < 1) return '刚刚更新';
-    if (minutes < 60) return `${minutes}分钟前`;
-
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}小时前`;
-
-    const days = Math.floor(hours / 24);
-    return `${days}天前`;
-  };
-
-  // 监听滚动位置，显示/隐藏回到顶部按钮
-  useEffect(() => {
-    // 获取滚动位置的函数
-    const getScrollTop = () => {
-      return document.body.scrollTop || document.documentElement.scrollTop || 0;
-    };
-
-    // 滚动事件处理
-    const handleScroll = () => {
-      const scrollTop = getScrollTop();
-      setShowBackToTop(scrollTop > 300);
-    };
-
-    // 监听 body 元素的滚动事件（参考搜索页面的实现方式）
-    document.body.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      document.body.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
 
   // 返回顶部功能
   const scrollToTop = () => {

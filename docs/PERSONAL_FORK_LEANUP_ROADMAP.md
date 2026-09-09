@@ -786,3 +786,14 @@ has dedicated behavior tests and a before/after client-bundle measurement.
 - Verification: typecheck, Prettier, and diff check passed.
 - Impact: scroll fallback behavior is unchanged; only the unused catch variable
   was removed.
+
+### Play-stats unreachable update helpers — September 9, 2026
+
+- [x] Removed the unused watching-updates popup state and its unreachable
+      click/force-close/formatting helpers, plus the unused local cache cleanup
+      helper.
+- Verification: typecheck, targeted ESLint unused-variable scan, Prettier, and
+  diff check passed.
+- Impact: removes an unreachable popup/cache code path from play-stats. The
+  active TanStack Query watching-updates data path and statistics UI remain
+  unchanged.
