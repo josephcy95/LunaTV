@@ -738,3 +738,32 @@ This roadmap is complete only when:
 - Verification: typecheck, Prettier, and diff check passed.
 - Impact: search tab switching and scroll fallback behavior are unchanged; only
   dead local bindings were removed.
+
+### Oversized route static complexity triage — September 9, 2026
+
+A source-level triage was performed before attempting behavioral refactors:
+
+| Route    |   Source size |  Lines | `useEffect` occurrences | `fetch` occurrences |
+| -------- | ------------: | -----: | ----------------------: | ------------------: |
+| Admin    | 401,746 bytes | 10,067 |                      12 |                  26 |
+| Playback | 200,250 bytes |  5,610 |                      36 |                  21 |
+| Live     | 161,609 bytes |  4,006 |                      19 |                   6 |
+| Search   | 126,573 bytes |  2,983 |                       5 |                   9 |
+
+Findings:
+
+- Admin is the largest source surface and has the highest request count; it is
+  the strongest candidate for extracting independently testable feature panels,
+  but extraction must preserve permission boundaries and mutation ordering.
+- Playback has the highest effect density; broad extraction or dependency-array
+  changes are high risk because player lifecycle and source switching are
+  tightly coupled. Continue with isolated dead-code cleanup or measurements.
+- Live has substantial state/effect complexity despite fewer requests; CORS,
+  HLS, and direct/proxy behavior should not be merged without behavior tests.
+- Search is smaller and already had its obvious dead bindings removed; defer
+  structural changes until a real bundle or render measurement identifies a
+  bottleneck.
+
+Decision: no speculative route rewrite in this step. The next implementation
+candidate is a narrowly bounded admin-panel extraction only if a panel boundary
+can be identified without changing request or permission behavior.
