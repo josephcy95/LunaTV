@@ -234,14 +234,12 @@ function LivePageClient() {
     }
     return false;
   });
-  const [corsSupport, setCorsSupport] = useState<Map<string, boolean>>(
-    new Map(),
-  );
+  const [, setCorsSupport] = useState<Map<string, boolean>>(new Map());
   const corsSupportRef = useRef<Map<string, boolean>>(new Map());
   const [playbackMode, setPlaybackMode] = useState<'direct' | 'proxy'>('proxy');
 
   // 📊 CORS 检测统计（管理员用）
-  const [corsStats, setCorsStats] = useState(() => {
+  const [, setCorsStats] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('live-cors-stats');
       if (saved) {
@@ -794,7 +792,7 @@ function LivePageClient() {
             return supports;
           }
         }
-      } catch (error) {
+      } catch {
         // 缓存读取失败，继续检测
       }
     }
@@ -830,7 +828,7 @@ function LivePageClient() {
               url: url.substring(0, 100), // 保存URL前缀便于调试
             }),
           );
-        } catch (error) {
+        } catch {
           // localStorage 满了或其他错误，忽略
         }
       }
@@ -1714,7 +1712,7 @@ function LivePageClient() {
             currentSourceRef.current?.key || '',
           );
           context.url = url.toString();
-        } catch (error) {
+        } catch {
           // ignore
         }
         // 拦截manifest和level请求

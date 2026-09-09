@@ -714,3 +714,12 @@ This roadmap is complete only when:
   passed with 13 suites and 66 tests.
 - Impact: confirms the accumulated source-only cleanups remain compatible with
   the production build. No additional feature or route changes were made.
+
+### Live page dead state/error bindings — September 9, 2026
+
+- [x] Removed unused CORS state read bindings and three unused error bindings
+      from live-page fallback catches while retaining all setters and fallback
+      behavior.
+- Verification: typecheck, Prettier, and diff check passed.
+- Impact: removes dead state reads and catch variables without changing CORS
+  detection, statistics updates, or HLS URL handling.
