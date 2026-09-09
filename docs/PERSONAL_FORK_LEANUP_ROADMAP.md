@@ -723,3 +723,10 @@ This roadmap is complete only when:
 - Verification: typecheck, Prettier, and diff check passed.
 - Impact: removes dead state reads and catch variables without changing CORS
   detection, statistics updates, or HLS URL handling.
+
+### Live HLS fallback binding — September 9, 2026
+
+- [x] Removed the final unused error binding in live-page HLS URL fallback.
+- Verification: typecheck, Prettier, and diff check passed.
+- Impact: URL fallback behavior is unchanged; only an unused catch variable was
+  removed.
