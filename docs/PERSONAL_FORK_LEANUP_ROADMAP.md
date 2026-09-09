@@ -669,3 +669,12 @@ This roadmap is complete only when:
 - Verification: typecheck, Prettier, and diff check passed.
 - Impact: removes dead bookkeeping while retaining the setter used by existing
   loading paths and preserving playback behavior.
+
+### Playback page dead state-value bindings — September 9, 2026
+
+- [x] Removed unused read-side bindings for loading stage/message, source-test
+      progress, and ad-filter version while retaining setters used by active
+      update paths.
+- Verification: typecheck, Prettier, and diff check passed.
+- Impact: less unused local state plumbing; existing source loading and ad
+  filter update behavior remains unchanged.

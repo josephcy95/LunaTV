@@ -346,15 +346,15 @@ function PlayPageClient() {
   // 状态变量（State）
   // -----------------------------------------------------------------------------
   const [loading, setLoading] = useState(true);
-  const [loadingStage, setLoadingStage] = useState<
+  const [, setLoadingStage] = useState<
     'searching' | 'preferring' | 'fetching' | 'ready'
   >('searching');
-  const [loadingMessage, setLoadingMessage] = useState('正在搜索播放源...');
+  const [, setLoadingMessage] = useState('正在搜索播放源...');
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<SearchResult | null>(null);
 
   // 测速进度状态
-  const [speedTestProgress, setSpeedTestProgress] = useState<{
+  const [, setSpeedTestProgress] = useState<{
     current: number;
     total: number;
     currentSource: string;
@@ -423,7 +423,7 @@ function PlayPageClient() {
 
   // 自定义去广告代码
   const [customAdFilterCode, setCustomAdFilterCode] = useState<string>('');
-  const [customAdFilterVersion, setCustomAdFilterVersion] = useState<number>(1);
+  const [, setCustomAdFilterVersion] = useState<number>(1);
   const customAdFilterCodeRef = useRef(customAdFilterCode);
 
   const netdiskModalContentRef = useRef<HTMLDivElement>(null);
