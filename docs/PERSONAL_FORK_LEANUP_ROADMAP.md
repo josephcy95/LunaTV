@@ -834,3 +834,11 @@ remove the buttons). Deferred to avoid silently changing visible behavior.
   diff check passed.
 - Impact: removes dead setter plumbing while preserving the state reads used by
   active HLS configuration and loading-overlay rendering.
+
+### Cron route dead bindings — September 9, 2026
+
+- [x] Removed the unused `getSpiderJarFromBlob` import and unused result
+      bindings from parallel cron task groups.
+- Verification: typecheck, Prettier, and diff check passed.
+- Impact: cron task execution and result handling remain unchanged; only dead
+  bindings and an unreachable import were removed.
