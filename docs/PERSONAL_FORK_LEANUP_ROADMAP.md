@@ -661,3 +661,11 @@ This roadmap is complete only when:
 - Verification: typecheck, Prettier, and diff check passed.
 - Impact: removes dead client module references from playback without changing
   the mutation-based save/delete paths or playback behavior.
+
+### Playback page dead query/state bindings — September 9, 2026
+
+- [x] Removed an unused movie-details error binding, unused background-source
+      loading value binding, and unused batch counter from playback.
+- Verification: typecheck, Prettier, and diff check passed.
+- Impact: removes dead bookkeeping while retaining the setter used by existing
+  loading paths and preserving playback behavior.
