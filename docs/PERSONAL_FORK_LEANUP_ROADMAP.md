@@ -485,6 +485,8 @@ After each dependency or feature cleanup:
 
 ## Completed work
 
+| 2026-09-09 | Pending commit | Bridge favorites/reminders event payloads into global Query caches and remove per-card subscriptions | Typecheck, 14 Jest suites/67 tests, targeted test, diff check passed | Removes two window listeners per card while preserving immediate payload-driven status updates; direct invalidation fallback is no longer needed for these events |
+
 | Date       | Commit     | Work                                   | Verification and limits                                                                                   |
 | ---------- | ---------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | 2026-09-09 | `aed24217` | Global virtualization removal          | Typecheck, 60 tests and build passed; browser acceptance was reported by the owner, not automated         |

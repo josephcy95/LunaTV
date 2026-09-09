@@ -41,15 +41,15 @@ function GlobalCacheInvalidator() {
 
     const unsubscribeFavorites = subscribeToDataUpdates(
       'favoritesUpdated',
-      () => {
-        queryClient.invalidateQueries({ queryKey: ['favorites'] });
+      (favorites: Record<string, unknown>) => {
+        queryClient.setQueryData(['favorites'], favorites);
       },
     );
 
     const unsubscribeReminders = subscribeToDataUpdates(
       'remindersUpdated',
-      () => {
-        queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      (reminders: Record<string, unknown>) => {
+        queryClient.setQueryData(['reminders'], reminders);
       },
     );
 
