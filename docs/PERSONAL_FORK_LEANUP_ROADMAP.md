@@ -597,3 +597,13 @@ This roadmap is complete only when:
 --check` passed.
 - Impact: removes avoidable lint noise and keeps the large client entry point
   easier to navigate; no runtime behavior changed.
+
+### Admin cache route dead-code cleanup — September 9, 2026
+
+- [x] Removed the unused `ClientCache` import and unused `formatBytes` helper.
+- [x] Removed an unused local-storage parse-error binding.
+- Verification: typecheck and diff check passed; targeted ESLint has no errors.
+  Existing debug logging and import-order warnings remain because they are
+  broader cleanup decisions, not incidental dead code.
+- Impact: smaller admin route source with no change to cache operations or API
+  responses.
