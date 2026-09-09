@@ -35,7 +35,11 @@ import { useDeletePlayRecordMutation } from '@/hooks/usePlayRecordsMutations';
 import { useIsFavoritedQuery } from '@/hooks/useFavoritesQuery';
 import { useIsRemindedQuery } from '@/hooks/useRemindersQuery';
 import { isAIRecommendFeatureDisabled } from '@/lib/ai-recommend.client';
-import { deletePlayRecord, saveFavorite, saveReminder } from '@/lib/db.client';
+import {
+  deletePlayRecord,
+  generateStorageKey,
+  subscribeToDataUpdates,
+} from '@/lib/db.client';
 import { processImageUrl, isSeriesCompleted } from '@/lib/utils';
 
 import { ImagePlaceholder } from '@/components/ImagePlaceholder';
@@ -262,6 +266,38 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         setReminded(remindedStatus);
       }
     }, [remindedStatus, shouldShowBell]);
+
+    // 监听状态更新事件
+    useEffect(() => {
+      if (!actualSource || !actualId) return;
+
+      const storageKey = generateStorageKey(actualSource, actualId);
+
+      const unsubscribeFavorites = subscribeToDataUpdates(
+        'favoritesUpdated',
+        (newFavorites: Record<string, any>) => {
+          const isNowFavorited = !!newFavorites[storageKey];
+          if (from === 'search') {
+            setSearchFavorited(isNowFavorited);
+          } else {
+            setFavorited(isNowFavorited);
+          }
+        },
+      );
+
+      const unsubscribeReminders = subscribeToDataUpdates(
+        'remindersUpdated',
+        (newReminders: Record<string, any>) => {
+          const isNowReminded = !!newReminders[storageKey];
+          setReminded(isNowReminded);
+        },
+      );
+
+      return () => {
+        unsubscribeFavorites();
+        unsubscribeReminders();
+      };
+    }, [from, actualSource, actualId, isUpcoming, remarks]);
 
     // 检查AI功能是否启用 - 只在没有父组件传递时才执行
     useEffect(() => {

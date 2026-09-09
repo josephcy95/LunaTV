@@ -13,12 +13,18 @@ import {
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { memo, useEffect, useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useLongPress } from '@/hooks/useLongPress';
 import { useToggleFavoriteMutation } from '@/hooks/useFavoritesMutations';
 import { useIsFavoritedQuery } from '@/hooks/useFavoritesQuery';
 import { isAIRecommendFeatureDisabled } from '@/lib/ai-recommend.client';
-import { saveFavorite, deleteFavorite } from '@/lib/db.client';
+import {
+  saveFavorite,
+  deleteFavorite,
+  generateStorageKey,
+  subscribeToDataUpdates,
+} from '@/lib/db.client';
 import {
   SHORTDRAMA_CACHE_EXPIRE,
   getCacheKey,
@@ -53,6 +59,7 @@ function ShortDramaCard({
   priority = false,
 }: ShortDramaCardProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const toggleFavoriteMutation = useToggleFavoriteMutation();
 
   const [realEpisodeCount, setRealEpisodeCount] = useState<number>(
@@ -89,6 +96,20 @@ function ShortDramaCard({
       setFavorited(favoritedStatus);
     }
   }, [favoritedStatus]);
+
+  // 监听收藏状态更新事件
+  useEffect(() => {
+    const storageKey = generateStorageKey(source, id);
+    const unsubscribe = subscribeToDataUpdates(
+      'favoritesUpdated',
+      (newFavorites: Record<string, any>) => {
+        const isNowFavorited = !!newFavorites[storageKey];
+        setFavorited(isNowFavorited);
+      },
+    );
+
+    return unsubscribe;
+  }, [source, id]);
 
   // 检查AI功能是否启用 - 只在没有父组件传递时才执行
   useEffect(() => {
