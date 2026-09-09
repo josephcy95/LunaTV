@@ -485,28 +485,38 @@ After each dependency or feature cleanup:
 
 ## Completed work
 
-| 2026-09-09 | Pending commit | Make favorite/reminder status hooks select from shared cached collection queries instead of fetching the full endpoint per card | Typecheck, 60 Jest tests, diff check passed | Catalog pages now share one cached favorites/reminders request per stale period instead of one request per distinct card; behavior and invalidation keys are preserved |
+| Date       | Commit     | Work                                   | Verification and limits                                                                                   |
+| ---------- | ---------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 2026-09-09 | `aed24217` | Global virtualization removal          | Typecheck, 60 tests and build passed; browser acceptance was reported by the owner, not automated         |
+| 2026-09-09 | `da5a6a4e` | Six unused direct dependencies removed | Typecheck, 60 tests and build passed; Zod remains in development tooling                                  |
+| 2026-09-09 | `8c8ca649` | Feature removal deferred               | Preserves all features during performance work                                                            |
+| 2026-09-09 | `fdb4c822` | Build artifact inventory               | Emitted file sizes only, not browser transfer measurements                                                |
+| 2026-09-09 | `1e3b568e` | Local changelog loaded on panel open   | Typecheck and existing tests passed; async load failures and offline-first opening still require coverage |
+| 2026-09-09 | `b7773769` | Shared favorites/reminders queries     | Follow-up fixtures below establish request reduction and cache selection behavior                         |
 
-| 2026-09-09 | Pending commit | Deferred-load the local VersionPanel changelog instead of importing it at module initialization | Typecheck, 60 Jest tests, diff check passed | Keeps offline/local fallback behavior while moving the large changelog out of the initial module path; verify route chunks with analyzer later |
+### Controlled card-status measurements
 
-| 2026-09-09 | `8c8ca649` | Deferred feature removal and added measured performance/maintainability workstream | Roadmap committed and pushed | All features remain preserved; next work targets evidence-based client/bundle improvements |
-| 2026-09-09 | Pending commit | Measured current build artifacts and identified VersionPanel/full changelog as first focused target | Production build passed; emitted chunk inventory recorded above | Measurement is a rough baseline; no runtime behavior changed |
+`src/hooks/useCardStatusQueries.test.tsx` runs real QueryClient observers with
+only HTTP mocked. No production fixture flag, new dependency, or database is
+needed. It is not a browser frame-rate or end-to-end playback measurement.
 
-| 2026-09-09 | Pending commit | Removed six confirmed-unused direct dependencies and the stale `react-icons` optimization entry | Typecheck, 60 Jest tests, production build, pnpm dependency resolution, diff check | Reduced dependency/install surface; no application source consumers found. `zod` remains transitively required by ESLint tooling. |
-
-| Date       | Commit     | Work                                         | Verification                                                             | Impact / notes                                                                           |
-| ---------- | ---------- | -------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| 2026-09-09 | `aed24217` | Removed application-wide list virtualization | Typecheck, 60 Jest tests, build, targeted ESLint, formatting, diff check | Simpler DOM path; long lists keep more cards mounted; virtual scroll restoration removed |
+- Running the same test against the hooks before `b7773769` produced **100 HTTP
+  calls for 100 distinct cards**, separately for favorites and reminders.
+- Current hooks produce **one request and one collection cache entry** for those
+  100 cards. Appending 25 cards while fresh produces no additional request.
+- Collection invalidation refreshes all 125 observers with one further request.
+- Cached optimistic updates and rollback change selected status without a request.
+- Changing the card ID reselects its status; disabled observers initiate no request.
+- These fixtures cover selectors and cache updates, not the full mutation network
+  lifecycle, browser paint cost, or cross-tab synchronization.
 
 ## Skipped or deferred work
 
-| 2026-09-09 | VideoCard runtime optimization | Blocked | Local Kvrocks endpoint timed out during browser profiling, so render/query measurements would be contaminated by backend failure. | Provide working Kvrocks or approve a controlled fixture/mock mode |
-
-Record every deliberate skip here. Use a separate row for each decision.
-
-| Date | Item | Decision             | Reason | Revisit when |
-| ---- | ---- | -------------------- | ------ | ------------ |
-| —    | —    | No items skipped yet | —      | —            |
+| Date       | Item                                         | Decision                       | Reason                                                                                              | Revisit when                                               |
+| ---------- | -------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 2026-09-09 | Feature removal / personal usage inventory   | Deferred by owner              | Preserve features while improving code                                                              | Owner chooses features to retire                           |
+| 2026-09-09 | Live backend card profiling                  | Deferred, not a global blocker | Configured Kvrocks timed out; controlled tests can still progress                                   | Backend is reachable                                       |
+| 2026-09-09 | Delete per-card event subscriptions outright | Rejected                       | Event payloads update cards immediately; provider invalidation alone waits for refetch and can fail | A tested payload-to-cache bridge preserves these semantics |
 
 ## Open decisions
 
