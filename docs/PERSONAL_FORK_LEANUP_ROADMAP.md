@@ -74,14 +74,30 @@ features to retire.
 - [x] Establish a production build baseline after virtualization/dependency
       cleanup.
 - [x] Inspect client entry points and dynamic imports for obvious heavy modules.
-- [ ] Measure route-level client chunks with a bundle analyzer before changing
-      client boundaries.
-- [ ] Audit `VersionPanel` and the full changelog fallback for client bundle cost.
+- [x] Measure current static/server route artifacts and inspect client entry
+      references before changing client boundaries.
+- [>] Audit `VersionPanel` and the full changelog fallback for client bundle cost.
 - [ ] Audit `VideoCard` imports and per-card queries/effects for render cost.
 - [ ] Audit `HomeClient` for unnecessary client-only work and repeated queries.
 - [ ] Audit oversized admin/play/live/search modules after measurements.
 - [ ] Review decorative animation and blur/shadow cost after functional audits.
 - [ ] Make one focused, measured improvement at a time; record before/after data.
+
+### Measurement results — September 9, 2026
+
+- The production build completed successfully after dependency cleanup.
+- Largest current `.next/static/chunks/*.js` files were approximately 813 KB,
+  700 KB, 244 KB, 229 KB and 225 KB before compression. These are emitted
+  chunk sizes, not per-route transfer sizes.
+- Route client-reference manifests were approximately 29–32 KB each, but these
+  manifests are metadata and not reliable bundle-size measurements.
+- `VersionPanel` is imported by `UserMenu` and imports the full generated
+  `src/lib/changelog.ts` as a local fallback. This is the strongest currently
+  evidenced candidate for a focused client-boundary improvement.
+- `HomeClient` and `VideoCard` are large client modules, but no change was made
+  without profiling their render and route costs.
+- A bundle analyzer is not currently installed. Adding one is deferred until
+  the first focused candidate is measured with a minimal, reviewable method.
 
 ### Current evidence and first performance target
 
@@ -451,6 +467,9 @@ After each dependency or feature cleanup:
 - Memory/performance observation: \***\*\_\_\*\***
 
 ## Completed work
+
+| 2026-09-09 | `8c8ca649` | Deferred feature removal and added measured performance/maintainability workstream | Roadmap committed and pushed | All features remain preserved; next work targets evidence-based client/bundle improvements |
+| 2026-09-09 | Pending commit | Measured current build artifacts and identified VersionPanel/full changelog as first focused target | Production build passed; emitted chunk inventory recorded above | Measurement is a rough baseline; no runtime behavior changed |
 
 | 2026-09-09 | Pending commit | Removed six confirmed-unused direct dependencies and the stale `react-icons` optimization entry | Typecheck, 60 Jest tests, production build, pnpm dependency resolution, diff check | Reduced dependency/install surface; no application source consumers found. `zod` remains transitively required by ESLint tooling. |
 
