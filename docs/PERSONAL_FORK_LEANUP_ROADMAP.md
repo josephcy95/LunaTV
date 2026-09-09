@@ -858,3 +858,38 @@ remove the buttons). Deferred to avoid silently changing visible behavior.
 - Verification: typecheck, Prettier, and diff check passed.
 - Impact: removes dead server references; source validation and Telegram token
   verification behavior remain unchanged.
+
+## Honest progress reset — September 9, 2026
+
+The cleanup history from `aed24217` onward was reviewed against the actual
+cumulative diff. The material improvements are:
+
+- application-wide virtualization removal (`aed24217`), addressing the card
+  recycling/jumping problem;
+- confirmed-unused dependency removal (`da5a6a4e`);
+- deferred local changelog loading (`1e3b568e`); and
+- shared favorites/reminders collection queries (`b7773769`), which reduced
+  repeated per-card requests in controlled tests.
+
+The later series of tiny dead-binding commits was valid source hygiene in
+places, but it was not meaningful performance work. Repeated formatting churn
+also made several patches much larger than their logic changes. Those commits
+remain in history and are not being rewritten silently. Going forward, the
+roadmap will not count mechanical lint cleanup or passing typechecks as a
+performance improvement.
+
+### Rejected workflow pattern
+
+- [x] Stop one-variable-at-a-time cleanup commits and broad formatter churn.
+- [x] Require a measured runtime, request, bundle, or memory reason before
+      calling a change an optimization.
+- [x] Record failed or weak verification honestly instead of treating unrelated
+      tests as proof of route-level behavior.
+
+### Next useful work
+
+- [ ] Establish a reproducible production client-bundle/request baseline for
+      the routes actually used by this fork.
+- [ ] Use that baseline to select one substantial, low-risk optimization.
+- [ ] Keep formatting-only changes separate from behavior/performance changes.
+- [ ] Run the full relevant verification suite before committing and pushing.
