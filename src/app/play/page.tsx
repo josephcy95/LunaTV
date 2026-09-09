@@ -412,7 +412,7 @@ function PlayPageClient() {
   const [downloadEnabled, setDownloadEnabled] = useState(true);
 
   // 去广告开关（从 localStorage 继承，默认 true）
-  const [blockAdEnabled, setBlockAdEnabled] = useState<boolean>(() => {
+  const [blockAdEnabled] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const v = localStorage.getItem('enable_blockad');
       if (v !== null) return v === 'true';
@@ -928,9 +928,7 @@ function PlayPageClient() {
 
   // 换源加载状态
   const [isVideoLoading, setIsVideoLoading] = useState(true);
-  const [videoLoadingStage, setVideoLoadingStage] = useState<
-    'initing' | 'sourceChanging'
-  >('initing');
+  const [videoLoadingStage] = useState<'initing' | 'sourceChanging'>('initing');
 
   // 播放进度保存相关
   const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);

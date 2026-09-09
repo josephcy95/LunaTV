@@ -825,3 +825,12 @@ remove the buttons). Deferred to avoid silently changing visible behavior.
   reports no unused-import or unused-variable findings.
 - Impact: confirms the source cleanup remains compatible with the covered
   search, query, cache, and security regression tests.
+
+### Playback page dead setter bindings — September 9, 2026
+
+- [x] Removed unused setters for the retained ad-filter state and video-loading
+      stage state.
+- Verification: typecheck, targeted ESLint unused-variable scan, Prettier, and
+  diff check passed.
+- Impact: removes dead setter plumbing while preserving the state reads used by
+  active HLS configuration and loading-overlay rendering.
