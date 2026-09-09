@@ -77,7 +77,7 @@ features to retire.
 - [x] Measure current static/server route artifacts and inspect client entry
       references before changing client boundaries.
 - [x] Audit and defer-load `VersionPanel`'s full changelog fallback until the panel opens.
-- [ ] Audit `VideoCard` imports and per-card queries/effects for render cost.
+- [>] Audit `VideoCard` imports and per-card queries/effects for render cost.
 - [ ] Audit `HomeClient` for unnecessary client-only work and repeated queries.
 - [ ] Audit oversized admin/play/live/search modules after measurements.
 - [ ] Review decorative animation and blur/shadow cost after functional audits.
@@ -98,6 +98,21 @@ features to retire.
   without profiling their render and route costs.
 - A bundle analyzer is not currently installed. Adding one is deferred until
   the first focused candidate is measured with a minimal, reviewable method.
+
+### VideoCard audit — September 9, 2026
+
+- `VideoCard` is approximately 68 KB and is rendered across major catalog and
+  history/favorites surfaces. It dynamically imports the AI modal, which is good
+  for initial loading.
+- Each card invokes favorite/reminder query hooks, mutation hooks, several local
+  states, and two data-update subscriptions. The query hooks use `enabled` guards,
+  so disabled network work may be avoided, but hook construction and subscription
+  overhead still need runtime measurement.
+- The card contains compatibility and multi-surface behavior for search, Douban,
+  favorites, history, reminders, aggregate results, live content, AI, and mobile
+  actions. No safe deletion was identified from static inspection alone.
+- The next safe action is profiling card mount/update counts and query/subscription
+  behavior on a real catalog page before changing this shared component.
 
 ### Current evidence and first performance target
 
