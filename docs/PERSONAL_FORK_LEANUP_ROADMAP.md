@@ -615,3 +615,12 @@ This roadmap is complete only when:
   diff check passed.
 - Impact: source-only cleanup; existing delegated error handling and admin
   behavior are unchanged.
+
+### Play-stats dead imports — September 9, 2026
+
+- [x] Removed unused `ReleaseCalendarItem`, `WatchingUpdate`, and
+      `PlayStatsResult` imports from the client play-stats page.
+- Verification: typecheck, targeted unused-import scan, Prettier, and diff
+  check passed.
+- Impact: removes dead client-side module references without changing the
+  statistics UI, queries, or feature behavior.
