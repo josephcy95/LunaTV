@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getSpiderJarFromBlob, uploadSpiderJarToBlob } from '@/lib/blobStorage';
 import { getConfig } from '@/lib/config';
+import { isBlockedTvboxCategory } from '@/lib/tvbox-filter';
 import { db } from '@/lib/db';
 import { isPrivateOrLocalApiUrl } from '@/lib/private-api-url';
 import { getSpiderJar, getCandidates } from '@/lib/spiderJar';
@@ -583,7 +584,8 @@ export async function GET(request: NextRequest) {
                 if (data.class && Array.isArray(data.class)) {
                   return data.class
                     .map((cat: any) => cat.type_name || cat.name)
-                    .filter((name: string) => name);
+                    .filter((name: string) => name)
+                    .filter((name: string) => !isBlockedTvboxCategory(name));
                 }
               }
             } catch (error) {
