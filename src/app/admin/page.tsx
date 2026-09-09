@@ -4811,7 +4811,9 @@ const VideoSourceConfig = ({
                 <li>• 通过Cloudflare全球CDN加速视频源API访问</li>
                 <li>• 自动转发所有API参数（ac=list, ac=detail等）</li>
                 <li>• 为每个源生成唯一路径，提升兼容性</li>
-                <li>• 仅影响网页播放，不影响TVBox配置</li>
+                <li>
+                  • 同时代理网页播放和TVBox中的视频源 API（不会自动代理视频流）
+                </li>
               </ul>
             </div>
 
