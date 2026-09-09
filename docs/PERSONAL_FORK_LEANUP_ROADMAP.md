@@ -8,8 +8,7 @@ and performance decisions without changing features merely for the sake of
 change.
 
 **Created:** September 9, 2026  
-**Status:** Planning and audit only. No work from this document is authorized
-until the corresponding checklist item is intentionally started.
+**Status:** Active performance/maintainability work; feature removal is deferred.
 
 The guiding principle is:
 
@@ -55,9 +54,49 @@ Status markers:
 - [x] Record current production bundle/chunk sizes.
 - [x] Record current install size and lockfile package count.
 - [x] Record the actual deployment/storage configuration.
-- [ ] Record which application routes and integrations are used at least once
-      per month.
-- [ ] Record which admin settings and provider integrations are never used.
+- [~] Record which application routes and integrations are used at least once
+  per month.
+- [~] Record which admin settings and provider integrations are never used.
+
+## Feature-removal inventory — deferred
+
+- [~] Personal usage inventory and unused-feature decisions.
+
+Reason: Feature removal is intentionally postponed. Current work preserves all
+routes, integrations, settings and APIs while focusing on code quality, bundle
+composition and runtime performance. Revisit when the owner decides which
+features to retire.
+
+## Performance and maintainability audit
+
+- [x] Audit current dependency usage and remove six confirmed-unused direct
+      dependencies (commit `da5a6a4e`).
+- [x] Establish a production build baseline after virtualization/dependency
+      cleanup.
+- [x] Inspect client entry points and dynamic imports for obvious heavy modules.
+- [ ] Measure route-level client chunks with a bundle analyzer before changing
+      client boundaries.
+- [ ] Audit `VersionPanel` and the full changelog fallback for client bundle cost.
+- [ ] Audit `VideoCard` imports and per-card queries/effects for render cost.
+- [ ] Audit `HomeClient` for unnecessary client-only work and repeated queries.
+- [ ] Audit oversized admin/play/live/search modules after measurements.
+- [ ] Review decorative animation and blur/shadow cost after functional audits.
+- [ ] Make one focused, measured improvement at a time; record before/after data.
+
+### Current evidence and first performance target
+
+- `VersionPanel` imports the full generated `src/lib/changelog.ts` into a client
+  component while also fetching the remote changelog. This is a plausible bundle
+  cost, but removing the fallback or changing its loading strategy could affect
+  offline/version-panel behavior, so it requires measurement first.
+- `VideoCard` is approximately 68 KB and appears throughout catalog pages. It
+  already dynamically imports the AI modal, but its queries/effects need profiling
+  before optimization.
+- `HomeClient` is approximately 81 KB and is a client-heavy entry point with many
+  queries and card sections; it is a high-value later target, not a reason for a
+  speculative rewrite.
+- The next implementation step is a route-level bundle measurement for the
+  changelog/VersionPanel and main home/search routes.
 
 ## First step: establish the personal-fork inventory
 
