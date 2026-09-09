@@ -6,7 +6,7 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
-import { Heart, ChevronUp, Download, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
@@ -17,10 +17,7 @@ import EpisodeSelector from '@/components/EpisodeSelector';
 import NetDiskSearchResults from '@/components/NetDiskSearchResults';
 import AcgSearch from '@/components/AcgSearch';
 import PageLayout from '@/components/PageLayout';
-import VideoCard from '@/components/VideoCard';
-import CommentSection from '@/components/play/CommentSection';
 import DownloadButtons from '@/components/play/DownloadButtons';
-import FavoriteButton from '@/components/play/FavoriteButton';
 import NetDiskButton from '@/components/play/NetDiskButton';
 import BackToTopButton from '@/components/play/BackToTopButton';
 import PlayInfoPanel from '@/components/play/PlayInfoPanel';
@@ -32,12 +29,10 @@ import { attachFullscreenOrientation } from '@/lib/player/orientation';
 import { attachPlayerGestures } from '@/lib/player/gestures';
 import '@/styles/artplayer-theme.css';
 import {
-  deleteFavorite,
   deletePlayRecord,
   generateStorageKey,
   getAllFavorites,
   getAllPlayRecords,
-  isFavorited,
   saveFavorite,
   savePlayRecord,
   subscribeToDataUpdates,

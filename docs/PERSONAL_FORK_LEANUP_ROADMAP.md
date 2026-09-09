@@ -643,3 +643,13 @@ This roadmap is complete only when:
   check passed.
 - Impact: source-only cleanup; live channel loading and health-check behavior
   were not changed.
+
+### Playback page dead imports — September 9, 2026
+
+- [x] Removed unused playback-page imports: three unused Lucide icons,
+      `VideoCard`, `CommentSection`, `FavoriteButton`, and unused direct
+      favorite helpers.
+- Verification: typecheck, Prettier, and diff check passed.
+- Impact: removes dead client module references from the large playback route;
+  active playback, download, favorites, and comments behavior remains
+  represented by their actually used paths.
