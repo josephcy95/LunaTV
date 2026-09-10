@@ -43,7 +43,7 @@ export interface Favorite {
   search_title: string; // 搜索时使用的标题
   origin?: 'vod' | 'live' | 'shortdrama';
   type?: string; // 内容类型（movie/tv/variety/shortdrama等）
-  remarks?: string; // 备注信息（如"X天后上映"、"已上映"等）
+  remarks?: string; // 备注信息（如"已完结"、"更新至20集"等）
   releaseDate?: string;
 }
 

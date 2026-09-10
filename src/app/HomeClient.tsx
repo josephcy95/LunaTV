@@ -484,18 +484,6 @@ function HomeClient({
     );
   }, [bangumiCalendarData]); // 依赖bangumiCalendarData，数据变化时重新计算
 
-  // 🎯 优化：缓存今天的日期（用于上映日期计算）
-  const today = useMemo(() => {
-    // 使用 Asia/Shanghai 时区，返回 YYYY-MM-DD 格式字符串（与 watching-updates.ts 保持一致）
-    const dateStr = new Date().toLocaleDateString('zh-CN', {
-      timeZone: 'Asia/Shanghai',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-    return dateStr.replace(/\//g, '-'); // "2026/04/02" -> "2026-04-02"
-  }, []); // 空依赖，只在组件挂载时计算一次
-
   // 合并初始化逻辑 - 优化性能，减少重渲染
   useEffect(() => {
     // 获取用户名
@@ -1040,66 +1028,15 @@ function HomeClient({
                   }
                   // 'recent' 已经在 updateFavoriteItems 中按 save_time 排序了
 
-                  return filtered.map((item) => {
-                    // 智能计算即将上映状态
-                    let calculatedRemarks = item.remarks;
-
-                    if (item.releaseDate) {
-                      // 使用字符串比较（YYYY-MM-DD 格式可以直接比较）
-                      const releaseDate = item.releaseDate; // "YYYY-MM-DD"
-
-                      if (releaseDate < today) {
-                        // 已上映：计算天数差
-                        const releaseParts = releaseDate.split('-').map(Number);
-                        const todayParts = today.split('-').map(Number);
-                        const releaseMs = new Date(
-                          releaseParts[0],
-                          releaseParts[1] - 1,
-                          releaseParts[2],
-                        ).getTime();
-                        const todayMs = new Date(
-                          todayParts[0],
-                          todayParts[1] - 1,
-                          todayParts[2],
-                        ).getTime();
-                        const daysAgo = Math.floor(
-                          (todayMs - releaseMs) / (1000 * 60 * 60 * 24),
-                        );
-                        calculatedRemarks = `已上映${daysAgo}天`;
-                      } else if (releaseDate === today) {
-                        calculatedRemarks = '今日上映';
-                      } else {
-                        // 即将上映：计算天数差
-                        const releaseParts = releaseDate.split('-').map(Number);
-                        const todayParts = today.split('-').map(Number);
-                        const releaseMs = new Date(
-                          releaseParts[0],
-                          releaseParts[1] - 1,
-                          releaseParts[2],
-                        ).getTime();
-                        const todayMs = new Date(
-                          todayParts[0],
-                          todayParts[1] - 1,
-                          todayParts[2],
-                        ).getTime();
-                        const daysUntil = Math.ceil(
-                          (releaseMs - todayMs) / (1000 * 60 * 60 * 24),
-                        );
-                        calculatedRemarks = `${daysUntil}天后上映`;
-                      }
-                    }
-
-                    return (
-                      <div key={item.id + item.source} className='w-full'>
-                        <VideoCard
-                          query={item.search_title}
-                          {...item}
-                          from='favorite'
-                          remarks={calculatedRemarks}
-                        />
-                      </div>
-                    );
-                  });
+                  return filtered.map((item) => (
+                    <div key={item.id + item.source} className='w-full'>
+                      <VideoCard
+                        query={item.search_title}
+                        {...item}
+                        from='favorite'
+                      />
+                    </div>
+                  ));
                 })()}
                 {favoritesPending && favoriteItems.length === 0 && (
                   <p

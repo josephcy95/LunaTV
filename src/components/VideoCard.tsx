@@ -55,7 +55,7 @@ export interface VideoCardProps {
   isAggregate?: boolean;
   origin?: 'vod' | 'live';
   remarks?: string; // 备注信息（如"已完结"、"更新至20集"等）
-  releaseDate?: string; // 上映日期 (YYYY-MM-DD)，用于即将上映内容
+  releaseDate?: string; // 上映日期 (YYYY-MM-DD)，收藏元数据
   priority?: boolean; // 图片加载优先级（用于首屏可见图片）
 }
 
@@ -173,14 +173,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       [isAggregate, actualEpisodes, type],
     );
 
-    // 这些值必须始终是 boolean，因为会传给 Query 的 enabled。
-    const isUpcoming = Boolean(remarks?.includes('天后上映'));
-    const hasReleaseTag = Boolean(
-      remarks?.includes('天后上映') ||
-      remarks?.includes('已上映') ||
-      remarks?.includes('今日上映'),
-    );
-
     // 🚀 TanStack Query - 获取收藏状态
     const { data: favoritedStatus } = useIsFavoritedQuery(
       actualSource || '',
@@ -220,7 +212,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       return () => {
         unsubscribeFavorites();
       };
-    }, [from, actualSource, actualId, isUpcoming, remarks]);
+    }, [from, actualSource, actualId]);
 
     // 🚀 使用 TanStack Query useMutation 优化收藏功能
     const handleToggleFavorite = useCallback(
@@ -376,11 +368,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     ]);
 
     const handleClick = useCallback(() => {
-      // 如果是即将上映的内容，不执行跳转，显示提示
-      if (isUpcoming) {
-        return;
-      }
-
       // 🔥 立即显示加载状态，提供即时反馈
       setIsNavigating(true);
 
@@ -420,7 +407,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         router.push(url);
       }
     }, [
-      isUpcoming,
       origin,
       from,
       actualSource,
@@ -585,14 +571,14 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         },
       };
       return configs[from] || configs.search;
-    }, [from, isAggregate, douban_id, rate, isUpcoming]);
+    }, [from, isAggregate, douban_id, rate]);
 
     // 移动端操作菜单配置
     const mobileActions = useMemo(() => {
       const actions = [];
 
-      // 播放操作（即将上映的内容不显示播放选项）
-      if (config.showPlayButton && !isUpcoming) {
+      // 播放操作
+      if (config.showPlayButton) {
         actions.push({
           id: 'play',
           label: origin === 'live' ? '观看直播' : '播放',
@@ -607,18 +593,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           label: origin === 'live' ? '新标签页观看' : '新标签页播放',
           icon: <ExternalLink size={20} />,
           onClick: handlePlayInNewTab,
-          color: 'default' as const,
-        });
-      }
-
-      // 即将上映提示（替代播放操作）
-      if (isUpcoming) {
-        actions.push({
-          id: 'upcoming-notice',
-          label: '该影片尚未上映，敬请期待',
-          icon: <span className='text-lg'>📅</span>,
-          onClick: () => {}, // 不执行任何操作
-          disabled: true,
           color: 'default' as const,
         });
       }
@@ -730,7 +704,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       isBangumi,
       isAggregate,
       dynamicSourceNames,
-      isUpcoming,
       origin,
       handleClick,
       handlePlayInNewTab,
@@ -869,7 +842,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               }}
             />
 
-            {/* 播放按钮 / 即将上映提示 / 加载状态 */}
+            {/* 播放按钮 / 加载状态 */}
             {config.showPlayButton && (
               <div
                 data-button='true'
@@ -896,19 +869,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                     <div className='moon-loader' />
                     <span className='font-mono text-xs font-semibold tracking-widest text-white/90 whitespace-nowrap'>
                       LOADING
-                    </span>
-                  </div>
-                ) : isUpcoming ? (
-                  // 即将上映 - 显示敬请期待
-                  <div className='flex flex-col items-center gap-2 rounded-2xl bg-black/65 px-6 py-4 ring-1 ring-white/10 backdrop-blur-md'>
-                    <span
-                      className='animate-moon-pulse text-2xl'
-                      aria-hidden='true'
-                    >
-                      ☽
-                    </span>
-                    <span className='text-sm font-bold text-white whitespace-nowrap'>
-                      敬请期待
                     </span>
                   </div>
                 ) : (
@@ -1029,11 +989,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             )}
 
             {/* 集数角标 - Netflix/DecoTV 风格 - 左上角 */}
-            {/* 即将上映的内容不显示集数徽章（因为是占位符数据）*/}
             {/* 收藏页面：过滤掉99集的占位符显示，只显示真实集数 */}
             {actualEpisodes &&
               actualEpisodes > 1 &&
-              !isUpcoming &&
               !(from === 'favorite' && actualEpisodes === 99) && (
                 <div
                   className='absolute top-2 left-2 z-30 transition-transform duration-300 ease-out group-hover:scale-105'
@@ -1073,7 +1031,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   className={`meta-badge absolute left-2 z-30 transition-transform duration-300 ease-out group-hover:scale-105 ${
                     actualEpisodes &&
                     actualEpisodes > 1 &&
-                    !isUpcoming &&
                     !(from === 'favorite' && actualEpisodes === 99)
                       ? 'top-9' // 有集数徽章时向下偏移
                       : 'top-2'
@@ -1114,40 +1071,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                 <span>已完结</span>
               </div>
             )}
-
-            {/* 上映状态徽章 - Netflix 风格 - 底部左侧 */}
-            {hasReleaseTag &&
-              (() => {
-                // 根据状态选择颜色和文本
-                let statusColor = 'text-orange-400';
-                let statusText = remarks || '';
-
-                if (remarks?.includes('已上映')) {
-                  statusColor = 'text-green-400';
-                } else if (remarks?.includes('今日上映')) {
-                  statusColor = 'text-yellow-400';
-                }
-
-                return (
-                  <div
-                    className='meta-badge absolute bottom-2 left-2 z-30 transition-transform duration-300 ease-out group-hover:scale-105'
-                    style={
-                      {
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        WebkitTouchCallout: 'none',
-                      } as React.CSSProperties
-                    }
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      return false;
-                    }}
-                  >
-                    <span className={statusColor}>●</span>
-                    <span className='text-white/85'>{statusText}</span>
-                  </div>
-                );
-              })()}
 
             {/* 评分徽章 - 动态颜色 - 🎯 使用容器查询替代媒体查询 */}
             {config.showRating && rate && ratingBadgeStyle && (
@@ -1467,88 +1390,45 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               </div>
             </div>
 
-            {config.showSourceName &&
-              source_name &&
-              (() => {
-                // 智能显示source_name：如果有上映状态标记，优先显示状态；否则显示来源
-                let displayText = source_name;
-                let themeColor = 'green'; // 默认绿色主题
-
-                if (hasReleaseTag && remarks) {
-                  // 有上映状态时，根据状态显示不同文本和颜色
-                  if (remarks.includes('天后上映')) {
-                    displayText = remarks; // 显示"X天后上映"
-                    themeColor = 'orange';
-                  } else if (remarks.includes('今日上映')) {
-                    displayText = '今日上映';
-                    themeColor = 'yellow';
-                  } else if (remarks.includes('已上映')) {
-                    displayText = remarks; // 显示"已上映X天"
-                    themeColor = 'green';
-                  }
+            {config.showSourceName && source_name && (
+              <div
+                className='flex items-center justify-center mt-2'
+                style={
+                  {
+                    WebkitUserSelect: 'none',
+                    userSelect: 'none',
+                    WebkitTouchCallout: 'none',
+                  } as React.CSSProperties
                 }
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  return false;
+                }}
+              >
+                <span
+                  className='inline-flex items-center gap-1.5 rounded-full border border-gray-900/12 bg-white/55 px-2.5 py-0.5 font-mono text-[10px] font-medium tracking-wide text-gray-500 backdrop-blur-sm transition-colors duration-300 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 group-hover:border-green-500/50 group-hover:text-green-700 dark:group-hover:border-green-400/40 dark:group-hover:text-green-300'
+                  style={
+                    {
+                      WebkitUserSelect: 'none',
+                      userSelect: 'none',
+                      WebkitTouchCallout: 'none',
+                    } as React.CSSProperties
+                  }
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    return false;
+                  }}
+                >
+                  <span className='h-1 w-1 rounded-full bg-gray-400 transition-colors duration-300 dark:bg-gray-500 group-hover:bg-green-500 dark:group-hover:bg-green-400'></span>
 
-                // Nocturne：安静的等宽出处签，hover 时按状态点亮
-                const hoverClasses = {
-                  green:
-                    'group-hover:border-green-500/50 group-hover:text-green-700 dark:group-hover:border-green-400/40 dark:group-hover:text-green-300',
-                  orange:
-                    'group-hover:border-orange-500/50 group-hover:text-orange-600 dark:group-hover:border-orange-400/40 dark:group-hover:text-orange-300',
-                  yellow:
-                    'group-hover:border-yellow-500/50 group-hover:text-yellow-700 dark:group-hover:border-yellow-400/40 dark:group-hover:text-yellow-300',
-                }[themeColor];
+                  {origin === 'live' && (
+                    <Radio size={11} className='inline-block' />
+                  )}
 
-                const dotColor = {
-                  green:
-                    'group-hover:bg-green-500 dark:group-hover:bg-green-400',
-                  orange:
-                    'group-hover:bg-orange-500 dark:group-hover:bg-orange-400',
-                  yellow:
-                    'group-hover:bg-yellow-500 dark:group-hover:bg-yellow-400',
-                }[themeColor];
-
-                return (
-                  <div
-                    className='flex items-center justify-center mt-2'
-                    style={
-                      {
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        WebkitTouchCallout: 'none',
-                      } as React.CSSProperties
-                    }
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      return false;
-                    }}
-                  >
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full border border-gray-900/12 bg-white/55 px-2.5 py-0.5 font-mono text-[10px] font-medium tracking-wide text-gray-500 backdrop-blur-sm transition-colors duration-300 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 ${hoverClasses}`}
-                      style={
-                        {
-                          WebkitUserSelect: 'none',
-                          userSelect: 'none',
-                          WebkitTouchCallout: 'none',
-                        } as React.CSSProperties
-                      }
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        return false;
-                      }}
-                    >
-                      <span
-                        className={`h-1 w-1 rounded-full bg-gray-400 transition-colors duration-300 dark:bg-gray-500 ${dotColor}`}
-                      ></span>
-
-                      {origin === 'live' && (
-                        <Radio size={11} className='inline-block' />
-                      )}
-
-                      <span>{displayText}</span>
-                    </span>
-                  </div>
-                );
-              })()}
+                  <span>{source_name}</span>
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
