@@ -241,7 +241,8 @@ export function useDanmu(options: UseDanmuOptions): UseDanmuReturn {
           : manualOverride;
       const emptyResult = { count: 0, data: [] };
 
-      if (!externalDanmuEnabledRef.current) {
+      // An explicit player load must not be blocked by stale localStorage.
+      if (!externalDanmuEnabledRef.current && !force) {
         console.log('外部弹幕开关已关闭');
         return emptyResult;
       }

@@ -772,15 +772,26 @@ function PlayPageClient() {
   // the actual player instance rather than the old player initialization path.
   useEffect(() => {
     if (!playerReady || !artPlayerRef.current) return;
+    console.info('[Danmu] player ready; inspecting plugin');
     const plugin = artPlayerRef.current.plugins?.artplayerPluginDanmuku;
-    if (!plugin) return;
+    if (!plugin) {
+      console.error('[Danmu] ArtPlayer danmu plugin is missing');
+      artPlayerRef.current.notice?.show?.('弹幕插件未加载，请刷新页面');
+      return;
+    }
     if (!danmuEnabled) {
       plugin.hide();
       return;
     }
-    void loadExternalDanmu()
+    console.info('[Danmu] requesting episode data');
+    void loadExternalDanmu({ force: true })
       .then(({ data, count }) => {
         console.info('[Danmu] API data received:', count);
+        if (count === 0) {
+          artPlayerRef.current?.notice?.show?.(
+            '弹幕 API 返回 0 条，请检查片名与集数匹配',
+          );
+        }
         if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku === plugin) {
           return plugin.load(data).then(() => {
             console.info('[Danmu] ArtPlayer loaded:', data.length);
