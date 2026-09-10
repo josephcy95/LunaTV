@@ -7,6 +7,7 @@ import { cache, Suspense } from 'react';
 import { Toaster } from 'sonner';
 
 import './globals.css';
+import '@/styles/rating-tiers.css';
 
 import { getConfig } from '@/lib/config';
 
