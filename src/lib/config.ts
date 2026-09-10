@@ -524,24 +524,6 @@ export async function configSelfCheck(
     };
   }
 
-  // 确保YouTube配置有默认值
-  if (!adminConfig.YouTubeConfig) {
-    adminConfig.YouTubeConfig = {
-      enabled: false, // 默认关闭
-      apiKey: '', // 默认为空，需要管理员配置
-      enableDemo: true, // 默认启用演示模式
-      maxResults: 25, // 默认每页25个结果
-      enabledRegions: ['US', 'CN', 'JP', 'KR', 'GB', 'DE', 'FR'], // 默认启用的地区
-      enabledCategories: [
-        'Film & Animation',
-        'Music',
-        'Gaming',
-        'News & Politics',
-        'Entertainment',
-      ], // 默认启用的分类
-    };
-  }
-
   // 确保短剧配置有默认值
   if (!adminConfig.ShortDramaConfig) {
     adminConfig.ShortDramaConfig = {
@@ -573,14 +555,6 @@ export async function configSelfCheck(
       onlyRefreshRecent: true, // 仅刷新最近活跃的记录
       recentDays: 30, // 最近 30 天内活跃
       onlyRefreshOngoing: true, // 仅刷新连载中的剧集
-    };
-  }
-
-  // 确保 Bilibili 配置有默认值
-  if (!adminConfig.BilibiliConfig) {
-    adminConfig.BilibiliConfig = {
-      enabled: true, // 默认启用（无需API Key）
-      loginStatus: 'not_logged_in', // 默认未登录
     };
   }
 
@@ -912,7 +886,7 @@ export async function setCachedConfig(config: AdminConfig) {
 // 特殊功能权限检查
 export async function hasSpecialFeaturePermission(
   username: string,
-  feature: 'ai-recommend' | 'youtube-search',
+  feature: 'ai-recommend',
   providedConfig?: AdminConfig,
 ): Promise<boolean> {
   try {
@@ -930,7 +904,7 @@ export async function hasSpecialFeaturePermission(
     // 如果用户不在配置中，检查是否是新注册用户
     if (!userConfig) {
       // 新注册用户默认无特殊功能权限，但不阻止基本访问
-      // 这里返回false是正确的，因为新用户默认不应该有AI/YouTube权限
+      // 这里返回false是正确的，因为新用户默认不应该有AI特殊功能权限
       return false;
     }
 

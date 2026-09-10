@@ -95,14 +95,10 @@ const serverConfigOptions = () =>
         const config = await response.json();
         return {
           downloadEnabled: config.DownloadEnabled ?? true,
-          youtubeEnabled: config.YouTubeEnabled ?? false,
-          bilibiliEnabled: config.BilibiliEnabled ?? false,
         };
       }
       return {
         downloadEnabled: true,
-        youtubeEnabled: false,
-        bilibiliEnabled: false,
       };
     },
     staleTime: 10 * 60 * 1000, // 10 minutes

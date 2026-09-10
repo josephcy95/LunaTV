@@ -30,8 +30,6 @@ export async function GET(request: NextRequest) {
     StorageType: process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage',
     Version: CURRENT_VERSION,
     DownloadEnabled: config.DownloadConfig?.enabled ?? true,
-    YouTubeEnabled: config.YouTubeConfig?.enabled ?? false,
-    BilibiliEnabled: config.BilibiliConfig?.enabled ?? false,
     requireInviteCode: config.UserConfig?.RequireInviteCode ?? false,
   };
 

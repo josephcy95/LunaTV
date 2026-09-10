@@ -13,7 +13,7 @@
   <img src="public/logo.png" alt="LunaTV Logo" width="120">
 </div>
 
-> 🎬 **LunaTV Enhanced Edition** is a comprehensive video streaming platform based on MoonTV with extensive enhancements. Features include **YouTube Integration**, **Cloud Drive Search**, **AI Recommendations**, **Short Drama**, **IPTV Live TV**, **Bangumi Anime**, **Watch Statistics**, **Danmaku System**, and 60+ major feature additions for the ultimate viewing experience.
+> 🎬 **LunaTV Enhanced Edition** is a comprehensive video streaming platform based on MoonTV with extensive enhancements. Features include **Cloud Drive Search**, **AI Recommendations**, **Short Drama**, **IPTV Live TV**, **Bangumi Anime**, **Watch Statistics**, **Danmaku System**, and major feature additions for the ultimate viewing experience.
 
 <div align="center">
 
@@ -44,8 +44,6 @@ This project is for educational purposes only. Do not use for commercial purpose
 ### 🎥 Content Ecosystem
 
 - **Emby Private Library**: Complete Emby media server integration with passwordless login, auth mode switcher, and multi-audio track playback → [Documentation](docs/integration/EMBY_GUIDE.md)
-- **YouTube Integration**: Full YouTube search, playback, live streaming, popular videos with region selector
-- **Bilibili Integration**: Bilibili search and playback with UP主 videos, popular videos, QR code login, cookie management
 - **Cloud Drive Search**: Advanced filtering and cache management, PanSou authentication support
 - **ACG Torrent Search**: Mikan Project dual-source system + Nyaa search with download export
 - **IPTV Live TV**: m3u/m3u8 subscription, FLV streaming, EPG guide, M3U import/export
