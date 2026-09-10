@@ -495,32 +495,26 @@ const CollapsibleTab = ({
   title,
   icon,
   isExpanded,
-  onToggle,
+  onToggle: _onToggle,
   children,
 }: CollapsibleTabProps) => {
-  return (
-    <div
-      id={id}
-      className='rounded-xl shadow-sm mb-4 overflow-hidden bg-white/80 backdrop-blur-md dark:bg-gray-800/50 dark:ring-1 dark:ring-gray-700 scroll-mt-4'
-    >
-      <button
-        type='button'
-        onClick={onToggle}
-        className='w-full px-6 py-4 flex items-center justify-between bg-gray-50/70 dark:bg-gray-800/60 hover:bg-gray-100/80 dark:hover:bg-gray-700/60 transition-colors'
-      >
-        <div className='flex items-center gap-3'>
-          {icon}
-          <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100'>
-            {title}
-          </h3>
-        </div>
-        <div className='text-gray-500 dark:text-gray-400'>
-          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-        </div>
-      </button>
+  if (!isExpanded) return null;
 
-      {isExpanded && <div className='px-6 py-4'>{children}</div>}
-    </div>
+  return (
+    <section
+      id={id}
+      role='tabpanel'
+      aria-label={title}
+      className='rounded-2xl border border-gray-900/8 bg-white/80 p-5 shadow-sm backdrop-blur-md dark:border-white/8 dark:bg-gray-800/50 sm:p-6'
+    >
+      <div className='mb-5 flex items-center gap-3 border-b border-gray-900/8 pb-4 dark:border-white/8'>
+        {icon}
+        <h2 className='text-lg font-semibold tracking-tight text-gray-900 dark:text-gray-100'>
+          {title}
+        </h2>
+      </div>
+      <div>{children}</div>
+    </section>
   );
 };
 
@@ -9173,28 +9167,7 @@ function AdminPageClient() {
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<'owner' | 'admin' | null>(null);
   const [showResetConfigModal, setShowResetConfigModal] = useState(false);
-  const [expandedTabs, setExpandedTabs] = useState<{ [key: string]: boolean }>({
-    userConfig: false,
-    videoSource: false,
-    sourceTest: false,
-    liveSource: false,
-    siteConfig: false,
-    homePageConfig: false,
-    categoryConfig: false,
-    netdiskConfig: false,
-    shortDramaConfig: false,
-    embyConfig: false,
-    downloadConfig: false,
-    customAdFilter: false,
-    tvboxSecurityConfig: false,
-    danmuApiConfig: false,
-    oidcAuthConfig: false,
-    inviteCodeManager: false,
-    configFile: false,
-    cacheManager: false,
-    dataMigration: false,
-    performanceMonitor: false,
-  });
+  const [activeTab, setActiveTab] = useState<string>('siteConfig');
 
   // 获取管理员配置
   // showLoading 用于控制是否在请求期间显示整体加载骨架。
@@ -9230,13 +9203,25 @@ function AdminPageClient() {
     fetchConfig(true);
   }, [fetchConfig]);
 
-  // 切换标签展开状态
-  const toggleTab = (tabKey: string) => {
-    setExpandedTabs((prev) => ({
-      ...prev,
-      [tabKey]: !prev[tabKey],
-    }));
+  const selectTab = (tabKey: string) => {
+    setActiveTab(tabKey);
   };
+
+  useEffect(() => {
+    if (!role) return;
+    const ownerOnly = new Set([
+      'configFile',
+      'inviteCodeManager',
+      'danmuApiConfig',
+      'oidcAuthConfig',
+      'cacheManager',
+      'dataMigration',
+      'performanceMonitor',
+    ]);
+    if (role !== 'owner' && ownerOnly.has(activeTab)) {
+      setActiveTab('siteConfig');
+    }
+  }, [role, activeTab]);
 
   // 新增: 重置配置处理函数
   const handleResetConfig = () => {
@@ -9308,239 +9293,283 @@ function AdminPageClient() {
             )}
           </div>
 
-          <div className='flex gap-6'>
-            {/* 左侧 Sticky 导航菜单 */}
-            <nav className='hidden lg:block w-48 shrink-0'>
-              <div className='sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-hide'>
-                <div className='space-y-0.5'>
-                  {[
-                    {
-                      id: 'admin-configFile',
-                      label: '配置文件',
-                      ownerOnly: true,
-                    },
-                    { id: 'admin-siteConfig', label: '站点配置' },
-                    { id: 'admin-homePageConfig', label: '首页模块' },
-                    { id: 'admin-userConfig', label: '用户配置' },
-                    {
-                      id: 'admin-inviteCodeManager',
-                      label: '邀请码',
-                      ownerOnly: true,
-                    },
-                    { id: 'admin-videoSource', label: '视频源' },
-                    { id: 'admin-sourceTest', label: '源检测' },
-                    { id: 'admin-liveSource', label: '直播源' },
-                    { id: 'admin-categoryConfig', label: '分类配置' },
-                    { id: 'admin-netdiskConfig', label: '网盘搜索' },
-                    { id: 'admin-embyConfig', label: 'Emby' },
-                    { id: 'admin-downloadConfig', label: '下载配置' },
-                    { id: 'admin-customAdFilter', label: '去广告' },
-                    { id: 'admin-tvboxSecurityConfig', label: 'TVBox安全' },
-                    {
-                      id: 'admin-danmuApiConfig',
-                      label: '弹幕API',
-                      ownerOnly: true,
-                    },
-                    {
-                      id: 'admin-oidcAuthConfig',
-                      label: 'OIDC',
-                      ownerOnly: true,
-                    },
-                    { id: 'admin-cacheManager', label: '缓存管理' },
-                    { id: 'admin-dataMigration', label: '数据迁移' },
-                    { id: 'admin-performanceMonitor', label: '性能监控' },
-                  ]
-                    .filter((item) => !item.ownerOnly || role === 'owner')
-                    .map((item) => (
-                      <a
-                        key={item.id}
-                        href={`#${item.id}`}
-                        className='block px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors'
-                      >
-                        {item.label}
-                      </a>
-                    ))}
-                </div>
-              </div>
-            </nav>
+          {/* 顶部折叠式胶囊标签 */}
+          <div
+            role='tablist'
+            aria-label='管理员设置分类'
+            className='mb-6 flex flex-wrap gap-2 rounded-2xl border border-gray-900/8 bg-white/70 p-2.5 shadow-sm backdrop-blur-xl dark:border-white/8 dark:bg-gray-900/55'
+          >
+            {[
+              {
+                key: 'configFile',
+                id: 'admin-configFile',
+                label: '配置文件',
+                ownerOnly: true,
+              },
+              { key: 'siteConfig', id: 'admin-siteConfig', label: '站点配置' },
+              {
+                key: 'homePageConfig',
+                id: 'admin-homePageConfig',
+                label: '首页模块',
+              },
+              { key: 'userConfig', id: 'admin-userConfig', label: '用户配置' },
+              {
+                key: 'inviteCodeManager',
+                id: 'admin-inviteCodeManager',
+                label: '邀请码',
+                ownerOnly: true,
+              },
+              { key: 'videoSource', id: 'admin-videoSource', label: '视频源' },
+              { key: 'sourceTest', id: 'admin-sourceTest', label: '源检测' },
+              { key: 'liveSource', id: 'admin-liveSource', label: '直播源' },
+              {
+                key: 'categoryConfig',
+                id: 'admin-categoryConfig',
+                label: '分类配置',
+              },
+              {
+                key: 'netdiskConfig',
+                id: 'admin-netdiskConfig',
+                label: '网盘搜索',
+              },
+              { key: 'embyConfig', id: 'admin-embyConfig', label: 'Emby' },
+              {
+                key: 'downloadConfig',
+                id: 'admin-downloadConfig',
+                label: '下载配置',
+              },
+              {
+                key: 'customAdFilter',
+                id: 'admin-customAdFilter',
+                label: '去广告',
+              },
+              {
+                key: 'tvboxSecurityConfig',
+                id: 'admin-tvboxSecurityConfig',
+                label: 'TVBox安全',
+              },
+              {
+                key: 'danmuApiConfig',
+                id: 'admin-danmuApiConfig',
+                label: '弹幕API',
+                ownerOnly: true,
+              },
+              {
+                key: 'oidcAuthConfig',
+                id: 'admin-oidcAuthConfig',
+                label: 'OIDC',
+                ownerOnly: true,
+              },
+              {
+                key: 'cacheManager',
+                id: 'admin-cacheManager',
+                label: '缓存管理',
+                ownerOnly: true,
+              },
+              {
+                key: 'dataMigration',
+                id: 'admin-dataMigration',
+                label: '数据迁移',
+                ownerOnly: true,
+              },
+              {
+                key: 'performanceMonitor',
+                id: 'admin-performanceMonitor',
+                label: '性能监控',
+                ownerOnly: true,
+              },
+            ]
+              .filter((item) => !item.ownerOnly || role === 'owner')
+              .map((item) => {
+                const selected = activeTab === item.key;
+                return (
+                  <button
+                    key={item.key}
+                    type='button'
+                    role='tab'
+                    aria-selected={selected}
+                    id={`tab-${item.key}`}
+                    onClick={() => selectTab(item.key)}
+                    className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500/50 ${
+                      selected
+                        ? 'bg-linear-to-b from-green-300 to-green-500 text-green-950 shadow-[0_2px_10px_rgba(209,159,48,0.35)]'
+                        : 'border border-gray-900/10 text-gray-600 hover:border-green-500/40 hover:text-green-700 dark:border-white/12 dark:text-gray-300 dark:hover:border-green-400/40 dark:hover:text-green-300'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+          </div>
 
-            {/* 右侧配置内容 */}
-            <div className='flex-1 min-w-0 space-y-6'>
-              {/* 配置文件标签 - 仅站长可见 */}
-              {role === 'owner' && (
-                <CollapsibleTab
-                  id='admin-configFile'
-                  title='配置文件'
-                  icon={
-                    <FileText
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.configFile}
-                  onToggle={() => toggleTab('configFile')}
-                >
-                  <ConfigFileComponent
-                    config={config}
-                    refreshConfig={fetchConfig}
-                  />
-                </CollapsibleTab>
-              )}
-
-              {/* 站点配置标签 */}
+          {/* 当前设置面板 */}
+          <div className='min-w-0'>
+            {/* 配置文件标签 - 仅站长可见 */}
+            {role === 'owner' && (
               <CollapsibleTab
-                id='admin-siteConfig'
-                title='站点配置'
+                id='admin-configFile'
+                title='配置文件'
                 icon={
-                  <Settings
+                  <FileText
                     size={20}
                     className='text-gray-600 dark:text-gray-400'
                   />
                 }
-                isExpanded={expandedTabs.siteConfig}
-                onToggle={() => toggleTab('siteConfig')}
+                isExpanded={activeTab === 'configFile'}
+                onToggle={() => selectTab('configFile')}
               >
-                <SiteConfigComponent
+                <ConfigFileComponent
                   config={config}
                   refreshConfig={fetchConfig}
                 />
               </CollapsibleTab>
+            )}
 
-              {/* 首页模块配置标签 */}
-              <CollapsibleTab
-                id='admin-homePageConfig'
-                title='首页模块配置'
-                icon={
-                  <Layout
-                    size={20}
-                    className='text-gray-600 dark:text-gray-400'
-                  />
-                }
-                isExpanded={expandedTabs.homePageConfig}
-                onToggle={() => toggleTab('homePageConfig')}
-              >
-                <HomePageConfig config={config} refreshConfig={fetchConfig} />
-              </CollapsibleTab>
-
-              {/* 用户配置标签 */}
-              <CollapsibleTab
-                id='admin-userConfig'
-                title='用户配置'
-                icon={
-                  <Users
-                    size={20}
-                    className='text-gray-600 dark:text-gray-400'
-                  />
-                }
-                isExpanded={expandedTabs.userConfig}
-                onToggle={() => toggleTab('userConfig')}
-              >
-                <UserConfig
-                  config={config}
-                  role={role}
-                  refreshConfig={fetchConfig}
+            {/* 站点配置标签 */}
+            <CollapsibleTab
+              id='admin-siteConfig'
+              title='站点配置'
+              icon={
+                <Settings
+                  size={20}
+                  className='text-gray-600 dark:text-gray-400'
                 />
-              </CollapsibleTab>
+              }
+              isExpanded={activeTab === 'siteConfig'}
+              onToggle={() => selectTab('siteConfig')}
+            >
+              <SiteConfigComponent
+                config={config}
+                refreshConfig={fetchConfig}
+              />
+            </CollapsibleTab>
 
-              {/* 邀请码管理标签 - 仅站长可见 */}
-              {role === 'owner' && (
-                <CollapsibleTab
-                  id='admin-inviteCodeManager'
-                  title='邀请码管理'
-                  icon={
-                    <Ticket
-                      size={20}
-                      className='text-blue-500 dark:text-blue-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.inviteCodeManager}
-                  onToggle={() => toggleTab('inviteCodeManager')}
-                >
-                  <InviteCodeManager />
-                </CollapsibleTab>
-              )}
-
-              {/* 视频源配置标签 */}
-              <CollapsibleTab
-                id='admin-videoSource'
-                title='视频源配置'
-                icon={
-                  <Video
-                    size={20}
-                    className='text-gray-600 dark:text-gray-400'
-                  />
-                }
-                isExpanded={expandedTabs.videoSource}
-                onToggle={() => toggleTab('videoSource')}
-              >
-                <VideoSourceConfig
-                  config={config}
-                  refreshConfig={fetchConfig}
+            {/* 首页模块配置标签 */}
+            <CollapsibleTab
+              id='admin-homePageConfig'
+              title='首页模块配置'
+              icon={
+                <Layout
+                  size={20}
+                  className='text-gray-600 dark:text-gray-400'
                 />
-              </CollapsibleTab>
+              }
+              isExpanded={activeTab === 'homePageConfig'}
+              onToggle={() => selectTab('homePageConfig')}
+            >
+              <HomePageConfig config={config} refreshConfig={fetchConfig} />
+            </CollapsibleTab>
 
-              {/* 源检测标签 */}
+            {/* 用户配置标签 */}
+            <CollapsibleTab
+              id='admin-userConfig'
+              title='用户配置'
+              icon={
+                <Users size={20} className='text-gray-600 dark:text-gray-400' />
+              }
+              isExpanded={activeTab === 'userConfig'}
+              onToggle={() => selectTab('userConfig')}
+            >
+              <UserConfig
+                config={config}
+                role={role}
+                refreshConfig={fetchConfig}
+              />
+            </CollapsibleTab>
+
+            {/* 邀请码管理标签 - 仅站长可见 */}
+            {role === 'owner' && (
               <CollapsibleTab
-                id='admin-sourceTest'
-                title='源检测'
+                id='admin-inviteCodeManager'
+                title='邀请码管理'
                 icon={
-                  <TestTube
+                  <Ticket
                     size={20}
-                    className='text-gray-600 dark:text-gray-400'
+                    className='text-blue-500 dark:text-blue-400'
                   />
                 }
-                isExpanded={expandedTabs.sourceTest}
-                onToggle={() => toggleTab('sourceTest')}
+                isExpanded={activeTab === 'inviteCodeManager'}
+                onToggle={() => selectTab('inviteCodeManager')}
               >
-                <SourceTestModule />
+                <InviteCodeManager />
               </CollapsibleTab>
+            )}
 
-              {/* 直播源配置标签 */}
-              <CollapsibleTab
-                id='admin-liveSource'
-                title='直播源配置'
-                icon={
-                  <Tv size={20} className='text-gray-600 dark:text-gray-400' />
-                }
-                isExpanded={expandedTabs.liveSource}
-                onToggle={() => toggleTab('liveSource')}
-              >
-                <LiveSourceConfig config={config} refreshConfig={fetchConfig} />
-              </CollapsibleTab>
+            {/* 视频源配置标签 */}
+            <CollapsibleTab
+              id='admin-videoSource'
+              title='视频源配置'
+              icon={
+                <Video size={20} className='text-gray-600 dark:text-gray-400' />
+              }
+              isExpanded={activeTab === 'videoSource'}
+              onToggle={() => selectTab('videoSource')}
+            >
+              <VideoSourceConfig config={config} refreshConfig={fetchConfig} />
+            </CollapsibleTab>
 
-              {/* 分类配置标签 */}
-              <CollapsibleTab
-                id='admin-categoryConfig'
-                title='分类配置'
-                icon={
-                  <FolderOpen
-                    size={20}
-                    className='text-gray-600 dark:text-gray-400'
-                  />
-                }
-                isExpanded={expandedTabs.categoryConfig}
-                onToggle={() => toggleTab('categoryConfig')}
-              >
-                <CategoryConfig config={config} refreshConfig={fetchConfig} />
-              </CollapsibleTab>
+            {/* 源检测标签 */}
+            <CollapsibleTab
+              id='admin-sourceTest'
+              title='源检测'
+              icon={
+                <TestTube
+                  size={20}
+                  className='text-gray-600 dark:text-gray-400'
+                />
+              }
+              isExpanded={activeTab === 'sourceTest'}
+              onToggle={() => selectTab('sourceTest')}
+            >
+              <SourceTestModule />
+            </CollapsibleTab>
 
-              {/* 网盘搜索配置标签 */}
-              <CollapsibleTab
-                id='admin-netdiskConfig'
-                title='网盘搜索配置'
-                icon={
-                  <Database
-                    size={20}
-                    className='text-gray-600 dark:text-gray-400'
-                  />
-                }
-                isExpanded={expandedTabs.netdiskConfig}
-                onToggle={() => toggleTab('netdiskConfig')}
-              >
-                <NetDiskConfig config={config} refreshConfig={fetchConfig} />
-              </CollapsibleTab>
+            {/* 直播源配置标签 */}
+            <CollapsibleTab
+              id='admin-liveSource'
+              title='直播源配置'
+              icon={
+                <Tv size={20} className='text-gray-600 dark:text-gray-400' />
+              }
+              isExpanded={activeTab === 'liveSource'}
+              onToggle={() => selectTab('liveSource')}
+            >
+              <LiveSourceConfig config={config} refreshConfig={fetchConfig} />
+            </CollapsibleTab>
 
-              {/* 短剧API配置标签 - 暂时隐藏，代码保留以后有用再显示
+            {/* 分类配置标签 */}
+            <CollapsibleTab
+              id='admin-categoryConfig'
+              title='分类配置'
+              icon={
+                <FolderOpen
+                  size={20}
+                  className='text-gray-600 dark:text-gray-400'
+                />
+              }
+              isExpanded={activeTab === 'categoryConfig'}
+              onToggle={() => selectTab('categoryConfig')}
+            >
+              <CategoryConfig config={config} refreshConfig={fetchConfig} />
+            </CollapsibleTab>
+
+            {/* 网盘搜索配置标签 */}
+            <CollapsibleTab
+              id='admin-netdiskConfig'
+              title='网盘搜索配置'
+              icon={
+                <Database
+                  size={20}
+                  className='text-gray-600 dark:text-gray-400'
+                />
+              }
+              isExpanded={activeTab === 'netdiskConfig'}
+              onToggle={() => selectTab('netdiskConfig')}
+            >
+              <NetDiskConfig config={config} refreshConfig={fetchConfig} />
+            </CollapsibleTab>
+
+            {/* 短剧API配置标签 - 暂时隐藏，代码保留以后有用再显示
             <CollapsibleTab
               title='短剧API配置'
               icon={
@@ -9549,218 +9578,217 @@ function AdminPageClient() {
                   className='text-purple-600 dark:text-purple-400'
                 />
               }
-              isExpanded={expandedTabs.shortDramaConfig}
-              onToggle={() => toggleTab('shortDramaConfig')}
+              isExpanded={activeTab === 'shortDramaConfig'}
+              onToggle={() => selectTab('shortDramaConfig')}
             >
               <ShortDramaConfig config={config} refreshConfig={fetchConfig} />
             </CollapsibleTab>
             */}
 
-              {/* Emby配置标签 */}
-              <CollapsibleTab
-                id='admin-embyConfig'
-                title='Emby私人影库'
-                icon={
-                  <FolderOpen
-                    size={20}
-                    className='text-indigo-600 dark:text-indigo-400'
-                  />
-                }
-                isExpanded={expandedTabs.embyConfig}
-                onToggle={() => toggleTab('embyConfig')}
-              >
-                <EmbyConfig config={config} refreshConfig={fetchConfig} />
-              </CollapsibleTab>
+            {/* Emby配置标签 */}
+            <CollapsibleTab
+              id='admin-embyConfig'
+              title='Emby私人影库'
+              icon={
+                <FolderOpen
+                  size={20}
+                  className='text-indigo-600 dark:text-indigo-400'
+                />
+              }
+              isExpanded={activeTab === 'embyConfig'}
+              onToggle={() => selectTab('embyConfig')}
+            >
+              <EmbyConfig config={config} refreshConfig={fetchConfig} />
+            </CollapsibleTab>
 
-              {/* 下载配置标签 */}
-              <CollapsibleTab
-                id='admin-downloadConfig'
-                title='下载配置'
-                icon={
-                  <Download
-                    size={20}
-                    className='text-green-600 dark:text-green-400'
-                  />
-                }
-                isExpanded={expandedTabs.downloadConfig}
-                onToggle={() => toggleTab('downloadConfig')}
-              >
-                <DownloadConfig config={config} refreshConfig={fetchConfig} />
-              </CollapsibleTab>
+            {/* 下载配置标签 */}
+            <CollapsibleTab
+              id='admin-downloadConfig'
+              title='下载配置'
+              icon={
+                <Download
+                  size={20}
+                  className='text-green-600 dark:text-green-400'
+                />
+              }
+              isExpanded={activeTab === 'downloadConfig'}
+              onToggle={() => selectTab('downloadConfig')}
+            >
+              <DownloadConfig config={config} refreshConfig={fetchConfig} />
+            </CollapsibleTab>
 
-              {/* 自定义去广告标签 */}
+            {/* 自定义去广告标签 */}
+            <CollapsibleTab
+              id='admin-customAdFilter'
+              title='自定义去广告'
+              icon={
+                <Video
+                  size={20}
+                  className='text-purple-600 dark:text-purple-400'
+                />
+              }
+              isExpanded={activeTab === 'customAdFilter'}
+              onToggle={() => selectTab('customAdFilter')}
+            >
+              <CustomAdFilterConfig
+                config={config}
+                refreshConfig={fetchConfig}
+              />
+            </CollapsibleTab>
+
+            {/* TVBox安全配置标签 */}
+            <CollapsibleTab
+              id='admin-tvboxSecurityConfig'
+              title='TVBox安全配置'
+              icon={
+                <Settings
+                  size={20}
+                  className='text-gray-600 dark:text-gray-400'
+                />
+              }
+              isExpanded={activeTab === 'tvboxSecurityConfig'}
+              onToggle={() => selectTab('tvboxSecurityConfig')}
+            >
+              <TVBoxSecurityConfig
+                config={config}
+                refreshConfig={fetchConfig}
+              />
+            </CollapsibleTab>
+
+            {/* 弹幕API配置 - 仅站长可见 */}
+            {role === 'owner' && (
               <CollapsibleTab
-                id='admin-customAdFilter'
-                title='自定义去广告'
+                id='admin-danmuApiConfig'
+                title='弹幕API配置'
                 icon={
-                  <Video
+                  <MessageSquare
                     size={20}
                     className='text-purple-600 dark:text-purple-400'
                   />
                 }
-                isExpanded={expandedTabs.customAdFilter}
-                onToggle={() => toggleTab('customAdFilter')}
+                isExpanded={activeTab === 'danmuApiConfig'}
+                onToggle={() => selectTab('danmuApiConfig')}
               >
-                <CustomAdFilterConfig
-                  config={config}
-                  refreshConfig={fetchConfig}
+                <DanmuApiConfig config={config} refreshConfig={fetchConfig} />
+              </CollapsibleTab>
+            )}
+
+            {/* OIDC 登录配置 - 仅站长可见 */}
+            {role === 'owner' && (
+              <CollapsibleTab
+                id='admin-oidcAuthConfig'
+                title='OIDC 登录配置'
+                icon={
+                  <KeyRound
+                    size={20}
+                    className='text-purple-500 dark:text-purple-400'
+                  />
+                }
+                isExpanded={activeTab === 'oidcAuthConfig'}
+                onToggle={() => selectTab('oidcAuthConfig')}
+              >
+                <OIDCAuthConfig
+                  config={
+                    config?.OIDCAuthConfig || {
+                      enabled: false,
+                      enableRegistration: false,
+                      issuer: '',
+                      authorizationEndpoint: '',
+                      tokenEndpoint: '',
+                      userInfoEndpoint: '',
+                      clientId: '',
+                      clientSecret: '',
+                      buttonText: '',
+                      minTrustLevel: 0,
+                    }
+                  }
+                  providers={config?.OIDCProviders || []}
+                  onSave={async (newConfig) => {
+                    if (!config) return;
+                    await fetch('/api/admin/config', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        ...config,
+                        OIDCAuthConfig: newConfig,
+                      }),
+                    });
+                    await fetchConfig();
+                  }}
+                  onSaveProviders={async (newProviders) => {
+                    if (!config) return;
+                    const updatedConfig = {
+                      ...config,
+                      OIDCProviders: newProviders,
+                    };
+                    // 如果切换到多provider模式，删除旧的单provider配置
+                    if (newProviders.length > 0) {
+                      delete updatedConfig.OIDCAuthConfig;
+                    }
+                    await fetch('/api/admin/config', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(updatedConfig),
+                    });
+                    await fetchConfig();
+                  }}
                 />
               </CollapsibleTab>
+            )}
 
-              {/* TVBox安全配置标签 */}
+            {/* 缓存管理标签 - 仅站长可见 */}
+            {role === 'owner' && (
               <CollapsibleTab
-                id='admin-tvboxSecurityConfig'
-                title='TVBox安全配置'
+                id='admin-cacheManager'
+                title='缓存管理'
                 icon={
-                  <Settings
+                  <Database
                     size={20}
                     className='text-gray-600 dark:text-gray-400'
                   />
                 }
-                isExpanded={expandedTabs.tvboxSecurityConfig}
-                onToggle={() => toggleTab('tvboxSecurityConfig')}
+                isExpanded={activeTab === 'cacheManager'}
+                onToggle={() => selectTab('cacheManager')}
               >
-                <TVBoxSecurityConfig
-                  config={config}
-                  refreshConfig={fetchConfig}
-                />
+                <CacheManager />
               </CollapsibleTab>
+            )}
 
-              {/* 弹幕API配置 - 仅站长可见 */}
-              {role === 'owner' && (
-                <CollapsibleTab
-                  id='admin-danmuApiConfig'
-                  title='弹幕API配置'
-                  icon={
-                    <MessageSquare
-                      size={20}
-                      className='text-purple-600 dark:text-purple-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.danmuApiConfig}
-                  onToggle={() => toggleTab('danmuApiConfig')}
-                >
-                  <DanmuApiConfig config={config} refreshConfig={fetchConfig} />
-                </CollapsibleTab>
-              )}
-
-              {/* OIDC 登录配置 - 仅站长可见 */}
-              {role === 'owner' && (
-                <CollapsibleTab
-                  id='admin-oidcAuthConfig'
-                  title='OIDC 登录配置'
-                  icon={
-                    <KeyRound
-                      size={20}
-                      className='text-purple-500 dark:text-purple-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.oidcAuthConfig}
-                  onToggle={() => toggleTab('oidcAuthConfig')}
-                >
-                  <OIDCAuthConfig
-                    config={
-                      config?.OIDCAuthConfig || {
-                        enabled: false,
-                        enableRegistration: false,
-                        issuer: '',
-                        authorizationEndpoint: '',
-                        tokenEndpoint: '',
-                        userInfoEndpoint: '',
-                        clientId: '',
-                        clientSecret: '',
-                        buttonText: '',
-                        minTrustLevel: 0,
-                      }
-                    }
-                    providers={config?.OIDCProviders || []}
-                    onSave={async (newConfig) => {
-                      if (!config) return;
-                      await fetch('/api/admin/config', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          ...config,
-                          OIDCAuthConfig: newConfig,
-                        }),
-                      });
-                      await fetchConfig();
-                    }}
-                    onSaveProviders={async (newProviders) => {
-                      if (!config) return;
-                      const updatedConfig = {
-                        ...config,
-                        OIDCProviders: newProviders,
-                      };
-                      // 如果切换到多provider模式，删除旧的单provider配置
-                      if (newProviders.length > 0) {
-                        delete updatedConfig.OIDCAuthConfig;
-                      }
-                      await fetch('/api/admin/config', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updatedConfig),
-                      });
-                      await fetchConfig();
-                    }}
+            {/* 数据迁移标签 - 仅站长可见 */}
+            {role === 'owner' && (
+              <CollapsibleTab
+                id='admin-dataMigration'
+                title='数据迁移'
+                icon={
+                  <Database
+                    size={20}
+                    className='text-gray-600 dark:text-gray-400'
                   />
-                </CollapsibleTab>
-              )}
+                }
+                isExpanded={activeTab === 'dataMigration'}
+                onToggle={() => selectTab('dataMigration')}
+              >
+                <DataMigration onRefreshConfig={fetchConfig} />
+              </CollapsibleTab>
+            )}
 
-              {/* 缓存管理标签 - 仅站长可见 */}
-              {role === 'owner' && (
-                <CollapsibleTab
-                  id='admin-cacheManager'
-                  title='缓存管理'
-                  icon={
-                    <Database
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.cacheManager}
-                  onToggle={() => toggleTab('cacheManager')}
-                >
-                  <CacheManager />
-                </CollapsibleTab>
-              )}
-
-              {/* 数据迁移标签 - 仅站长可见 */}
-              {role === 'owner' && (
-                <CollapsibleTab
-                  id='admin-dataMigration'
-                  title='数据迁移'
-                  icon={
-                    <Database
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.dataMigration}
-                  onToggle={() => toggleTab('dataMigration')}
-                >
-                  <DataMigration onRefreshConfig={fetchConfig} />
-                </CollapsibleTab>
-              )}
-
-              {/* 性能监控标签 - 仅站长可见 */}
-              {role === 'owner' && (
-                <CollapsibleTab
-                  id='admin-performanceMonitor'
-                  title='性能监控'
-                  icon={
-                    <Activity
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.performanceMonitor}
-                  onToggle={() => toggleTab('performanceMonitor')}
-                >
-                  <PerformanceMonitor />
-                </CollapsibleTab>
-              )}
-            </div>
+            {/* 性能监控标签 - 仅站长可见 */}
+            {role === 'owner' && (
+              <CollapsibleTab
+                id='admin-performanceMonitor'
+                title='性能监控'
+                icon={
+                  <Activity
+                    size={20}
+                    className='text-gray-600 dark:text-gray-400'
+                  />
+                }
+                isExpanded={activeTab === 'performanceMonitor'}
+                onToggle={() => selectTab('performanceMonitor')}
+              >
+                <PerformanceMonitor />
+              </CollapsibleTab>
+            )}
           </div>
         </div>
       </div>
