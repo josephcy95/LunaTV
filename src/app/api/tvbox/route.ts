@@ -582,10 +582,21 @@ export async function GET(request: NextRequest) {
               if (response.ok) {
                 const data = await response.json();
                 if (data.class && Array.isArray(data.class)) {
+                  // TVBox clients (e.g. TVBoxOSC) build their category bar by
+                  // matching these names against `ac=list`. Duplicate names would
+                  // render duplicate tabs, so keep only the first occurrence and
+                  // preserve the source's original ordering.
+                  const seen = new Set<string>();
                   return data.class
                     .map((cat: any) => cat.type_name || cat.name)
                     .filter((name: string) => name)
-                    .filter((name: string) => !isBlockedTvboxCategory(name));
+                    .filter((name: string) => !isBlockedTvboxCategory(name))
+                    .filter((name: string) => {
+                      const key = String(name).trim();
+                      if (!key || seen.has(key)) return false;
+                      seen.add(key);
+                      return true;
+                    });
                 }
               }
             } catch (error) {
