@@ -679,6 +679,7 @@ function PlayPageClient() {
   const artPlayerRef = useRef<any>(null);
   const [playerReady, setPlayerReady] = useState(false);
   const artRef = useRef<HTMLDivElement | null>(null);
+  const danmuRequestScopeRef = useRef('');
   const [isDanmuSettingsOpen, setIsDanmuSettingsOpen] = useState(false);
   const [isDanmuManualOpen, setIsDanmuManualOpen] = useState(false);
   const [manualDanmuOverride, setManualDanmuOverride] =
@@ -772,7 +773,10 @@ function PlayPageClient() {
   // the actual player instance rather than the old player initialization path.
   useEffect(() => {
     if (!playerReady || !artPlayerRef.current) return;
-    console.info('[Danmu] player ready; inspecting plugin');
+    const requestScope = `${videoTitle}_${videoYear}_${videoDoubanId}_${currentEpisodeIndex + 1}_${manualDanmuOverride?.episodeId || ''}`;
+    if (danmuRequestScopeRef.current === requestScope) return;
+    danmuRequestScopeRef.current = requestScope;
+    console.info('[Danmu] player ready; inspecting plugin', { requestScope });
     const plugin = artPlayerRef.current.plugins?.artplayerPluginDanmuku;
     if (!plugin) {
       console.error('[Danmu] ArtPlayer danmu plugin is missing');
