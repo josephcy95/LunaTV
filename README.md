@@ -13,7 +13,7 @@
   <img src="public/logo.png" alt="LunaTV Logo" width="120">
 </div>
 
-> 🎬 **LunaTV Enhanced Edition** 是基于 MoonTV 深度二次开发的全功能影视聚合播放平台。在原版基础上新增了 **YouTube 集成**、**网盘搜索**、**AI 推荐**、**短剧功能**、**IPTV 直播**、**Bangumi 动漫**、**播放统计**、**弹幕系统**等 60+ 重大功能增强，打造极致的在线观影体验。
+> 🎬 **LunaTV Enhanced Edition** 是基于 MoonTV 深度二次开发的全功能影视聚合播放平台。在原版基础上新增了 **网盘搜索**、**AI 推荐**、**短剧功能**、**IPTV 直播**、**Bangumi 动漫**、**播放统计**、**弹幕系统**等重大功能增强，打造极致的在线观影体验。
 
 <div align="center">
 
@@ -44,8 +44,6 @@
 ### 🎥 内容生态扩展
 
 - **Emby 私有库**：完整的 Emby 媒体服务器集成，支持免密登录、认证模式切换和多音轨播放 → [详细文档](docs/integration/EMBY_GUIDE.md)
-- **YouTube 集成**：完整的 YouTube 搜索、播放、直播功能，支持热门视频和地区选择器
-- **Bilibili 集成**：Bilibili 搜索和播放功能，支持 UP主视频、热门视频、QR码登录、Cookie管理
 - **网盘搜索**：集成高级筛选和缓存管理的网盘资源搜索，PanSou 支持身份认证
 - **ACG 种子搜索**：Mikan Project 双源系统 + Nyaa 搜索，支持种子下载链接导出，丰富的动漫资源
 - **IPTV 直播**：m3u/m3u8 订阅、FLV 直播流、EPG 节目单、M3U 导入导出

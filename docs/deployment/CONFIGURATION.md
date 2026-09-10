@@ -56,22 +56,23 @@
 
 ### 必填变量
 
-| 变量                     | 说明           | 示例值                |
-| ------------------------ | -------------- | --------------------- |
-| `USERNAME`               | 站长账号       | `admin`               |
-| `PASSWORD`               | 站长密码       | `your_secure_password`|
-| `NEXT_PUBLIC_STORAGE_TYPE` | 存储类型     | `kvrocks` / `redis` / `upstash` |
+| 变量                       | 说明     | 示例值                          |
+| -------------------------- | -------- | ------------------------------- |
+| `USERNAME`                 | 站长账号 | `admin`                         |
+| `PASSWORD`                 | 站长密码 | `your_secure_password`          |
+| `NEXT_PUBLIC_STORAGE_TYPE` | 存储类型 | `kvrocks` / `redis` / `upstash` |
 
 ### 存储配置
 
-| 变量              | 说明                 | 示例值                          |
-| ----------------- | -------------------- | ------------------------------- |
-| `KVROCKS_URL`     | Kvrocks 连接 URL      | `redis://moontv-kvrocks:6666`   |
-| `REDIS_URL`       | Redis 连接 URL        | `redis://moontv-redis:6379`     |
-| `UPSTASH_URL`     | Upstash 端点          | `https://xxx.upstash.io`        |
-| `UPSTASH_TOKEN`   | Upstash Token         | `AxxxxxxxxxxxxxxxxxxxxxxxxxxxQ==`|
+| 变量            | 说明             | 示例值                            |
+| --------------- | ---------------- | --------------------------------- |
+| `KVROCKS_URL`   | Kvrocks 连接 URL | `redis://moontv-kvrocks:6666`     |
+| `REDIS_URL`     | Redis 连接 URL   | `redis://moontv-redis:6379`       |
+| `UPSTASH_URL`   | Upstash 端点     | `https://xxx.upstash.io`          |
+| `UPSTASH_TOKEN` | Upstash Token    | `AxxxxxxxxxxxxxxxxxxxxxxxxxxxQ==` |
 
 > 💡 **Redis 兼容服务**：`REDIS_URL` 支持所有 Redis 协议兼容的服务，包括：
+>
 > - 自建 Redis / KVRocks
 > - [Redis Cloud](https://redis.io/cloud/) - 官方云服务，免费 30MB
 > - [Aiven Valkey](https://aiven.io/valkey) - 免费 1GB，Redis 7.2 兼容
@@ -81,27 +82,29 @@
 
 ### 可选配置
 
-| 变量                                | 说明                 | 默认值      | 可选值                    |
-| ----------------------------------- | -------------------- | ----------- | ------------------------- |
-| `SITE_BASE`                         | 站点 URL             | 空          | `https://example.com`     |
-| `NEXT_PUBLIC_SITE_NAME`             | 站点名称             | `MoonTV`    | 任意字符串                |
-| `ANNOUNCEMENT`                      | 站点公告             | 默认公告     | 任意字符串                |
-| `NEXT_PUBLIC_SEARCH_MAX_PAGE`       | 搜索最大页数         | `5`         | `1-50`                    |
-| `NEXT_PUBLIC_DOUBAN_PROXY_TYPE`     | 豆瓣数据代理类型     | `direct`    | `direct` / `cors-proxy-zwei` / `cmliussss-cdn-tencent` / `cmliussss-cdn-ali` / `custom` |
-| `NEXT_PUBLIC_DOUBAN_PROXY`          | 自定义豆瓣代理       | 空          | URL prefix                |
-| `NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE`| 豆瓣图片代理类型    | `direct`    | `direct` / `server` / `img3` / `cmliussss-cdn-tencent` / `cmliussss-cdn-ali` / `custom` |
-| `NEXT_PUBLIC_DOUBAN_IMAGE_PROXY`    | 自定义图片代理       | 空          | URL prefix                |
-| `NEXT_PUBLIC_DISABLE_YELLOW_FILTER` | 关闭色情内容过滤     | `false`     | `true` / `false`          |
-| `NEXT_PUBLIC_FLUID_SEARCH`          | 流式搜索输出         | `true`      | `true` / `false`          |
-| `DISABLE_HERO_TRAILER`              | 禁用首页预告片       | `false`     | `true` / `false`          |
-| `DISABLE_SSRF_PROTECTION`           | 禁用 SSRF 防护       | `false`     | `true` / `false`          |
+| 变量                                  | 说明             | 默认值   | 可选值                                                                                  |
+| ------------------------------------- | ---------------- | -------- | --------------------------------------------------------------------------------------- |
+| `SITE_BASE`                           | 站点 URL         | 空       | `https://example.com`                                                                   |
+| `NEXT_PUBLIC_SITE_NAME`               | 站点名称         | `MoonTV` | 任意字符串                                                                              |
+| `ANNOUNCEMENT`                        | 站点公告         | 默认公告 | 任意字符串                                                                              |
+| `NEXT_PUBLIC_SEARCH_MAX_PAGE`         | 搜索最大页数     | `5`      | `1-50`                                                                                  |
+| `NEXT_PUBLIC_DOUBAN_PROXY_TYPE`       | 豆瓣数据代理类型 | `direct` | `direct` / `cors-proxy-zwei` / `cmliussss-cdn-tencent` / `cmliussss-cdn-ali` / `custom` |
+| `NEXT_PUBLIC_DOUBAN_PROXY`            | 自定义豆瓣代理   | 空       | URL prefix                                                                              |
+| `NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE` | 豆瓣图片代理类型 | `direct` | `direct` / `server` / `img3` / `cmliussss-cdn-tencent` / `cmliussss-cdn-ali` / `custom` |
+| `NEXT_PUBLIC_DOUBAN_IMAGE_PROXY`      | 自定义图片代理   | 空       | URL prefix                                                                              |
+| `NEXT_PUBLIC_DISABLE_YELLOW_FILTER`   | 关闭色情内容过滤 | `false`  | `true` / `false`                                                                        |
+| `NEXT_PUBLIC_FLUID_SEARCH`            | 流式搜索输出     | `true`   | `true` / `false`                                                                        |
+| `DISABLE_HERO_TRAILER`                | 禁用首页预告片   | `false`  | `true` / `false`                                                                        |
+| `DISABLE_SSRF_PROTECTION`             | 禁用 SSRF 防护   | `false`  | `true` / `false`                                                                        |
 
 > 💡 **DISABLE_HERO_TRAILER**：首页 HeroBanner 预告片会消耗较多流量，且预告片 URL 带时间戳会定时过期。
+>
 > - **Vercel**：自动禁用（无需设置）
 > - **Docker/VPS（可挂载持久化卷）**：无需禁用，视频会缓存到本地（`VIDEO_CACHE_DIR`），URL 过期后自动刷新并重新缓存
 > - **ClawCloud、HF Space、EdgeOne Pages 等无持久化平台**：建议设置 `DISABLE_HERO_TRAILER=true`，因为无法缓存视频，URL 过期后每次刷新都要重新下载
 
 > ⚠️ **DISABLE_SSRF_PROTECTION**：SSRF（服务器端请求伪造）防护默认启用，阻止代理访问内网资源。
+>
 > - **公网部署（VPS/云服务器/Vercel）**：保持默认（不设置或 `false`），防止被利用访问内网服务
 > - **私有部署（NAS/家庭服务器/内网环境）**：如果视频源、图片或 CMS 接口使用内网地址（如 `192.168.x.x`、`10.x.x.x`），需设置 `DISABLE_SSRF_PROTECTION=true`
 > - **安全警告**：禁用 SSRF 防护会允许访问内网资源，仅适用于私有部署环境。详见 [安全文档](../security/SECURITY.md#-ssrf-防护说明)
@@ -109,6 +112,7 @@
 ### 豆瓣代理说明
 
 **DOUBAN_PROXY_TYPE 选项**：
+
 - `direct`：服务器直接请求豆瓣（可能被墙）
 - `cors-proxy-zwei`：通过 [Zwei](https://github.com/bestzwei) 提供的 CORS 代理
 - `cmliussss-cdn-tencent`：[CMLiussss](https://github.com/cmliu) 提供的腾讯云 CDN
@@ -116,6 +120,7 @@
 - `custom`：自定义代理（需设置 `DOUBAN_PROXY`）
 
 **DOUBAN_IMAGE_PROXY_TYPE 选项**：
+
 - `direct`：浏览器直接请求豆瓣图片域名
 - `server`：服务器代理请求
 - `img3`：豆瓣官方阿里云 CDN
@@ -138,6 +143,7 @@
 管理后台提供以下功能模块（部分功能仅站长可见）：
 
 #### 📁 配置文件（仅站长）
+
 - **配置订阅**：
   - 订阅 URL 设置
   - 自动拉取远程配置
@@ -147,6 +153,7 @@
   - 在线保存配置
 
 #### ⚙️ 站点配置
+
 - **基础设置**：
   - 站点名称
   - 站点公告
@@ -168,6 +175,7 @@
   - 功能启用开关
 
 #### 👥 用户配置
+
 - **用户注册设置**（仅站长）：
   - 用户注册开关
   - 非活跃用户自动清理
@@ -184,6 +192,7 @@
   - 删除用户
 
 #### 🎬 视频源配置
+
 - **视频源管理**：
   - 添加视频源（名称、API 地址）
   - 批量启用/禁用/删除
@@ -199,6 +208,7 @@
   - 侧抽屉测试结果展示
 
 #### 📺 直播源配置
+
 - **直播源管理**：
   - 添加直播源（名称、m3u/m3u8 地址）
   - 刷新直播源数据
@@ -206,12 +216,14 @@
   - 编辑/删除直播源
 
 #### 🏷️ 分类配置
+
 - **自定义分类**：
   - 添加/编辑自定义分类
   - 拖拽排序
   - 基于豆瓣搜索的分类
 
 #### 🔍 网盘搜索配置
+
 - **基础设置**：
   - 网盘搜索功能开关
   - PanSou 服务地址
@@ -223,27 +235,25 @@
   - 磁力链接、电驴链接
 
 #### 🤖 AI 推荐配置
+
 - OpenAI API 配置
 - 模型选择和参数设置
 - 推荐提示词管理
 
-#### 🎥 YouTube 配置
-- YouTube Data API v3 密钥
-- 搜索和缓存配置
-- 功能启用开关
-
 #### 🔐 TVBox 安全配置
+
 - IP 白名单管理
 - Token 认证配置
 - TVBox API 设置
 
 #### 🗄️ 缓存管理（仅站长）
+
 - 各类缓存查看和清理
-- YouTube、网盘、豆瓣、弹幕缓存统计
+- 网盘、豆瓣、弹幕缓存统计
 
 #### 📦 数据迁移（仅站长）
+
 - 导入/导出整站数据
 - 数据库迁移工具
 
 ---
-

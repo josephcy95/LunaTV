@@ -4,7 +4,7 @@
  * 触屏：
  * - 单击：显示 / 隐藏控制栏
  * - 双击中间：播放 / 暂停
- * - 双击左右侧：快退 / 快进 10 秒（连续点按可累加，同 YouTube）
+ * - 双击左右侧：快退 / 快进 10 秒（连续点按可累加）
  * - 长按：临时 2 倍速，松开恢复
  *
  * 鼠标：
@@ -49,7 +49,7 @@ interface LastTap {
 
 export function attachPlayerGestures(
   container: HTMLElement,
-  cb: PlayerGestureCallbacks
+  cb: PlayerGestureCallbacks,
 ): () => void {
   let pointerId: number | null = null;
   let startX = 0;
@@ -81,7 +81,9 @@ export function attachPlayerGestures(
     const art = cb.getArt();
     const playerEl: HTMLElement | undefined = art?.template?.$player;
     if (!playerEl) return null;
-    let layer = playerEl.querySelector<HTMLElement>(':scope > .art-gesture-layer');
+    let layer = playerEl.querySelector<HTMLElement>(
+      ':scope > .art-gesture-layer',
+    );
     if (!layer) {
       layer = document.createElement('div');
       layer.className = 'art-gesture-layer';
@@ -361,7 +363,9 @@ export function attachPlayerGestures(
   // iOS Safari 的长按「拷贝 / 存储图像」气泡由 -webkit-touch-callout 控制，
   // contextmenu 拦不到，这里在手势容器上一并关闭。
   container.style.userSelect = 'none';
-  (container.style as CSSStyleDeclaration & { webkitTouchCallout?: string }).webkitTouchCallout = 'none';
+  (
+    container.style as CSSStyleDeclaration & { webkitTouchCallout?: string }
+  ).webkitTouchCallout = 'none';
 
   container.addEventListener('pointerdown', handlePointerDown);
   container.addEventListener('pointermove', handlePointerMove);

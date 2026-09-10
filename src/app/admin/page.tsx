@@ -81,8 +81,6 @@ import {
   TVBoxTokenCell,
   TVBoxTokenModal,
 } from '@/components/TVBoxTokenManager';
-import YouTubeConfig from '@/components/YouTubeConfig';
-import BilibiliConfig from '@/components/BilibiliConfig';
 // import ShortDramaConfig from '@/components/ShortDramaConfig'; // 暂时隐藏短剧API配置
 import DownloadConfig from '@/components/OfflineDownloadConfig';
 import EmbyConfig from '@/components/EmbyConfig';
@@ -2612,43 +2610,6 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                             </div>
                           </div>
                         </label>
-
-                        {/* YouTube搜索功能 */}
-                        <label className='flex items-center space-x-3 p-3 border border-red-200 dark:border-red-700 rounded-lg bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 cursor-pointer transition-colors'>
-                          <input
-                            type='checkbox'
-                            checked={newUserGroup.enabledApis.includes(
-                              'youtube-search',
-                            )}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setNewUserGroup((prev) => ({
-                                  ...prev,
-                                  enabledApis: [
-                                    ...prev.enabledApis,
-                                    'youtube-search',
-                                  ],
-                                }));
-                              } else {
-                                setNewUserGroup((prev) => ({
-                                  ...prev,
-                                  enabledApis: prev.enabledApis.filter(
-                                    (api) => api !== 'youtube-search',
-                                  ),
-                                }));
-                              }
-                            }}
-                            className='rounded border-red-300 text-red-600 focus:ring-red-500 dark:border-red-600 dark:bg-red-700'
-                          />
-                          <div className='flex-1'>
-                            <div className='text-sm font-medium text-red-900 dark:text-red-100'>
-                              📺 YouTube搜索功能
-                            </div>
-                            <div className='text-xs text-red-700 dark:text-red-300'>
-                              搜索和推荐YouTube视频 (消耗YouTube API配额)
-                            </div>
-                          </div>
-                        </label>
                       </div>
                     </div>
 
@@ -2671,10 +2632,7 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                             config?.SourceConfig?.filter(
                               (source) => !source.disabled,
                             ).map((s) => s.key) || [];
-                          const specialFeatures = [
-                            'ai-recommend',
-                            'youtube-search',
-                          ];
+                          const specialFeatures = ['ai-recommend'];
                           setNewUserGroup((prev) => ({
                             ...prev,
                             enabledApis: [...allApis, ...specialFeatures],
@@ -2905,51 +2863,6 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                             </div>
                           </div>
                         </label>
-
-                        {/* YouTube搜索功能 */}
-                        <label className='flex items-center space-x-3 p-3 border border-red-200 dark:border-red-700 rounded-lg bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 cursor-pointer transition-colors'>
-                          <input
-                            type='checkbox'
-                            checked={editingUserGroup.enabledApis.includes(
-                              'youtube-search',
-                            )}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setEditingUserGroup((prev) =>
-                                  prev
-                                    ? {
-                                        ...prev,
-                                        enabledApis: [
-                                          ...prev.enabledApis,
-                                          'youtube-search',
-                                        ],
-                                      }
-                                    : null,
-                                );
-                              } else {
-                                setEditingUserGroup((prev) =>
-                                  prev
-                                    ? {
-                                        ...prev,
-                                        enabledApis: prev.enabledApis.filter(
-                                          (api) => api !== 'youtube-search',
-                                        ),
-                                      }
-                                    : null,
-                                );
-                              }
-                            }}
-                            className='rounded border-red-300 text-red-600 focus:ring-red-500 dark:border-red-600 dark:bg-red-700'
-                          />
-                          <div className='flex-1'>
-                            <div className='text-sm font-medium text-red-900 dark:text-red-100'>
-                              📺 YouTube搜索功能
-                            </div>
-                            <div className='text-xs text-red-700 dark:text-red-300'>
-                              搜索和推荐YouTube视频 (消耗YouTube API配额)
-                            </div>
-                          </div>
-                        </label>
                       </div>
                     </div>
 
@@ -2971,10 +2884,7 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                             config?.SourceConfig?.filter(
                               (source) => !source.disabled,
                             ).map((s) => s.key) || [];
-                          const specialFeatures = [
-                            'ai-recommend',
-                            'youtube-search',
-                          ];
+                          const specialFeatures = ['ai-recommend'];
                           setEditingUserGroup((prev) =>
                             prev
                               ? {
@@ -9358,7 +9268,6 @@ function AdminPageClient() {
     categoryConfig: false,
     netdiskConfig: false,
     aiRecommendConfig: false,
-    youtubeConfig: false,
     shortDramaConfig: false,
     embyConfig: false,
     downloadConfig: false,
@@ -9512,8 +9421,6 @@ function AdminPageClient() {
                     { id: 'admin-categoryConfig', label: '分类配置' },
                     { id: 'admin-netdiskConfig', label: '网盘搜索' },
                     { id: 'admin-aiRecommendConfig', label: 'AI推荐' },
-                    { id: 'admin-youtubeConfig', label: 'YouTube' },
-                    { id: 'admin-bilibiliConfig', label: 'Bilibili' },
                     { id: 'admin-embyConfig', label: 'Emby' },
                     { id: 'admin-downloadConfig', label: '下载配置' },
                     { id: 'admin-customAdFilter', label: '去广告' },
@@ -9749,38 +9656,6 @@ function AdminPageClient() {
                   config={config}
                   refreshConfig={fetchConfig}
                 />
-              </CollapsibleTab>
-
-              {/* YouTube配置标签 */}
-              <CollapsibleTab
-                id='admin-youtubeConfig'
-                title='YouTube配置'
-                icon={
-                  <Video
-                    size={20}
-                    className='text-gray-600 dark:text-gray-400'
-                  />
-                }
-                isExpanded={expandedTabs.youtubeConfig}
-                onToggle={() => toggleTab('youtubeConfig')}
-              >
-                <YouTubeConfig config={config} refreshConfig={fetchConfig} />
-              </CollapsibleTab>
-
-              {/* Bilibili配置标签 */}
-              <CollapsibleTab
-                id='admin-bilibiliConfig'
-                title='Bilibili配置'
-                icon={
-                  <Video
-                    size={20}
-                    className='text-pink-600 dark:text-pink-400'
-                  />
-                }
-                isExpanded={expandedTabs.bilibiliConfig}
-                onToggle={() => toggleTab('bilibiliConfig')}
-              >
-                <BilibiliConfig config={config} refreshConfig={fetchConfig} />
               </CollapsibleTab>
 
               {/* 短剧API配置标签 - 暂时隐藏，代码保留以后有用再显示
