@@ -696,8 +696,8 @@ function PlayPageClient() {
 
   const [danmuEnabled, setDanmuEnabled] = useState(
     () =>
-      typeof window !== 'undefined' &&
-      localStorage.getItem('enable_external_danmu') === 'true',
+      typeof window === 'undefined' ||
+      localStorage.getItem('enable_external_danmu') !== 'false',
   );
   const danmu = useDanmu({
     videoTitle,
@@ -748,7 +748,7 @@ function PlayPageClient() {
     if (typeof window === 'undefined') return;
     setDanmuSettings((current) => ({
       ...current,
-      enabled: localStorage.getItem('enable_external_danmu') === 'true',
+      enabled: localStorage.getItem('enable_external_danmu') !== 'false',
       fontSize: Number(
         localStorage.getItem('danmaku_fontSize') || current.fontSize,
       ),
@@ -778,12 +778,23 @@ function PlayPageClient() {
       plugin.hide();
       return;
     }
-    void loadExternalDanmu().then(({ data }) => {
-      if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku === plugin) {
-        void plugin.load(data);
-        plugin.show();
-      }
-    });
+    void loadExternalDanmu()
+      .then(({ data, count }) => {
+        console.info('[Danmu] API data received:', count);
+        if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku === plugin) {
+          return plugin.load(data).then(() => {
+            console.info('[Danmu] ArtPlayer loaded:', data.length);
+            plugin.show();
+          });
+        }
+        return undefined;
+      })
+      .catch((error) => {
+        console.error('[Danmu] Player load failed:', error);
+        artPlayerRef.current?.notice?.show?.(
+          '弹幕加载失败，请打开弹幕设置查看详情',
+        );
+      });
   }, [
     playerReady,
     danmuEnabled,
@@ -4460,23 +4471,6 @@ function PlayPageClient() {
           theme: '#e6b94a',
           lang: navigator.language.toLowerCase(),
           controls: [
-            {
-              name: 'danmu-toggle',
-              position: 'right',
-              index: 33,
-              html: '<span style="font-size:16px">弹</span>',
-              tooltip: danmuEnabled ? '关闭弹幕' : '开启弹幕',
-              click: function () {
-                const next = !danmuEnabled;
-                setDanmuEnabled(next);
-                localStorage.setItem('enable_external_danmu', String(next));
-                const plugin =
-                  artPlayerRef.current?.plugins?.artplayerPluginDanmuku;
-                if (next) void loadExternalDanmu();
-                else plugin?.hide();
-                setDanmuSettings((current) => ({ ...current, enabled: next }));
-              },
-            },
             {
               name: 'danmu-settings',
               position: 'right',
