@@ -9,7 +9,6 @@ export default async function Home() {
   const homePageConfig = config.HomePageConfig || {
     showHeroBanner: true,
     showContinueWatching: true,
-    showUpcomingReleases: true,
     showHotMovies: true,
     showHotTvShows: true,
     showNewAnime: true,

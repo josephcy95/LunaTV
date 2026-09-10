@@ -67,15 +67,12 @@ import {
 } from '@/lib/admin.types';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
-import AIRecommendConfig from '@/components/AIRecommendConfig';
 import CacheManager from '@/components/CacheManager';
 import DataMigration from '@/components/DataMigration';
 import ImportExportModal from '@/components/ImportExportModal';
 import SourceTestModule from '@/components/SourceTestModule';
-import { TelegramAuthConfig } from '@/components/TelegramAuthConfig';
 import { OIDCAuthConfig } from '@/components/OIDCAuthConfig';
 import TVBoxSecurityConfig from '@/components/TVBoxSecurityConfig';
-import TrustedNetworkConfig from '@/components/TrustedNetworkConfig';
 import DanmuApiConfig from '@/components/DanmuApiConfig';
 import {
   TVBoxTokenCell,
@@ -2573,44 +2570,7 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
                         特殊功能权限
                       </label>
-                      <div className='space-y-3'>
-                        {/* AI推荐功能 */}
-                        <label className='flex items-center space-x-3 p-3 border border-orange-200 dark:border-orange-700 rounded-lg bg-orange-50 dark:bg-orange-900/10 hover:bg-orange-100 dark:hover:bg-orange-900/20 cursor-pointer transition-colors'>
-                          <input
-                            type='checkbox'
-                            checked={newUserGroup.enabledApis.includes(
-                              'ai-recommend',
-                            )}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setNewUserGroup((prev) => ({
-                                  ...prev,
-                                  enabledApis: [
-                                    ...prev.enabledApis,
-                                    'ai-recommend',
-                                  ],
-                                }));
-                              } else {
-                                setNewUserGroup((prev) => ({
-                                  ...prev,
-                                  enabledApis: prev.enabledApis.filter(
-                                    (api) => api !== 'ai-recommend',
-                                  ),
-                                }));
-                              }
-                            }}
-                            className='rounded border-orange-300 text-orange-600 focus:ring-orange-500 dark:border-orange-600 dark:bg-orange-700'
-                          />
-                          <div className='flex-1'>
-                            <div className='text-sm font-medium text-orange-900 dark:text-orange-100'>
-                              🤖 AI推荐功能
-                            </div>
-                            <div className='text-xs text-orange-700 dark:text-orange-300'>
-                              智能推荐影视内容 (消耗OpenAI API费用)
-                            </div>
-                          </div>
-                        </label>
-                      </div>
+                      <div className='space-y-3'></div>
                     </div>
 
                     {/* 快速操作按钮 */}
@@ -2818,52 +2778,7 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
                         特殊功能权限
                       </label>
-                      <div className='space-y-3'>
-                        {/* AI推荐功能 */}
-                        <label className='flex items-center space-x-3 p-3 border border-orange-200 dark:border-orange-700 rounded-lg bg-orange-50 dark:bg-orange-900/10 hover:bg-orange-100 dark:hover:bg-orange-900/20 cursor-pointer transition-colors'>
-                          <input
-                            type='checkbox'
-                            checked={editingUserGroup.enabledApis.includes(
-                              'ai-recommend',
-                            )}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setEditingUserGroup((prev) =>
-                                  prev
-                                    ? {
-                                        ...prev,
-                                        enabledApis: [
-                                          ...prev.enabledApis,
-                                          'ai-recommend',
-                                        ],
-                                      }
-                                    : null,
-                                );
-                              } else {
-                                setEditingUserGroup((prev) =>
-                                  prev
-                                    ? {
-                                        ...prev,
-                                        enabledApis: prev.enabledApis.filter(
-                                          (api) => api !== 'ai-recommend',
-                                        ),
-                                      }
-                                    : null,
-                                );
-                              }
-                            }}
-                            className='rounded border-orange-300 text-orange-600 focus:ring-orange-500 dark:border-orange-600 dark:bg-orange-700'
-                          />
-                          <div className='flex-1'>
-                            <div className='text-sm font-medium text-orange-900 dark:text-orange-100'>
-                              🤖 AI推荐功能
-                            </div>
-                            <div className='text-xs text-orange-700 dark:text-orange-300'>
-                              智能推荐影视内容 (消耗OpenAI API费用)
-                            </div>
-                          </div>
-                        </label>
-                      </div>
+                      <div className='space-y-3'></div>
                     </div>
 
                     {/* 快速操作按钮 */}
@@ -9267,15 +9182,12 @@ function AdminPageClient() {
     homePageConfig: false,
     categoryConfig: false,
     netdiskConfig: false,
-    aiRecommendConfig: false,
     shortDramaConfig: false,
     embyConfig: false,
     downloadConfig: false,
     customAdFilter: false,
     tvboxSecurityConfig: false,
-    trustedNetworkConfig: false,
     danmuApiConfig: false,
-    telegramAuthConfig: false,
     oidcAuthConfig: false,
     inviteCodeManager: false,
     configFile: false,
@@ -9420,24 +9332,13 @@ function AdminPageClient() {
                     { id: 'admin-liveSource', label: '直播源' },
                     { id: 'admin-categoryConfig', label: '分类配置' },
                     { id: 'admin-netdiskConfig', label: '网盘搜索' },
-                    { id: 'admin-aiRecommendConfig', label: 'AI推荐' },
                     { id: 'admin-embyConfig', label: 'Emby' },
                     { id: 'admin-downloadConfig', label: '下载配置' },
                     { id: 'admin-customAdFilter', label: '去广告' },
                     { id: 'admin-tvboxSecurityConfig', label: 'TVBox安全' },
                     {
-                      id: 'admin-trustedNetworkConfig',
-                      label: '信任网络',
-                      ownerOnly: true,
-                    },
-                    {
                       id: 'admin-danmuApiConfig',
                       label: '弹幕API',
-                      ownerOnly: true,
-                    },
-                    {
-                      id: 'admin-telegramAuthConfig',
-                      label: 'Telegram',
                       ownerOnly: true,
                     },
                     {
@@ -9639,25 +9540,6 @@ function AdminPageClient() {
                 <NetDiskConfig config={config} refreshConfig={fetchConfig} />
               </CollapsibleTab>
 
-              {/* AI推荐配置标签 */}
-              <CollapsibleTab
-                id='admin-aiRecommendConfig'
-                title='AI推荐配置'
-                icon={
-                  <Brain
-                    size={20}
-                    className='text-gray-600 dark:text-gray-400'
-                  />
-                }
-                isExpanded={expandedTabs.aiRecommendConfig}
-                onToggle={() => toggleTab('aiRecommendConfig')}
-              >
-                <AIRecommendConfig
-                  config={config}
-                  refreshConfig={fetchConfig}
-                />
-              </CollapsibleTab>
-
               {/* 短剧API配置标签 - 暂时隐藏，代码保留以后有用再显示
             <CollapsibleTab
               title='短剧API配置'
@@ -9744,24 +9626,6 @@ function AdminPageClient() {
                 />
               </CollapsibleTab>
 
-              {/* 信任网络配置 - 仅站长可见 */}
-              {role === 'owner' && (
-                <CollapsibleTab
-                  id='admin-trustedNetworkConfig'
-                  title='信任网络配置'
-                  icon={
-                    <Shield
-                      size={20}
-                      className='text-green-600 dark:text-green-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.trustedNetworkConfig}
-                  onToggle={() => toggleTab('trustedNetworkConfig')}
-                >
-                  <TrustedNetworkConfig />
-                </CollapsibleTab>
-              )}
-
               {/* 弹幕API配置 - 仅站长可见 */}
               {role === 'owner' && (
                 <CollapsibleTab
@@ -9777,53 +9641,6 @@ function AdminPageClient() {
                   onToggle={() => toggleTab('danmuApiConfig')}
                 >
                   <DanmuApiConfig config={config} refreshConfig={fetchConfig} />
-                </CollapsibleTab>
-              )}
-
-              {/* Telegram 登录配置 - 仅站长可见 */}
-              {role === 'owner' && (
-                <CollapsibleTab
-                  id='admin-telegramAuthConfig'
-                  title='Telegram 登录配置'
-                  icon={
-                    <svg
-                      viewBox='0 0 24 24'
-                      width='20'
-                      height='20'
-                      className='text-blue-500 dark:text-blue-400'
-                      fill='currentColor'
-                    >
-                      <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.03-1.99 1.27-5.62 3.72-.53.36-1.01.54-1.44.53-.47-.01-1.38-.27-2.05-.49-.82-.27-1.47-.42-1.42-.88.03-.24.37-.48 1.02-.73 4-1.74 6.68-2.88 8.03-3.44 3.82-1.58 4.61-1.85 5.13-1.86.11 0 .37.03.54.17.14.11.18.26.2.37.02.08.03.29.01.45z' />
-                    </svg>
-                  }
-                  isExpanded={expandedTabs.telegramAuthConfig}
-                  onToggle={() => toggleTab('telegramAuthConfig')}
-                >
-                  <TelegramAuthConfig
-                    config={
-                      config?.TelegramAuthConfig || {
-                        enabled: false,
-                        botToken: '',
-                        botUsername: '',
-                        autoRegister: true,
-                        buttonSize: 'large',
-                        showAvatar: true,
-                        requestWriteAccess: false,
-                      }
-                    }
-                    onSave={async (newConfig) => {
-                      if (!config) return;
-                      await fetch('/api/admin/config', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          ...config,
-                          TelegramAuthConfig: newConfig,
-                        }),
-                      });
-                      await fetchConfig();
-                    }}
-                  />
                 </CollapsibleTab>
               )}
 

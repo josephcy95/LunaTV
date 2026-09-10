@@ -43,23 +43,8 @@ export interface Favorite {
   search_title: string; // 搜索时使用的标题
   origin?: 'vod' | 'live' | 'shortdrama';
   type?: string; // 内容类型（movie/tv/variety/shortdrama等）
-  releaseDate?: string; // 上映日期 (YYYY-MM-DD)，用于即将上映内容
   remarks?: string; // 备注信息（如"X天后上映"、"已上映"等）
-}
-
-// 提醒数据结构（与收藏类似，但 releaseDate 是必需的）
-export interface Reminder {
-  source_name: string;
-  total_episodes: number; // 总集数
-  title: string;
-  year: string;
-  cover: string;
-  save_time: number; // 记录保存时间（时间戳）
-  search_title: string; // 搜索时使用的标题
-  origin?: 'vod' | 'live' | 'shortdrama';
-  type?: string; // 内容类型（movie/tv/variety/shortdrama等）
-  releaseDate: string; // 上映日期 (YYYY-MM-DD)，提醒必须有上映日期
-  remarks?: string; // 备注信息（如"X天后上映"、"今日上映"等）
+  releaseDate?: string;
 }
 
 // 短剧分类数据结构
@@ -77,10 +62,10 @@ export interface ShortDramaItem {
   score: number;
   episode_count: number;
   description?: string;
-  author?: string;        // 演员/导演信息
-  backdrop?: string;      // 高清背景图
-  vote_average?: number;  // 用户评分 (0-10)
-  tmdb_id?: number;       // TMDB ID
+  author?: string; // 演员/导演信息
+  backdrop?: string; // 高清背景图
+  vote_average?: number; // 用户评分 (0-10)
+  tmdb_id?: number; // TMDB ID
 }
 
 // 短剧解析结果数据结构
@@ -126,14 +111,14 @@ export interface IStorage {
   setPlayRecord(
     userName: string,
     key: string,
-    record: PlayRecord
+    record: PlayRecord,
   ): Promise<void>;
   getAllPlayRecords(userName: string): Promise<{ [key: string]: PlayRecord }>;
   deletePlayRecord(userName: string, key: string): Promise<void>;
   // 🚀 批量写入播放记录（Upstash 优化，使用 mset 只算1条命令）
   setPlayRecordsBatch?(
     userName: string,
-    records: { [key: string]: PlayRecord }
+    records: { [key: string]: PlayRecord },
   ): Promise<void>;
 
   // 收藏相关
@@ -144,14 +129,10 @@ export interface IStorage {
   // 🚀 批量写入收藏（Upstash 优化，使用 mset 只算1条命令）
   setFavoritesBatch?(
     userName: string,
-    favorites: { [key: string]: Favorite }
+    favorites: { [key: string]: Favorite },
   ): Promise<void>;
 
   // 提醒相关
-  getReminder(userName: string, key: string): Promise<Reminder | null>;
-  setReminder(userName: string, key: string, reminder: Reminder): Promise<void>;
-  getAllReminders(userName: string): Promise<{ [key: string]: Reminder }>;
-  deleteReminder(userName: string, key: string): Promise<void>;
 
   // 用户相关
   registerUser(userName: string, password: string): Promise<void>;
@@ -192,14 +173,14 @@ export interface IStorage {
     userName: string,
     source: string,
     id: string,
-    watchTime: number
+    watchTime: number,
   ): Promise<void>;
 
   // 登入统计相关
   updateUserLoginStats(
     userName: string,
     loginTime: number,
-    isFirstLogin?: boolean
+    isFirstLogin?: boolean,
   ): Promise<void>;
 
   // 崩溃日志相关
@@ -265,8 +246,8 @@ export interface DoubanItem {
   first_aired?: string;
   plot_summary?: string;
   // 🎬 Netflix风格字段
-  backdrop?: string;      // 高清背景图（用于HeroBanner）
-  trailerUrl?: string;    // 预告片视频URL
+  backdrop?: string; // 高清背景图（用于HeroBanner）
+  trailerUrl?: string; // 预告片视频URL
 }
 
 export interface DoubanResult {
@@ -394,46 +375,4 @@ export interface ContentStat {
   averageWatchTime: number; // 平均观看时长
   lastPlayed: number; // 最后播放时间
   uniqueUsers: number; // 观看用户数
-}
-
-// 发布日历数据结构
-export interface ReleaseCalendarItem {
-  id: string; // 唯一标识符
-  title: string; // 影视名称
-  type: 'movie' | 'tv'; // 类型：电影或电视剧
-  director: string; // 导演
-  actors: string; // 主演
-  region: string; // 地区
-  genre: string; // 类型/标签
-  releaseDate: string; // 发布日期 (YYYY-MM-DD)
-  cover?: string; // 封面图片URL
-  description?: string; // 简介
-  episodes?: number; // 集数（电视剧）
-  source: 'manmankan'; // 数据来源
-  createdAt: number; // 记录创建时间戳
-  updatedAt: number; // 记录更新时间戳
-}
-
-// 发布日历API响应结构
-export interface ReleaseCalendarResult {
-  items: ReleaseCalendarItem[];
-  total: number;
-  hasMore: boolean;
-  filters: {
-    types: Array<{ value: 'movie' | 'tv'; label: string; count: number }>;
-    regions: Array<{ value: string; label: string; count: number }>;
-    genres: Array<{ value: string; label: string; count: number }>;
-  };
-}
-
-// 个性化发布推荐结构
-export interface PersonalizedReleaseRecommendation {
-  userId: string;
-  recommendations: Array<{
-    item: ReleaseCalendarItem;
-    reason: string; // 推荐理由
-    score: number; // 推荐分数 0-100
-    matchedPreferences: string[]; // 匹配的用户偏好
-  }>;
-  generatedAt: number; // 生成时间戳
 }

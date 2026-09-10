@@ -81,7 +81,6 @@ jobs:
           DISABLE_HERO_TRAILER: ${{ secrets.DISABLE_HERO_TRAILER }}
           DISABLE_SSRF_PROTECTION: ${{ secrets.DISABLE_SSRF_PROTECTION }}
           TVBOX_SUBSCRIBE_TOKEN: ${{ secrets.TVBOX_SUBSCRIBE_TOKEN }}
-          TRUSTED_NETWORK_IPS: ${{ secrets.TRUSTED_NETWORK_IPS }}
         run: |
           append_env() {
             local key="$1"
@@ -108,7 +107,7 @@ jobs:
             NEXT_PUBLIC_BANGUMI_IMAGE_PROXY_TYPE NEXT_PUBLIC_BANGUMI_IMAGE_PROXY
             NEXT_PUBLIC_CORSAPI_URL NEXT_PUBLIC_SUB_URL
             DISABLE_HERO_TRAILER DISABLE_SSRF_PROTECTION
-            TVBOX_SUBSCRIBE_TOKEN TRUSTED_NETWORK_IPS
+            TVBOX_SUBSCRIBE_TOKEN
           )
 
           for key in "${keys[@]}"; do
@@ -162,7 +161,7 @@ jobs:
             NEXT_PUBLIC_BANGUMI_IMAGE_PROXY_TYPE NEXT_PUBLIC_BANGUMI_IMAGE_PROXY
             NEXT_PUBLIC_CORSAPI_URL NEXT_PUBLIC_SUB_URL
             DISABLE_HERO_TRAILER DISABLE_SSRF_PROTECTION
-            TVBOX_SUBSCRIBE_TOKEN TRUSTED_NETWORK_IPS
+            TVBOX_SUBSCRIBE_TOKEN
           )
 
           for key in "${keys[@]}"; do

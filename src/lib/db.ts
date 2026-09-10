@@ -10,7 +10,6 @@ import {
   IStorage,
   PlayRecord,
   PlayStatsResult,
-  Reminder,
   UserPlayStat,
 } from './types';
 import { UpstashRedisStorage } from './upstash.db';
@@ -39,7 +38,7 @@ function createStorage(): IStorage {
       if (process.env.EDGEONE_PAGES === '1') {
         throw new Error(
           '[LunaTV] SQLite storage is not supported on EdgeOne Pages: the platform has no persistent filesystem. ' +
-          'Please set NEXT_PUBLIC_STORAGE_TYPE to "upstash", "redis", or "kvrocks".'
+            'Please set NEXT_PUBLIC_STORAGE_TYPE to "upstash", "redis", or "kvrocks".',
         );
       }
       return new SqliteStorage();
@@ -71,14 +70,20 @@ export class DbManager {
   constructor() {
     this.storage = getStorage();
     // 启动时自动触发数据迁移（异步，不阻塞构造）
-    if (this.storage && typeof (this.storage as any).migrateData === 'function') {
-      (this.storage as any).migrateData().then(async () => {
-        if (typeof (this.storage as any).migratePasswords === 'function') {
-          await (this.storage as any).migratePasswords();
-        }
-      }).catch((err: any) => {
-        console.error('数据迁移异常:', err);
-      });
+    if (
+      this.storage &&
+      typeof (this.storage as any).migrateData === 'function'
+    ) {
+      (this.storage as any)
+        .migrateData()
+        .then(async () => {
+          if (typeof (this.storage as any).migratePasswords === 'function') {
+            await (this.storage as any).migratePasswords();
+          }
+        })
+        .catch((err: any) => {
+          console.error('数据迁移异常:', err);
+        });
     }
   }
 
@@ -86,7 +91,7 @@ export class DbManager {
   async getPlayRecord(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<PlayRecord | null> {
     incrementDbQuery();
     const key = generateStorageKey(source, id);
@@ -97,7 +102,7 @@ export class DbManager {
     userName: string,
     source: string,
     id: string,
-    record: PlayRecord
+    record: PlayRecord,
   ): Promise<void> {
     incrementDbQuery();
     const key = generateStorageKey(source, id);
@@ -114,7 +119,7 @@ export class DbManager {
   async deletePlayRecord(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<void> {
     incrementDbQuery();
     const key = generateStorageKey(source, id);
@@ -124,7 +129,7 @@ export class DbManager {
   // 🚀 批量保存播放记录（Upstash 优化，使用 mset 只算1条命令）
   async savePlayRecordsBatch(
     userName: string,
-    records: Array<{ source: string; id: string; record: PlayRecord }>
+    records: Array<{ source: string; id: string; record: PlayRecord }>,
   ): Promise<void> {
     if (records.length === 0) return;
 
@@ -149,7 +154,7 @@ export class DbManager {
   async getFavorite(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<Favorite | null> {
     incrementDbQuery();
     const key = generateStorageKey(source, id);
@@ -160,7 +165,7 @@ export class DbManager {
     userName: string,
     source: string,
     id: string,
-    favorite: Favorite
+    favorite: Favorite,
   ): Promise<void> {
     incrementDbQuery();
     const key = generateStorageKey(source, id);
@@ -168,7 +173,7 @@ export class DbManager {
   }
 
   async getAllFavorites(
-    userName: string
+    userName: string,
   ): Promise<{ [key: string]: Favorite }> {
     incrementDbQuery();
     return this.storage.getAllFavorites(userName);
@@ -177,57 +182,17 @@ export class DbManager {
   async deleteFavorite(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<void> {
     incrementDbQuery();
     const key = generateStorageKey(source, id);
     await this.storage.deleteFavorite(userName, key);
   }
 
-  // ==================== 提醒相关方法 ====================
-
-  async getReminder(
-    userName: string,
-    source: string,
-    id: string
-  ): Promise<Reminder | null> {
-    incrementDbQuery();
-    const key = generateStorageKey(source, id);
-    return this.storage.getReminder(userName, key);
-  }
-
-  async saveReminder(
-    userName: string,
-    source: string,
-    id: string,
-    reminder: Reminder
-  ): Promise<void> {
-    incrementDbQuery();
-    const key = generateStorageKey(source, id);
-    await this.storage.setReminder(userName, key, reminder);
-  }
-
-  async getAllReminders(
-    userName: string
-  ): Promise<{ [key: string]: Reminder }> {
-    incrementDbQuery();
-    return this.storage.getAllReminders(userName);
-  }
-
-  async deleteReminder(
-    userName: string,
-    source: string,
-    id: string
-  ): Promise<void> {
-    incrementDbQuery();
-    const key = generateStorageKey(source, id);
-    await this.storage.deleteReminder(userName, key);
-  }
-
   // 🚀 批量保存收藏（Upstash 优化，使用 mset 只算1条命令）
   async saveFavoritesBatch(
     userName: string,
-    favorites: Array<{ source: string; id: string; favorite: Favorite }>
+    favorites: Array<{ source: string; id: string; favorite: Favorite }>,
   ): Promise<void> {
     if (favorites.length === 0) return;
 
@@ -251,7 +216,7 @@ export class DbManager {
   async isFavorited(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<boolean> {
     incrementDbQuery();
     const favorite = await this.getFavorite(userName, source, id);
@@ -292,11 +257,18 @@ export class DbManager {
     role: 'owner' | 'admin' | 'user' = 'user',
     tags?: string[],
     oidcSub?: string,
-    enabledApis?: string[]
+    enabledApis?: string[],
   ): Promise<void> {
     incrementDbQuery();
     if (typeof (this.storage as any).createUserV2 === 'function') {
-      await (this.storage as any).createUserV2(userName, password, role, tags, oidcSub, enabledApis);
+      await (this.storage as any).createUserV2(
+        userName,
+        password,
+        role,
+        tags,
+        oidcSub,
+        enabledApis,
+      );
     }
   }
 
@@ -400,7 +372,11 @@ export class DbManager {
     return null;
   }
 
-  async setCache(key: string, data: any, expireSeconds?: number): Promise<void> {
+  async setCache(
+    key: string,
+    data: any,
+    expireSeconds?: number,
+  ): Promise<void> {
     incrementDbQuery();
     if (typeof this.storage.setCache === 'function') {
       await this.storage.setCache(key, data, expireSeconds);
@@ -467,7 +443,7 @@ export class DbManager {
       lastPlayTime: 0,
       recentRecords: [],
       avgWatchTime: 0,
-      mostWatchedSource: ''
+      mostWatchedSource: '',
     };
   }
 
@@ -485,11 +461,16 @@ export class DbManager {
     _userName: string,
     _source: string,
     _id: string,
-    _watchTime: number
+    _watchTime: number,
   ): Promise<void> {
     incrementDbQuery();
     if (typeof (this.storage as any).updatePlayStatistics === 'function') {
-      await (this.storage as any).updatePlayStatistics(_userName, _source, _id, _watchTime);
+      await (this.storage as any).updatePlayStatistics(
+        _userName,
+        _source,
+        _id,
+        _watchTime,
+      );
     }
   }
 
@@ -497,11 +478,22 @@ export class DbManager {
     userName: string,
     loginTime: number,
     isFirstLogin?: boolean,
-    loginMeta?: { ip?: string; location?: string; device?: string; browser?: string; os?: string }
+    loginMeta?: {
+      ip?: string;
+      location?: string;
+      device?: string;
+      browser?: string;
+      os?: string;
+    },
   ): Promise<void> {
     incrementDbQuery();
     if (typeof (this.storage as any).updateUserLoginStats === 'function') {
-      await (this.storage as any).updateUserLoginStats(userName, loginTime, isFirstLogin, loginMeta);
+      await (this.storage as any).updateUserLoginStats(
+        userName,
+        loginTime,
+        isFirstLogin,
+        loginMeta,
+      );
     }
   }
 

@@ -13,7 +13,6 @@ import {
   useAdminStatsQuery,
   useUserStatsQuery,
   usePlayStatsWatchingUpdatesQuery,
-  useUpcomingReleasesQuery,
   useInvalidatePlayStats,
 } from '@/hooks/usePlayStatsQueries';
 
@@ -157,17 +156,12 @@ const PlayStatsPage: React.FC = () => {
   const { data: watchingUpdates = null } =
     usePlayStatsWatchingUpdatesQuery(!!authInfo);
 
-  // 🚀 TanStack Query - 即将上映
-  const { data: upcomingReleases = [], isLoading: upcomingLoading } =
-    useUpcomingReleasesQuery(!!authInfo);
-
   // 🚀 TanStack Query - 刷新所有数据
   const invalidatePlayStats = useInvalidatePlayStats();
 
   // 兼容旧代码的loading和error状态
   const loading = userLoading;
   const error = userError?.message || null;
-  const upcomingInitialized = !upcomingLoading;
 
   // 检查用户权限
   useEffect(() => {
@@ -225,8 +219,6 @@ const PlayStatsPage: React.FC = () => {
   };
 
   // 🚀 数据获取由 TanStack Query 自动管理
-
-  // 🚀 即将上映由 TanStack Query 自动管理
 
   // 处理刷新按钮点击
   const handleRefreshClick = async () => {
@@ -1203,161 +1195,6 @@ const PlayStatsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 即将上映卡片 */}
-              {(upcomingInitialized || upcomingLoading) && (
-                <div className='mb-8'>
-                  <div className='bg-linear-to-r from-purple-500 to-pink-500 rounded-lg p-6 text-white shadow-lg'>
-                    <div className='flex items-center justify-between mb-4'>
-                      <div>
-                        <h3 className='text-lg font-bold flex items-center gap-2'>
-                          📅 即将上映
-                        </h3>
-                        <p className='text-purple-100 text-sm mt-1'>
-                          {upcomingLoading
-                            ? '正在获取最新内容...'
-                            : `未来两周将有 ${upcomingReleases.length} 部新内容上线`}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => router.push('/release-calendar')}
-                        className='bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2'
-                      >
-                        <span>查看全部</span>
-                        <svg
-                          className='w-4 h-4'
-                          fill='none'
-                          stroke='currentColor'
-                          viewBox='0 0 24 24'
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth='2'
-                            d='M9 5l7 7-7 7'
-                          />
-                        </svg>
-                      </button>
-                    </div>
-
-                    {/* 横向滚动的发布项目 */}
-                    <div className='flex space-x-4 overflow-x-auto pb-2 scrollbar-hide'>
-                      {upcomingLoading ? (
-                        // Loading skeleton
-                        Array.from({ length: 3 }).map((_, index) => (
-                          <div
-                            key={`loading-${index}`}
-                            className='min-w-[140px] bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20 animate-pulse'
-                          >
-                            <div className='h-4 bg-white/20 rounded mb-2'></div>
-                            <div className='h-3 bg-white/20 rounded mb-2 w-3/4'></div>
-                            <div className='h-3 bg-white/20 rounded mb-2 w-1/2'></div>
-                            <div className='h-3 bg-white/20 rounded w-2/3'></div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className='flex flex-col gap-6'>
-                          {/* 电影部分 */}
-                          {upcomingReleases.filter(
-                            (item) => item.type === 'movie',
-                          ).length > 0 && (
-                            <div className='w-full'>
-                              <div className='text-sm font-medium text-purple-100 mb-3 flex items-center gap-2 border-b border-white/20 pb-2'>
-                                🎬 电影
-                              </div>
-                              <div className='flex space-x-3 overflow-x-auto pb-1 w-full'>
-                                {upcomingReleases
-                                  .filter((item) => item.type === 'movie')
-                                  .slice(0, 7)
-                                  .map((item) => (
-                                    <div
-                                      key={item.id}
-                                      className='min-w-[140px] bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20 shrink-0'
-                                    >
-                                      <div
-                                        className='text-sm font-medium mb-1 line-clamp-2'
-                                        title={item.title}
-                                      >
-                                        {item.title}
-                                      </div>
-                                      <div className='text-xs text-purple-200 mb-1'>
-                                        {new Date(
-                                          item.releaseDate,
-                                        ).toLocaleDateString('zh-CN', {
-                                          month: 'short',
-                                          day: 'numeric',
-                                        })}
-                                      </div>
-                                      <div className='text-xs text-purple-200 truncate'>
-                                        {item.region}
-                                      </div>
-                                    </div>
-                                  ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 电视剧部分 */}
-                          {upcomingReleases.filter((item) => item.type === 'tv')
-                            .length > 0 && (
-                            <div className='w-full'>
-                              <div className='text-sm font-medium text-purple-100 mb-3 flex items-center gap-2 border-b border-white/20 pb-2'>
-                                📺 电视剧
-                              </div>
-                              <div className='flex space-x-3 overflow-x-auto pb-1 w-full'>
-                                {upcomingReleases
-                                  .filter((item) => item.type === 'tv')
-                                  .slice(0, 7)
-                                  .map((item) => (
-                                    <div
-                                      key={item.id}
-                                      className='min-w-[140px] bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20 shrink-0'
-                                    >
-                                      <div
-                                        className='text-sm font-medium mb-1 line-clamp-2'
-                                        title={item.title}
-                                      >
-                                        {item.title}
-                                      </div>
-                                      <div className='text-xs text-purple-200 mb-1'>
-                                        {new Date(
-                                          item.releaseDate,
-                                        ).toLocaleDateString('zh-CN', {
-                                          month: 'short',
-                                          day: 'numeric',
-                                        })}
-                                      </div>
-                                      <div className='text-xs text-purple-200 truncate'>
-                                        {item.region}
-                                      </div>
-                                    </div>
-                                  ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 空状态提示 */}
-                          {upcomingReleases.length === 0 &&
-                            !upcomingLoading &&
-                            upcomingInitialized && (
-                              <div className='text-center py-6'>
-                                <div className='text-purple-100 text-sm mb-2'>
-                                  📅
-                                </div>
-                                <div className='text-purple-100 text-sm'>
-                                  暂无即将上映的内容
-                                </div>
-                                <div className='text-purple-200 text-xs mt-1'>
-                                  数据获取可能失败，请尝试刷新
-                                </div>
-                              </div>
-                            )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* 有新集数的剧集 */}
               {watchingUpdates &&
                 watchingUpdates.updatedSeries.filter(
@@ -1910,159 +1747,6 @@ const PlayStatsPage: React.FC = () => {
               )}
             </div>
           </div>
-
-          {/* 即将上映卡片 */}
-          {(upcomingInitialized || upcomingLoading) && (
-            <div className='mb-8'>
-              <div className='bg-linear-to-r from-purple-500 to-pink-500 rounded-lg p-6 text-white shadow-lg'>
-                <div className='flex items-center justify-between mb-4'>
-                  <div>
-                    <h3 className='text-lg font-bold flex items-center gap-2'>
-                      📅 即将上映
-                    </h3>
-                    <p className='text-purple-100 text-sm mt-1'>
-                      {upcomingLoading
-                        ? '正在获取最新内容...'
-                        : `未来两周将有 ${upcomingReleases.length} 部新内容上线`}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => router.push('/release-calendar')}
-                    className='bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2'
-                  >
-                    <span>查看全部</span>
-                    <svg
-                      className='w-4 h-4'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth='2'
-                        d='M9 5l7 7-7 7'
-                      />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* 垂直分组显示：电影一行，电视剧一行 */}
-                <div>
-                  {upcomingLoading ? (
-                    // Loading skeleton
-                    Array.from({ length: 3 }).map((_, index) => (
-                      <div
-                        key={`loading-${index}`}
-                        className='min-w-[140px] bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20 animate-pulse'
-                      >
-                        <div className='h-4 bg-white/20 rounded mb-2'></div>
-                        <div className='h-3 bg-white/20 rounded mb-2 w-1/2'></div>
-                        <div className='h-3 bg-white/20 rounded w-2/3'></div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className='flex flex-col gap-6'>
-                      {/* 电影部分 */}
-                      {upcomingReleases.filter((item) => item.type === 'movie')
-                        .length > 0 && (
-                        <div className='w-full'>
-                          <div className='text-sm font-medium text-purple-100 mb-3 flex items-center gap-2 border-b border-white/20 pb-2'>
-                            🎬 电影
-                          </div>
-                          <div className='flex space-x-3 overflow-x-auto pb-1 w-full'>
-                            {upcomingReleases
-                              .filter((item) => item.type === 'movie')
-                              .slice(0, 7)
-                              .map((item) => (
-                                <div
-                                  key={item.id}
-                                  className='min-w-[140px] bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20 shrink-0'
-                                >
-                                  <div
-                                    className='text-sm font-medium mb-1 line-clamp-2'
-                                    title={item.title}
-                                  >
-                                    {item.title}
-                                  </div>
-                                  <div className='text-xs text-purple-200 mb-1'>
-                                    {new Date(
-                                      item.releaseDate,
-                                    ).toLocaleDateString('zh-CN', {
-                                      month: 'short',
-                                      day: 'numeric',
-                                    })}
-                                  </div>
-                                  <div className='text-xs text-purple-200 truncate'>
-                                    {item.region}
-                                  </div>
-                                </div>
-                              ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 电视剧部分 */}
-                      {upcomingReleases.filter((item) => item.type === 'tv')
-                        .length > 0 && (
-                        <div className='w-full'>
-                          <div className='text-sm font-medium text-purple-100 mb-3 flex items-center gap-2 border-b border-white/20 pb-2'>
-                            📺 电视剧
-                          </div>
-                          <div className='flex space-x-3 overflow-x-auto pb-1 w-full'>
-                            {upcomingReleases
-                              .filter((item) => item.type === 'tv')
-                              .slice(0, 7)
-                              .map((item) => (
-                                <div
-                                  key={item.id}
-                                  className='min-w-[140px] bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20 shrink-0'
-                                >
-                                  <div
-                                    className='text-sm font-medium mb-1 line-clamp-2'
-                                    title={item.title}
-                                  >
-                                    {item.title}
-                                  </div>
-                                  <div className='text-xs text-purple-200 mb-1'>
-                                    {new Date(
-                                      item.releaseDate,
-                                    ).toLocaleDateString('zh-CN', {
-                                      month: 'short',
-                                      day: 'numeric',
-                                    })}
-                                  </div>
-                                  <div className='text-xs text-purple-200 truncate'>
-                                    {item.region}
-                                  </div>
-                                </div>
-                              ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 空状态提示 */}
-                      {upcomingReleases.length === 0 &&
-                        !upcomingLoading &&
-                        upcomingInitialized && (
-                          <div className='text-center py-6'>
-                            <div className='text-purple-100 text-sm mb-2'>
-                              📅
-                            </div>
-                            <div className='text-purple-100 text-sm'>
-                              暂无即将上映的内容
-                            </div>
-                            <div className='text-purple-200 text-xs mt-1'>
-                              数据获取可能失败，请尝试刷新
-                            </div>
-                          </div>
-                        )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* 有新集数的剧集 */}
           {watchingUpdates &&

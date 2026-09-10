@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   if (storageType === 'localstorage') {
     return NextResponse.json(
       { error: '不支持本地存储进行管理员配置' },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -28,7 +28,6 @@ export async function POST(request: NextRequest) {
     const {
       showHeroBanner,
       showContinueWatching,
-      showUpcomingReleases,
       showHotMovies,
       showHotTvShows,
       showNewAnime,
@@ -41,7 +40,6 @@ export async function POST(request: NextRequest) {
     config.HomePageConfig = {
       showHeroBanner: showHeroBanner ?? true,
       showContinueWatching: showContinueWatching ?? true,
-      showUpcomingReleases: showUpcomingReleases ?? true,
       showHotMovies: showHotMovies ?? true,
       showHotTvShows: showHotTvShows ?? true,
       showNewAnime: showNewAnime ?? true,
@@ -58,10 +56,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('保存首页配置失败:', error);
-    return NextResponse.json(
-      { error: '保存失败，请重试' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '保存失败，请重试' }, { status: 500 });
   }
 }
 
@@ -70,7 +65,7 @@ export async function GET(request: NextRequest) {
   if (storageType === 'localstorage') {
     return NextResponse.json(
       { error: '不支持本地存储进行管理员配置' },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -88,7 +83,6 @@ export async function GET(request: NextRequest) {
       config: config.HomePageConfig || {
         showHeroBanner: true,
         showContinueWatching: true,
-        showUpcomingReleases: true,
         showHotMovies: true,
         showHotTvShows: true,
         showNewAnime: true,
@@ -98,9 +92,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('获取首页配置失败:', error);
-    return NextResponse.json(
-      { error: '获取配置失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '获取配置失败' }, { status: 500 });
   }
 }

@@ -13,7 +13,6 @@ import {
   Bell,
   BellRing,
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, {
@@ -44,13 +43,6 @@ import { processImageUrl, isSeriesCompleted } from '@/lib/utils';
 
 import { ImagePlaceholder } from '@/components/ImagePlaceholder';
 import MobileActionSheet from '@/components/MobileActionSheet';
-
-const AIRecommendModal = dynamic(
-  () => import('@/components/AIRecommendModal'),
-  {
-    loading: () => null,
-  },
-);
 
 export interface VideoCardProps {
   id?: string;
@@ -236,7 +228,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     }, [remarks, hasReleaseTag, isAggregate, dynamicSourceNames]);
 
     // 🔥 判断是否应该显示提醒按钮（即将上映或新上映）
-    const shouldShowBell = isUpcoming || isNewRelease;
+    const shouldShowBell = false;
 
     // 🚀 TanStack Query - 获取收藏/提醒状态
     const { data: favoritedStatus } = useIsFavoritedQuery(
@@ -285,17 +277,8 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         },
       );
 
-      const unsubscribeReminders = subscribeToDataUpdates(
-        'remindersUpdated',
-        (newReminders: Record<string, any>) => {
-          const isNowReminded = !!newReminders[storageKey];
-          setReminded(isNowReminded);
-        },
-      );
-
       return () => {
         unsubscribeFavorites();
-        unsubscribeReminders();
       };
     }, [from, actualSource, actualId, isUpcoming, remarks]);
 
@@ -324,7 +307,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         const isNewRelease = Boolean(
           remarks?.includes('已上映') || remarks?.includes('今日上映'),
         );
-        const shouldShowBell = isUpcoming || isNewRelease;
+        const shouldShowBell = false;
 
         if (shouldShowBell) {
           // ========== 即将上映或新上映 → 操作提醒 ==========
@@ -781,7 +764,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         const isNewRelease = Boolean(
           remarks?.includes('已上映') || remarks?.includes('今日上映'),
         );
-        const shouldShowBell = isUpcoming || isNewRelease;
+        const shouldShowBell = false;
 
         // 🚀 使用乐观状态显示，提供即时UI反馈
         const currentState = shouldShowBell
@@ -934,18 +917,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       }
 
       // AI问片功能
-      if (aiEnabled && actualTitle) {
-        actions.push({
-          id: 'ai-chat',
-          label: 'AI问片',
-          icon: <Sparkles size={20} />,
-          onClick: () => {
-            setShowMobileActions(false); // 关闭菜单
-            setShowAIChat(true);
-          },
-          color: 'default' as const,
-        });
-      }
 
       return actions;
     }, [
@@ -1213,7 +1184,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                           remarks?.includes('已上映') ||
                           remarks?.includes('今日上映'),
                         );
-                        const shouldShowBell = isUpcoming || isNewRelease;
+                        const shouldShowBell = false;
 
                         if (shouldShowBell) {
                           // 即将上映或新上映：显示铃铛图标（使用 reminded 状态）
@@ -1311,7 +1282,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                     remarks?.includes('已上映') ||
                     remarks?.includes('今日上映'),
                   );
-                  const shouldShowBell = isUpcoming || isNewRelease;
+                  const shouldShowBell = false;
 
                   return shouldShowBell ? (
                     <BellRing
@@ -1930,22 +1901,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           videoYear={actualYear}
           isBangumi={isBangumi}
         />
-
-        {/* AI问片弹窗 */}
-        {aiEnabled && showAIChat && (
-          <AIRecommendModal
-            isOpen={showAIChat}
-            onClose={() => setShowAIChat(false)}
-            context={{
-              title: actualTitle,
-              year: actualYear,
-              douban_id: actualDoubanId,
-              type: actualSearchType as 'movie' | 'tv',
-              currentEpisode,
-            }}
-            welcomeMessage={`想了解《${actualTitle}》的更多信息吗？我可以帮你查询剧情、演员、评价等。`}
-          />
-        )}
       </>
     );
   },

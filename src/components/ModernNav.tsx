@@ -2,7 +2,21 @@
 
 'use client';
 
-import { Cat, Clover, Film, FolderOpen, Globe, Home, MoreHorizontal, PlaySquare, Radio, Search, Sparkles, Star, Tv, X } from 'lucide-react';
+import {
+  Cat,
+  Clover,
+  Film,
+  FolderOpen,
+  Globe,
+  Home,
+  MoreHorizontal,
+  PlaySquare,
+  Radio,
+  Search,
+  Star,
+  Tv,
+  X,
+} from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useQuery, queryOptions } from '@tanstack/react-query';
@@ -19,36 +33,33 @@ interface NavItem {
   href: string;
 }
 
-interface ModernNavProps {
-  showAIButton?: boolean;
-  onAIButtonClick?: () => void;
-}
-
 // Query Options 工厂函数
-const userEmbyConfigOptions = () => queryOptions({
-  queryKey: ['user', 'emby-config'],
-  queryFn: async () => {
-    const res = await fetch('/api/user/emby-config');
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.config;
-  },
-  staleTime: 5 * 60 * 1000,
-  retry: false,
-});
+const userEmbyConfigOptions = () =>
+  queryOptions({
+    queryKey: ['user', 'emby-config'],
+    queryFn: async () => {
+      const res = await fetch('/api/user/emby-config');
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.config;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
 
-const publicSourcesOptions = () => queryOptions({
-  queryKey: ['emby', 'public-sources'],
-  queryFn: async () => {
-    const res = await fetch('/api/emby/public-sources');
-    if (!res.ok) return { sources: [] };
-    return res.json();
-  },
-  staleTime: 5 * 60 * 1000,
-  retry: false,
-});
+const publicSourcesOptions = () =>
+  queryOptions({
+    queryKey: ['emby', 'public-sources'],
+    queryFn: async () => {
+      const res = await fetch('/api/emby/public-sources');
+      if (!res.ok) return { sources: [] };
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
 
-export default function ModernNav({ showAIButton = false, onAIButtonClick }: ModernNavProps = {}) {
+export default function ModernNav() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -78,29 +89,38 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
     const newItems = [...menuItems];
 
     // 直播 - 根据 ENABLE_WEB_LIVE 动态控制
-    const hasLiveInMenu = newItems.some(item => item.href === '/live');
+    const hasLiveInMenu = newItems.some((item) => item.href === '/live');
     if (runtimeConfig?.ENABLE_WEB_LIVE && !hasLiveInMenu) {
       newItems.push({ icon: Radio, label: '直播', href: '/live' });
     } else if (!runtimeConfig?.ENABLE_WEB_LIVE && hasLiveInMenu) {
-      const index = newItems.findIndex(item => item.href === '/live');
+      const index = newItems.findIndex((item) => item.href === '/live');
       if (index > -1) newItems.splice(index, 1);
     }
 
-    if (runtimeConfig?.CUSTOM_CATEGORIES?.length > 0 && !newItems.some(item => item.href === '/douban?type=custom')) {
-      newItems.push({ icon: Star, label: '自定义', href: '/douban?type=custom' });
+    if (
+      runtimeConfig?.CUSTOM_CATEGORIES?.length > 0 &&
+      !newItems.some((item) => item.href === '/douban?type=custom')
+    ) {
+      newItems.push({
+        icon: Star,
+        label: '自定义',
+        href: '/douban?type=custom',
+      });
     }
 
     // Emby - 用户有私人源 OR 管理员有公共源，都显示导航
-    const hasUserEmby = userEmbyConfig?.sources?.some((s: any) => s.enabled && s.ServerURL);
+    const hasUserEmby = userEmbyConfig?.sources?.some(
+      (s: any) => s.enabled && s.ServerURL,
+    );
     const hasPublicEmby = (publicSourcesData?.sources?.length ?? 0) > 0;
     const hasEmbyConfig = hasUserEmby || hasPublicEmby;
-    const hasEmbyInMenu = newItems.some(item => item.href === '/emby');
+    const hasEmbyInMenu = newItems.some((item) => item.href === '/emby');
 
     if (hasEmbyConfig && !hasEmbyInMenu) {
       newItems.push({ icon: FolderOpen, label: 'Emby', href: '/emby' });
     } else if (!hasEmbyConfig && hasEmbyInMenu) {
       // 如果用户删除了所有 Emby 配置，移除导航项
-      const index = newItems.findIndex(item => item.href === '/emby');
+      const index = newItems.findIndex((item) => item.href === '/emby');
       if (index > -1) {
         newItems.splice(index, 1);
       }
@@ -173,16 +193,6 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
 
             {/* 右侧操作区 */}
             <div className='flex items-center gap-1.5 shrink-0'>
-              {showAIButton && onAIButtonClick && (
-                <button
-                  onClick={onAIButtonClick}
-                  className='group flex items-center gap-1.5 rounded-full border border-purple-400/35 px-3 py-1.5 text-xs font-semibold text-purple-600 transition-all duration-200 hover:border-purple-400/70 hover:bg-purple-500/10 dark:text-purple-300'
-                  aria-label='AI 推荐'
-                >
-                  <Sparkles className='h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-12' />
-                  <span className='hidden lg:inline'>AI 推荐</span>
-                </button>
-              )}
               <ThemeToggle />
               <UserMenu />
             </div>
@@ -205,7 +215,9 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
             <div className='flex items-center justify-between px-6 pt-5 pb-3'>
               <div>
                 <div className='eyebrow mb-0.5'>Collections</div>
-                <h3 className='text-lg font-extrabold tracking-tight text-gray-900 dark:text-gray-100'>全部分类</h3>
+                <h3 className='text-lg font-extrabold tracking-tight text-gray-900 dark:text-gray-100'>
+                  全部分类
+                </h3>
               </div>
               <button
                 onClick={() => setShowMoreMenu(false)}
@@ -313,7 +325,9 @@ export default function ModernNav({ showAIButton = false, onAIButtonClick }: Mod
             aria-label='更多分类'
           >
             <MoreHorizontal className='mb-0.5 h-5.5 w-5.5 text-gray-500 dark:text-gray-400' />
-            <span className='text-[10px] font-medium leading-tight text-gray-500 dark:text-gray-400'>更多</span>
+            <span className='text-[10px] font-medium leading-tight text-gray-500 dark:text-gray-400'>
+              更多
+            </span>
           </button>
         </div>
       </nav>

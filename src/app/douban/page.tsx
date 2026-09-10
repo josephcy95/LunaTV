@@ -8,7 +8,6 @@ import { Suspense } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery, infiniteQueryOptions } from '@tanstack/react-query';
 
-import { isAIRecommendFeatureDisabled } from '@/lib/ai-recommend.client';
 import { GetBangumiCalendarData } from '@/lib/bangumi.client';
 import {
   getDoubanCategories,
@@ -187,8 +186,6 @@ function DoubanPageClient() {
   });
 
   const [selectedWeekday, setSelectedWeekday] = useState<string>('');
-  const [aiEnabled, setAiEnabled] = useState(false);
-  const [aiCheckComplete, setAiCheckComplete] = useState(false);
 
   // 使用 useInfiniteQuery
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
@@ -245,13 +242,6 @@ function DoubanPageClient() {
     if (runtimeConfig?.CUSTOM_CATEGORIES?.length > 0) {
       setCustomCategories(runtimeConfig.CUSTOM_CATEGORIES);
     }
-  }, []);
-
-  // 页面级别的AI权限检测
-  useEffect(() => {
-    const disabled = isAIRecommendFeatureDisabled();
-    setAiEnabled(!disabled);
-    setAiCheckComplete(true);
   }, []);
 
   // 初始化时标记选择器为准备好状态
@@ -541,8 +531,6 @@ function DoubanPageClient() {
                         isBangumi={
                           type === 'anime' && primarySelection === '每日放送'
                         }
-                        aiEnabled={aiEnabled}
-                        aiCheckComplete={aiCheckComplete}
                       />
                     </div>
                   );

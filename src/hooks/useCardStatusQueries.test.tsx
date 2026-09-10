@@ -2,11 +2,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 
 import { useIsFavoritedQuery } from './useFavoritesQuery';
-import { useIsRemindedQuery } from './useRemindersQuery';
 
 const cases = [
   { collection: 'favorites', useStatus: useIsFavoritedQuery },
-  { collection: 'reminders', useStatus: useIsRemindedQuery },
+  {
+    collection: 'reminders',
+    useStatus: useIsFavoritedQuery /* removed remind */,
+  },
 ];
 
 // Real QueryClient/observers; only the HTTP boundary is mocked.

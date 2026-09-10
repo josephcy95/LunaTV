@@ -2,20 +2,12 @@
 
 'use client';
 
-import {
-  AlertCircle,
-  CheckCircle,
-  User,
-  Lock,
-  UserPlus,
-  Send,
-} from 'lucide-react';
+import { AlertCircle, User, Lock, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
 import { CURRENT_VERSION } from '@/lib/version';
-import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 
 import BrandMark from '@/components/BrandMark';
 import { useSite } from '@/components/SiteProvider';
@@ -28,51 +20,9 @@ import {
 } from '@/components/OIDCProviderLogos';
 
 function VersionDisplay() {
-  const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null);
-  const [isChecking, setIsChecking] = useState(true);
-
-  useEffect(() => {
-    const checkUpdate = async () => {
-      try {
-        const status = await checkForUpdates();
-        setUpdateStatus(status);
-      } catch (_) {
-        // do nothing
-      } finally {
-        setIsChecking(false);
-      }
-    };
-
-    checkUpdate();
-  }, []);
-
   return (
     <div className='absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400'>
       <span className='font-mono'>v{CURRENT_VERSION}</span>
-      {!isChecking && updateStatus !== UpdateStatus.FETCH_FAILED && (
-        <div
-          className={`flex items-center gap-1.5 ${
-            updateStatus === UpdateStatus.HAS_UPDATE
-              ? 'text-yellow-600 dark:text-yellow-400'
-              : updateStatus === UpdateStatus.NO_UPDATE
-                ? 'text-green-600 dark:text-green-400'
-                : ''
-          }`}
-        >
-          {updateStatus === UpdateStatus.HAS_UPDATE && (
-            <>
-              <AlertCircle className='w-3.5 h-3.5' />
-              <span className='font-semibold text-xs'>有新版本</span>
-            </>
-          )}
-          {updateStatus === UpdateStatus.NO_UPDATE && (
-            <>
-              <CheckCircle className='w-3.5 h-3.5' />
-              <span className='font-semibold text-xs'>已是最新</span>
-            </>
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -86,12 +36,6 @@ function LoginPageClient() {
   const [loading, setLoading] = useState(false);
   const shouldAskUsername =
     process.env.NEXT_PUBLIC_STORAGE_TYPE !== 'localstorage';
-
-  // Telegram Magic Link 状态
-  const [telegramLoading, setTelegramLoading] = useState(false);
-  const [telegramDeepLink, setTelegramDeepLink] = useState('');
-  const [telegramEnabled, setTelegramEnabled] = useState(false);
-  const [telegramUsername, setTelegramUsername] = useState('');
 
   // OIDC 登录状态
   const [oidcProviders, setOidcProviders] = useState<
@@ -108,16 +52,12 @@ function LoginPageClient() {
 
   const { siteName } = useSite();
 
-  // 获取 Telegram Magic Link 配置
+  // 获取 OIDC 配置
   useEffect(() => {
-    const fetchTelegramConfig = async () => {
+    const fetchServerConfig = async () => {
       try {
         const response = await fetch('/api/server-config');
         const data = await response.json();
-        if (data.TelegramAuthConfig?.enabled) {
-          setTelegramEnabled(true);
-        }
-
         if (data.OIDCProviders && data.OIDCProviders.length > 0) {
           setOidcProviders(data.OIDCProviders);
           setOidcEnabled(true);
@@ -131,7 +71,7 @@ function LoginPageClient() {
       }
     };
 
-    fetchTelegramConfig();
+    fetchServerConfig();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -176,38 +116,6 @@ function LoginPageClient() {
       setError('网络错误，请稍后重试');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleTelegramLogin = async () => {
-    setError(null);
-
-    if (!telegramUsername || telegramUsername.trim() === '') {
-      setError('请输入您的 Telegram 用户名');
-      return;
-    }
-
-    setTelegramLoading(true);
-
-    try {
-      const res = await fetch('/api/telegram/send-magic-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegramUsername: telegramUsername.trim() }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.deepLink) {
-        setTelegramDeepLink(data.deepLink);
-        window.open(data.deepLink, '_blank');
-      } else {
-        setError(data.error || '生成链接失败，请重试');
-      }
-    } catch (error) {
-      setError('网络错误，请稍后重试');
-    } finally {
-      setTelegramLoading(false);
     }
   };
 
@@ -334,65 +242,6 @@ function LoginPageClient() {
             </div>
           )}
         </form>
-
-        {/* Telegram Magic Link 登录 */}
-        {telegramEnabled && (
-          <div className='mt-4 pt-4 border-t border-gray-200 dark:border-gray-700'>
-            <p className='text-center text-gray-500 dark:text-gray-400 text-sm mb-3'>
-              或使用 Telegram 登录
-            </p>
-
-            <div className='mb-3'>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
-                Telegram 用户名
-              </label>
-              <div className='relative'>
-                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                  <Send className='h-4 w-4 text-gray-400' />
-                </div>
-                <input
-                  type='text'
-                  value={telegramUsername}
-                  onChange={(e) => setTelegramUsername(e.target.value)}
-                  placeholder='输入您的 Telegram 用户名'
-                  className='block w-full rounded-xl border border-gray-900/12 bg-white/70 py-2.5 pl-9 pr-3 text-sm text-gray-900 backdrop-blur-sm transition-colors placeholder:text-gray-400 focus:border-blue-400/70 focus:outline-none focus:ring-2 focus:ring-blue-400/40 dark:border-white/10 dark:bg-gray-900/55 dark:text-white'
-                  disabled={telegramLoading}
-                />
-              </div>
-              <p className='mt-1.5 text-xs text-gray-500 dark:text-gray-400'>
-                输入您的 Telegram 用户名（不含 @）
-              </p>
-            </div>
-
-            <button
-              onClick={handleTelegramLogin}
-              disabled={telegramLoading || !telegramUsername.trim()}
-              className='flex w-full items-center justify-center gap-2 rounded-xl border border-blue-400/40 py-2.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-300'
-            >
-              <Send className='h-4 w-4' />
-              {telegramLoading ? '正在打开 Telegram...' : '通过 Telegram 登录'}
-            </button>
-
-            {telegramDeepLink && (
-              <div className='mt-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50'>
-                <p className='text-sm text-blue-800 dark:text-blue-200 mb-1'>
-                  已在新标签页打开 Telegram
-                </p>
-                <p className='text-xs text-blue-600 dark:text-blue-300'>
-                  如果没有自动打开，请点击{' '}
-                  <a
-                    href={telegramDeepLink}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='underline font-semibold'
-                  >
-                    这里
-                  </a>
-                </p>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* OIDC 登录 */}
         {oidcEnabled && shouldAskUsername && (

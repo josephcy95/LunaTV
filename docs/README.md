@@ -13,7 +13,6 @@
 
 ### ✨ 功能特性
 
-- [AI 功能](features/AI_FEATURES.md) - AI 智能推荐、聊天助手详细说明
 - [下载功能](features/DOWNLOAD_FEATURES.md) - 离线下载、资源管理功能
 - [邀请码系统](INVITE_CODE_SYSTEM.md) - 邀请码注册系统配置和使用
 
@@ -26,8 +25,6 @@
 ### 🔐 认证与授权
 
 - [OIDC 认证设置](authentication/OIDC_SETUP.md) - OpenID Connect 单点登录配置
-- [Telegram 认证](authentication/TELEGRAM_AUTH.md) - Telegram Bot 登录集成
-- [可信网络](authentication/TRUSTED_NETWORK.md) - 内网免认证配置
 
 ### ⚙️ 高级配置
 

@@ -11,19 +11,6 @@ export async function GET(request: NextRequest) {
   console.log('server-config called: ', request.url);
 
   const config = await getConfig();
-  console.log('TelegramAuthConfig:', config.TelegramAuthConfig);
-
-  // 检查是否是内部请求（middleware 获取信任网络配置）
-  const isInternalRequest =
-    request.headers.get('x-internal-request') === 'true';
-  const requestedKey = new URL(request.url).searchParams.get('key');
-
-  // 内部请求：只返回特定配置
-  if (isInternalRequest && requestedKey === 'TrustedNetworkConfig') {
-    return NextResponse.json({
-      TrustedNetworkConfig: config.TrustedNetworkConfig || null,
-    });
-  }
 
   const result: any = {
     SiteName: config.SiteConfig.SiteName,
@@ -32,21 +19,6 @@ export async function GET(request: NextRequest) {
     DownloadEnabled: config.DownloadConfig?.enabled ?? true,
     requireInviteCode: config.UserConfig?.RequireInviteCode ?? false,
   };
-
-  // 添加 Telegram 登录配置（仅公开必要信息）
-  if (config.TelegramAuthConfig?.enabled) {
-    console.log('Telegram config is enabled, adding to result');
-    result.TelegramAuthConfig = {
-      enabled: true,
-      botUsername: config.TelegramAuthConfig.botUsername,
-      buttonSize: config.TelegramAuthConfig.buttonSize || 'large',
-      showAvatar: config.TelegramAuthConfig.showAvatar ?? true,
-      requestWriteAccess: config.TelegramAuthConfig.requestWriteAccess ?? false,
-      // 注意：不返回 botToken，保护敏感信息
-    };
-  } else {
-    console.log('Telegram config is NOT enabled or missing');
-  }
 
   // 添加 OIDC 登录配置（仅公开必要信息）
   // 优先使用新的多 Provider 配置

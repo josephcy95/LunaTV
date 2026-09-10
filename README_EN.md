@@ -72,10 +72,8 @@ This project is for educational purposes only. Do not use for commercial purpose
 
 ### 🤖 AI Recommendation System
 
-- **AI Assistant**: GPT-5/o series models support, streaming → [Documentation](docs/features/AI_FEATURES.md)
 - **Tavily Search Mode**: Search mode without AI API
 - **TMDB Actor Search**: Complete actor search, filtering, and caching
-- **Release Calendar**: Preview and track upcoming content
 
 ### 💬 Danmaku Ecosystem
 
@@ -140,7 +138,6 @@ pnpm dev
 
 ### Feature Documentation
 
-- 🤖 [AI Features](docs/features/AI_FEATURES.md)
 - 📥 [Download Features](docs/features/DOWNLOAD_FEATURES.md)
 
 ### Integration Guides
@@ -152,8 +149,6 @@ pnpm dev
 ### Authentication
 
 - 🔐 [OIDC Setup](docs/authentication/OIDC_SETUP.md)
-- 💬 [Telegram Auth](docs/authentication/TELEGRAM_AUTH.md)
-- 🌐 [Trusted Network](docs/authentication/TRUSTED_NETWORK.md)
 
 ### Advanced Configuration
 

@@ -6,7 +6,6 @@ import {
   useQueryClient,
   queryOptions,
 } from '@tanstack/react-query';
-import { checkForUpdates, type UpdateStatus } from '@/lib/version_check';
 import type { PlayRecord } from '@/lib/types';
 
 // ─── Emby Config Types ──────────────────────────────────────────────────────
@@ -110,25 +109,6 @@ const serverConfigOptions = () =>
  */
 export function useServerConfigQuery() {
   return useQuery(serverConfigOptions());
-}
-
-/**
- * Query options for version check
- */
-const versionCheckOptions = () =>
-  queryOptions<UpdateStatus>({
-    queryKey: ['versionCheck'],
-    queryFn: () => checkForUpdates(),
-    staleTime: 30 * 60 * 1000, // 30 minutes - no need to check frequently
-    gcTime: 60 * 60 * 1000,
-    retry: 1,
-  });
-
-/**
- * Check for version updates
- */
-export function useVersionCheckQuery() {
-  return useQuery(versionCheckOptions());
 }
 
 interface UsePlayRecordsQueryOptions {

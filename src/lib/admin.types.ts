@@ -105,6 +105,13 @@ export interface AdminConfig {
     channelNumber?: number;
     disabled?: boolean;
   }[];
+
+  /** @deprecated removed */
+  AIRecommendConfig?: any;
+  /** @deprecated removed */
+  TelegramAuthConfig?: any;
+  /** @deprecated removed */
+  TrustedNetworkConfig?: any;
   NetDiskConfig?: {
     enabled: boolean; // 是否启用网盘搜索
     pansouUrl: string; // PanSou服务地址
@@ -113,22 +120,6 @@ export interface AdminConfig {
     token?: string; // PanSou Bearer Token（可选）
     username?: string; // PanSou 登录用户名（可选）
     password?: string; // PanSou 登录密码（可选）
-  };
-  AIRecommendConfig?: {
-    enabled: boolean; // 是否启用AI推荐功能
-    apiUrl: string; // OpenAI兼容API地址
-    apiKey: string; // API密钥
-    model: string; // 模型名称
-    temperature: number; // 温度参数 0-2
-    maxTokens: number; // 最大token数
-    // 🔥 智能协调器（Orchestrator）配置
-    enableOrchestrator?: boolean; // 是否启用智能协调器（意图分析+联网搜索）
-    enableWebSearch?: boolean; // 是否启用联网搜索
-    tavilyApiKeys?: string[]; // Tavily API Keys（支持多个轮询，1000次/月免费）
-    enablePersonalization?: boolean; // 是否启用当前用户个性化上下文（默认 true）
-    personalizationMode?: 'minimal' | 'balanced' | 'max'; // 个性化上下文注入强度
-    preferAvailableResults?: boolean; // 推荐时是否优先站内更可能可用的标题（默认 true）
-    personalizationCacheTtlSeconds?: number; // 个性化画像缓存时间，默认 300 秒
   };
   TVBoxSecurityConfig?: {
     enableAuth: boolean; // 是否启用Token验证
@@ -145,15 +136,6 @@ export interface AdminConfig {
   VideoProxyConfig?: {
     enabled: boolean; // 是否为普通视频源启用Cloudflare Worker代理
     proxyUrl: string; // Cloudflare Worker代理地址（例如：https://corsapi.smone.workers.dev）
-  };
-  TelegramAuthConfig?: {
-    enabled: boolean; // 是否启用Telegram登录
-    botToken: string; // Telegram Bot Token
-    botUsername: string; // Telegram Bot Username
-    autoRegister: boolean; // 是否自动注册新用户
-    buttonSize: 'large' | 'medium' | 'small'; // 按钮大小
-    showAvatar: boolean; // 是否显示用户头像
-    requestWriteAccess: boolean; // 是否请求发送消息权限
   };
   // 旧的单 Provider 配置（保留用于向后兼容）
   OIDCAuthConfig?: {
@@ -202,11 +184,6 @@ export interface AdminConfig {
     recentDays: number; // 最近活跃的天数定义（默认 30）
     onlyRefreshOngoing: boolean; // 仅刷新连载中的剧集（默认 true）
   };
-  TrustedNetworkConfig?: {
-    enabled: boolean; // 是否启用信任网络模式（内网免登录）
-    trustedIPs: string[]; // 信任的IP/CIDR列表（如 192.168.0.0/16, 10.0.0.0/8）
-    blockAdminAccess?: boolean; // 是否禁止信任网络访客访问后台（默认 false 保持现状）
-  };
   DanmuApiConfig?: {
     enabled: boolean; // 是否启用弹幕API（默认启用）
     useCustomApi: boolean; // 是否使用自定义API（false则使用默认API）
@@ -243,7 +220,7 @@ export interface AdminConfig {
   HomePageConfig?: {
     showHeroBanner: boolean;
     showContinueWatching: boolean;
-    showUpcomingReleases: boolean;
+    showUpcomingReleases?: boolean;
     showHotMovies: boolean;
     showHotTvShows: boolean;
     showNewAnime: boolean;

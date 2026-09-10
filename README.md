@@ -66,16 +66,13 @@
 
 ### 🔔 内容追踪系统
 
-- **即将上映提醒**：完整的即将上映内容关注列表和提醒系统
 - **自动发布通知**：收藏内容发布时自动推送通知
 - **邀请码系统**：支持邀请码注册、历史记录和管理功能
 
 ### 🤖 智能推荐系统
 
-- **AI 智能助手**：支持 GPT-5/o 系列模型，流式传输 → [详细文档](docs/features/AI_FEATURES.md)
 - **Tavily 搜索模式**：无需 AI API 的搜索模式
 - **TMDB 演员搜索**：完整的演员搜索、过滤和缓存
-- **发布日历**：即将上映内容预览和跟踪
 
 ### 💬 弹幕生态系统
 
@@ -140,7 +137,6 @@ pnpm dev
 
 ### 功能文档
 
-- 🤖 [AI 功能详解](docs/features/AI_FEATURES.md)
 - 📥 [下载功能](docs/features/DOWNLOAD_FEATURES.md)
 
 ### 集成指南
@@ -152,8 +148,6 @@ pnpm dev
 ### 认证配置
 
 - 🔐 [OIDC 认证](docs/authentication/OIDC_SETUP.md)
-- 💬 [Telegram 认证](docs/authentication/TELEGRAM_AUTH.md)
-- 🌐 [可信网络](docs/authentication/TRUSTED_NETWORK.md)
 
 ### 高级配置
 

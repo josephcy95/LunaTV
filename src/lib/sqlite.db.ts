@@ -20,7 +20,6 @@ import {
   IStorage,
   PlayRecord,
   PlayStatsResult,
-  Reminder,
   UserPlayStat,
 } from './types';
 
@@ -33,7 +32,9 @@ export class SqliteStorage implements IStorage {
 
   constructor() {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { DatabaseSync } = require('node:sqlite') as { DatabaseSync: new (path: string) => DatabaseSync };
+    const { DatabaseSync } = require('node:sqlite') as {
+      DatabaseSync: new (path: string) => DatabaseSync;
+    };
 
     const isBuild = process.env.IS_BUILD_PHASE === 'true';
 
@@ -107,13 +108,6 @@ export class SqliteStorage implements IStorage {
       );
 
       CREATE TABLE IF NOT EXISTS favorites (
-        username TEXT NOT NULL,
-        key TEXT NOT NULL,
-        value TEXT NOT NULL,
-        PRIMARY KEY (username, key)
-      );
-
-      CREATE TABLE IF NOT EXISTS reminders (
         username TEXT NOT NULL,
         key TEXT NOT NULL,
         value TEXT NOT NULL,
@@ -304,44 +298,6 @@ export class SqliteStorage implements IStorage {
     }
   }
 
-  // ==================== 提醒 ====================
-
-  async getReminder(userName: string, key: string): Promise<Reminder | null> {
-    const row = this.db
-      .prepare('SELECT value FROM reminders WHERE username = ? AND key = ?')
-      .get(userName, key) as { value: string } | undefined;
-    return row ? (JSON.parse(row.value) as Reminder) : null;
-  }
-
-  async setReminder(
-    userName: string,
-    key: string,
-    reminder: Reminder,
-  ): Promise<void> {
-    this.db
-      .prepare(
-        'INSERT OR REPLACE INTO reminders (username, key, value) VALUES (?, ?, ?)',
-      )
-      .run(userName, key, JSON.stringify(reminder));
-  }
-
-  async getAllReminders(userName: string): Promise<Record<string, Reminder>> {
-    const rows = this.db
-      .prepare('SELECT key, value FROM reminders WHERE username = ?')
-      .all(userName) as Array<{ key: string; value: string }>;
-    const result: Record<string, Reminder> = {};
-    for (const row of rows) {
-      result[row.key] = JSON.parse(row.value) as Reminder;
-    }
-    return result;
-  }
-
-  async deleteReminder(userName: string, key: string): Promise<void> {
-    this.db
-      .prepare('DELETE FROM reminders WHERE username = ? AND key = ?')
-      .run(userName, key);
-  }
-
   // ==================== 用户 V1 ====================
 
   async registerUser(userName: string, password: string): Promise<void> {
@@ -399,7 +355,6 @@ export class SqliteStorage implements IStorage {
         .prepare('DELETE FROM play_records WHERE username = ?')
         .run(userName);
       this.db.prepare('DELETE FROM favorites WHERE username = ?').run(userName);
-      this.db.prepare('DELETE FROM reminders WHERE username = ?').run(userName);
       this.db
         .prepare('DELETE FROM search_history WHERE username = ?')
         .run(userName);
@@ -625,7 +580,6 @@ export class SqliteStorage implements IStorage {
       'users_v2',
       'play_records',
       'favorites',
-      'reminders',
       'search_history',
       'admin_config',
       'cache',
@@ -1062,7 +1016,13 @@ export class SqliteStorage implements IStorage {
     userName: string,
     loginTime: number,
     isFirstLogin?: boolean,
-    loginMeta?: { ip?: string; location?: string; device?: string; browser?: string; os?: string }
+    loginMeta?: {
+      ip?: string;
+      location?: string;
+      device?: string;
+      browser?: string;
+      os?: string;
+    },
   ): Promise<void> {
     const row = this.db
       .prepare('SELECT * FROM login_stats WHERE username = ?')
@@ -1088,12 +1048,16 @@ export class SqliteStorage implements IStorage {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
-        userName, loginCount, firstLoginTime, loginTime, loginTime,
-        loginMeta?.ip ?? (row?.last_login_ip ?? null),
-        loginMeta?.location ?? (row?.last_login_location ?? null),
-        loginMeta?.device ?? (row?.last_login_device ?? null),
-        loginMeta?.browser ?? (row?.last_login_browser ?? null),
-        loginMeta?.os ?? (row?.last_login_os ?? null),
+        userName,
+        loginCount,
+        firstLoginTime,
+        loginTime,
+        loginTime,
+        loginMeta?.ip ?? row?.last_login_ip ?? null,
+        loginMeta?.location ?? row?.last_login_location ?? null,
+        loginMeta?.device ?? row?.last_login_device ?? null,
+        loginMeta?.browser ?? row?.last_login_browser ?? null,
+        loginMeta?.os ?? row?.last_login_os ?? null,
       );
   }
 
