@@ -35,14 +35,143 @@ export function getSimklAppMeta() {
 
 export async function getSimklAppCredentials(): Promise<{
   clientId: string;
+  /** Empty when only PIN auth is configured (secret needed only for redirect OAuth). */
   clientSecret: string;
 } | null> {
   const config = await getConfig();
   const clientId = (config.SiteConfig as any).SimklClientId?.trim?.() || '';
   const clientSecret =
     (config.SiteConfig as any).SimklClientSecret?.trim?.() || '';
-  if (!clientId || !clientSecret) return null;
+  // PIN flow needs Client ID only; redirect exchange still needs secret.
+  if (!clientId) return null;
   return { clientId, clientSecret };
+}
+
+/** True when hostname is localhost or RFC1918 private LAN. */
+export function isPrivateOrLocalHost(hostname: string): boolean {
+  const h = (hostname || '').toLowerCase();
+  if (
+    h === 'localhost' ||
+    h === '127.0.0.1' ||
+    h === '::1' ||
+    h === '0.0.0.0' ||
+    h.endsWith('.local')
+  ) {
+    return true;
+  }
+  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
+  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
+  if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(h)) return true;
+  return false;
+}
+
+/**
+ * Redirect OAuth is only reliable for public https origins (not LAN IPs).
+ * Also requires client_secret for the code exchange.
+ */
+export function canUseSimklRedirectOAuth(
+  origin: string,
+  clientSecret: string,
+): boolean {
+  if (!clientSecret?.trim()) return false;
+  try {
+    const u = new URL(origin);
+    if (u.protocol !== 'https:') return false;
+    if (isPrivateOrLocalHost(u.hostname)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export type SimklPinStart = {
+  user_code: string;
+  verification_uri: string;
+  expires_in: number;
+  interval: number;
+};
+
+export async function requestSimklPin(
+  clientId: string,
+): Promise<SimklPinStart> {
+  const { userAgent, appName, appVersion } = getSimklAppMeta();
+  const u = new URL(`${SIMKL_API}/oauth/pin`);
+  u.searchParams.set('client_id', clientId);
+  u.searchParams.set('app-name', appName);
+  u.searchParams.set('app-version', appVersion);
+  const res = await fetch(u.toString(), {
+    method: 'GET',
+    headers: { 'User-Agent': userAgent },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Simkl PIN request failed: ${res.status} ${text}`);
+  }
+  const data = await res.json();
+  if (!data?.user_code) {
+    throw new Error('Simkl PIN response missing user_code');
+  }
+  return {
+    user_code: String(data.user_code),
+    verification_uri:
+      data.verification_uri || data.verification_url || 'https://simkl.com/pin',
+    expires_in: Number(data.expires_in) || 900,
+    interval: Math.max(1, Number(data.interval) || 5),
+  };
+}
+
+export type SimklPinPollResult =
+  | { status: 'pending' }
+  | { status: 'expired' }
+  | {
+      status: 'authorized';
+      tokens: UserSimklTokens;
+    };
+
+/**
+ * Poll GET /oauth/pin/{USER_CODE}.
+ * Pending → KO; authorized → OK + access_token;
+ * device_code present means original code is gone (expired / unknown).
+ */
+export async function pollSimklPin(
+  clientId: string,
+  userCode: string,
+): Promise<SimklPinPollResult> {
+  const { userAgent, appName, appVersion } = getSimklAppMeta();
+  const path = `/oauth/pin/${encodeURIComponent(userCode)}`;
+  const u = new URL(`${SIMKL_API}${path}`);
+  u.searchParams.set('client_id', clientId);
+  u.searchParams.set('app-name', appName);
+  u.searchParams.set('app-version', appVersion);
+  const res = await fetch(u.toString(), {
+    method: 'GET',
+    headers: { 'User-Agent': userAgent },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Simkl PIN poll failed: ${res.status} ${text}`);
+  }
+  const data = await res.json();
+  if (data?.access_token) {
+    return {
+      status: 'authorized',
+      tokens: {
+        access_token: data.access_token,
+        created_at: Math.floor(Date.now() / 1000),
+        expires_in: data.expires_in || 157680000,
+        token_type: data.token_type || 'bearer',
+        scope: data.scope,
+      },
+    };
+  }
+  // Fresh init shape (device_code / new user_code) = original code gone
+  if (data?.device_code != null) {
+    return { status: 'expired' };
+  }
+  if (data?.result === 'KO') {
+    return { status: 'pending' };
+  }
+  return { status: 'pending' };
 }
 
 export function buildSimklAuthorizeUrl(

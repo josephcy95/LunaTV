@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { dbManager } from '@/lib/db';
-import { getSimklAppCredentials } from '@/lib/simkl';
+import { canUseSimklRedirectOAuth, getSimklAppCredentials } from '@/lib/simkl';
 
 export const runtime = 'nodejs';
 
@@ -12,10 +12,17 @@ export async function GET(request: NextRequest) {
   }
   const creds = await getSimklAppCredentials();
   const tokens = await dbManager.getUserSimklTokens(auth.username);
+  const redirectAvailable = Boolean(
+    creds &&
+    canUseSimklRedirectOAuth(request.nextUrl.origin, creds.clientSecret),
+  );
   return NextResponse.json({
     appConfigured: Boolean(creds),
     connected: Boolean(tokens?.access_token),
     simklUsername: tokens?.simkl_username || null,
+    /** PIN is primary; redirect only on public https + secret. */
+    authMode: 'pin' as const,
+    redirectAvailable,
   });
 }
 

@@ -7533,7 +7533,7 @@ const SiteConfigComponent = ({
                 SimklClientId: e.target.value,
               }))
             }
-            placeholder='可选 — 用户可在设置中连接 Simkl'
+            placeholder='必填即可启用 PIN 连接（局域网推荐）'
             className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
           />
         </div>
@@ -7550,7 +7550,7 @@ const SiteConfigComponent = ({
                 SimklClientSecret: e.target.value,
               }))
             }
-            placeholder='可选 — 切勿提交到公开仓库'
+            placeholder='仅公网跳转 OAuth 需要 — 切勿提交到公开仓库'
             className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
           />
           <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
@@ -7563,12 +7563,20 @@ const SiteConfigComponent = ({
             >
               Simkl Developer Settings
             </a>{' '}
-            免费创建应用。Redirect URI 填{' '}
+            免费创建应用。
+            <br />
+            <strong>本地 / 局域网：</strong>Redirect URI 填{' '}
+            <code className='text-[11px]'>urn:ietf:wg:oauth:2.0:oob</code>
+            （PIN 授权，仅需 Client ID）。
+            <br />
+            <strong>公网域名：</strong>也可额外登记{' '}
             <code className='text-[11px]'>
-              https://你的域名/api/simkl/callback
+              https://&lt;host&gt;/api/simkl/callback
             </code>
-            。非商业 / 月收入低于 $150 可免费使用。未配置时 Trakt
-            与本地记录仍可用。
+            （浏览器跳转 OAuth，需 Client Secret）。
+            <br />
+            连接默认走 PIN：用户打开 simkl.com/pin 输入代码。非商业 / 月收入低于
+            $150 可免费使用。未配置时本地记录仍可用。
           </p>
         </div>
       </div>
