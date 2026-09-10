@@ -59,6 +59,10 @@ interface PlayInfoPanelProps {
   rightActions?: ReactNode;
 }
 
+/** Shared size/padding for ALL top-row chips so borders/tints don't change perceived size. */
+const CHIP_BASE =
+  'inline-flex h-5 max-w-none items-center gap-1 rounded-md border px-1.5 text-[10px] font-medium leading-none sm:h-[22px] sm:px-2 sm:text-[11px]';
+
 export default function PlayInfoPanel(props: PlayInfoPanelProps) {
   const {
     title,
@@ -178,30 +182,38 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
             {/* Header chips: source / episode / year / genres / ratings */}
             <div className='flex flex-wrap items-center gap-1'>
               {sourceName && (
-                <span className='max-w-[42vw] truncate rounded-md border border-gray-300/70 bg-white/70 px-1.5 py-0.5 text-[10px] font-medium text-gray-700 dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-200 sm:max-w-none sm:px-2 sm:text-[11px]'>
+                <span
+                  className={`${CHIP_BASE} max-w-[42vw] truncate border-gray-300/60 bg-gray-100/90 text-gray-700 dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-200 sm:max-w-none`}
+                >
                   {sourceName}
                 </span>
               )}
               {episodeText && (
-                <span className='rounded-md border border-green-500/30 bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-500/15 dark:text-green-300 sm:px-2 sm:text-[11px]'>
+                <span
+                  className={`${CHIP_BASE} border-green-500/25 bg-green-50 text-green-700 dark:border-green-500/30 dark:bg-green-500/15 dark:text-green-300`}
+                >
                   {episodeText}
                 </span>
               )}
               {(detail?.year || year) && (
-                <span className='rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300 sm:px-2 sm:text-[11px]'>
+                <span
+                  className={`${CHIP_BASE} border-gray-300/50 bg-violet-50/80 text-gray-600 dark:border-gray-600/80 dark:bg-violet-500/10 dark:text-gray-300`}
+                >
                   {detail?.year || year}
                 </span>
               )}
               {genres.slice(0, 4).map((g) => (
                 <span
                   key={g}
-                  className='max-w-[28vw] truncate rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300 sm:max-w-none sm:px-2 sm:text-[11px]'
+                  className={`${CHIP_BASE} max-w-[28vw] truncate border-gray-300/50 bg-violet-50/80 text-gray-600 dark:border-gray-600/80 dark:bg-violet-500/10 dark:text-gray-300 sm:max-w-none`}
                 >
                   {g}
                 </span>
               ))}
               {tmdbNumberOfSeasons && tmdbNumberOfSeasons > 1 && (
-                <span className='rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300 sm:px-2 sm:text-[11px]'>
+                <span
+                  className={`${CHIP_BASE} border-gray-300/50 bg-violet-50/80 text-gray-600 dark:border-gray-600/80 dark:bg-violet-500/10 dark:text-gray-300`}
+                >
                   共 {tmdbNumberOfSeasons} 季
                 </span>
               )}
@@ -300,7 +312,9 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
   );
 }
 
-// ─── Compact rating chips (icons + score) ─────────────────────────────────────
+// ─── Compact chips (shared base + rating tiers) ───────────────────────────────
+
+type RatingTier = 'great' | 'good' | 'meh' | 'bad';
 
 type RatingChip = {
   key: string;
@@ -308,6 +322,35 @@ type RatingChip = {
   alt: string;
   value: string;
   title: string;
+  /** Normalized 0–100 score for color tiering */
+  percent: number;
+};
+
+function ratingTier(percent: number): RatingTier {
+  if (percent >= 85) return 'great';
+  if (percent >= 70) return 'good';
+  if (percent >= 50) return 'meh';
+  return 'bad';
+}
+
+/** Soft wash + stronger score text; same border weight as meta chips. */
+const RATING_TIER_CLASS: Record<RatingTier, { chip: string; score: string }> = {
+  great: {
+    chip: 'border-emerald-500/25 bg-emerald-500/10 dark:border-emerald-400/30 dark:bg-emerald-500/15',
+    score: 'font-semibold tabular-nums text-emerald-700 dark:text-emerald-300',
+  },
+  good: {
+    chip: 'border-amber-500/25 bg-amber-500/10 dark:border-amber-400/30 dark:bg-amber-500/15',
+    score: 'font-semibold tabular-nums text-amber-700 dark:text-amber-300',
+  },
+  meh: {
+    chip: 'border-slate-400/30 bg-slate-500/10 dark:border-slate-500/40 dark:bg-slate-500/15',
+    score: 'font-semibold tabular-nums text-slate-600 dark:text-slate-300',
+  },
+  bad: {
+    chip: 'border-rose-500/25 bg-rose-500/10 dark:border-rose-400/30 dark:bg-rose-500/15',
+    score: 'font-semibold tabular-nums text-rose-700 dark:text-rose-300',
+  },
 };
 
 function buildRatingChips({
@@ -334,6 +377,7 @@ function buildRatingChips({
       alt: '豆瓣',
       value: douban.toFixed(1),
       title: `豆瓣 ${douban.toFixed(1)}/10`,
+      percent: (douban / 10) * 100,
     });
   }
 
@@ -347,6 +391,7 @@ function buildRatingChips({
       alt: 'Bangumi',
       value: bangumi.toFixed(1),
       title: `Bangumi ${bangumi.toFixed(1)}/10`,
+      percent: (bangumi / 10) * 100,
     });
   }
 
@@ -363,6 +408,7 @@ function buildRatingChips({
         alt: 'RT 新鲜度',
         value: `${v}%`,
         title: `Rotten Tomatoes 新鲜度 ${v}%`,
+        percent: v,
       });
     }
     if (mdblistRatings?.rtAudience != null && mdblistRatings.rtAudience > 0) {
@@ -373,6 +419,7 @@ function buildRatingChips({
         alt: 'RT 观众',
         value: `${v}%`,
         title: `Rotten Tomatoes 观众 ${v}%`,
+        percent: v,
       });
     }
   } else {
@@ -389,6 +436,7 @@ function buildRatingChips({
         alt: 'TMDB',
         value: tmdbScore.toFixed(1),
         title: `TMDB ${tmdbScore.toFixed(1)}/10`,
+        percent: (tmdbScore / 10) * 100,
       });
     }
   }
@@ -400,28 +448,31 @@ function RatingChips({ chips }: { chips: RatingChip[] }) {
   if (!chips.length) return null;
   return (
     <>
-      {chips.map((item) => (
-        <span
-          key={item.key}
-          title={item.title}
-          className='inline-flex max-w-none items-center gap-1 rounded-md border border-gray-300/70 bg-white/80 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-gray-800 dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-100 sm:px-2 sm:text-[11px]'
-        >
-          {item.icon ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={item.icon}
-              alt={item.alt}
-              className='h-3.5 w-3.5 shrink-0 object-contain sm:h-4 sm:w-4'
-              loading='lazy'
-            />
-          ) : (
-            <span className='text-[9px] font-medium text-gray-500 dark:text-gray-400'>
-              {item.alt}
-            </span>
-          )}
-          <span>{item.value}</span>
-        </span>
-      ))}
+      {chips.map((item) => {
+        const tier = RATING_TIER_CLASS[ratingTier(item.percent)];
+        return (
+          <span
+            key={item.key}
+            title={item.title}
+            className={`${CHIP_BASE} ${tier.chip}`}
+          >
+            {item.icon ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={item.icon}
+                alt={item.alt}
+                className='h-3.5 w-3.5 shrink-0 object-contain sm:h-4 sm:w-4'
+                loading='lazy'
+              />
+            ) : (
+              <span className='text-[9px] font-medium text-gray-500 dark:text-gray-400'>
+                {item.alt}
+              </span>
+            )}
+            <span className={tier.score}>{item.value}</span>
+          </span>
+        );
+      })}
     </>
   );
 }
@@ -460,25 +511,16 @@ function DetailsTab({
 
   return (
     <div className='space-y-4 text-sm sm:space-y-5'>
-      {/* 简介 — preserve paragraph breaks */}
+      {/* 简介 — single plain block */}
       {(shortdramaDetails?.desc ||
         bangumiDetails?.summary ||
         movieDetails?.plot_summary ||
         detail?.desc) && (
-        <p className='whitespace-pre-line text-sm leading-relaxed text-gray-700 dark:text-gray-300'>
+        <p className='text-sm leading-relaxed text-gray-700 dark:text-gray-300'>
           {movieDetails?.plot_summary ||
             bangumiDetails?.summary ||
             shortdramaDetails?.desc ||
             detail?.desc}
-        </p>
-      )}
-
-      {tmdbAlias && (
-        <p className='m-0 text-sm leading-snug text-gray-600 dark:text-gray-400'>
-          <span className='font-semibold text-gray-700 dark:text-gray-300'>
-            TMDB 别名:
-          </span>{' '}
-          <span>{tmdbAlias}</span>
         </p>
       )}
 
@@ -535,6 +577,16 @@ function DetailsTab({
       {/* 豆瓣 credits（评分/类型已上移，避免重复） */}
       {movieDetails && (
         <div className='space-y-2'>
+          {tmdbAlias && (
+            <div>
+              <span className='font-semibold text-gray-700 dark:text-gray-300'>
+                TMDB 别名:{' '}
+              </span>
+              <span className='text-gray-600 dark:text-gray-400'>
+                {tmdbAlias}
+              </span>
+            </div>
+          )}
           {movieDetails.directors?.length > 0 && (
             <div>
               <span className='font-semibold text-gray-700 dark:text-gray-300'>
@@ -607,6 +659,20 @@ function DetailsTab({
                 {movieDetails.movie_duration}分钟
               </span>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* TMDB 别名 fallback when no movieDetails list */}
+      {tmdbAlias && !movieDetails && (
+        <div className='space-y-2'>
+          <div>
+            <span className='font-semibold text-gray-700 dark:text-gray-300'>
+              TMDB 别名:{' '}
+            </span>
+            <span className='text-gray-600 dark:text-gray-400'>
+              {tmdbAlias}
+            </span>
           </div>
         </div>
       )}
