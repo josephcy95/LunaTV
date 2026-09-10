@@ -428,6 +428,8 @@ interface SiteConfig {
   TMDBApiKey?: string;
   TMDBLanguage?: string;
   EnableTMDBActorSearch?: boolean;
+  // MDBList 评分
+  MDBListApiKey?: string;
   // Bangumi API 代理
   BangumiApiType?: string;
   BangumiApiProxy?: string;
@@ -6278,6 +6280,7 @@ const SiteConfigComponent = ({
     TMDBApiKey: '',
     TMDBLanguage: 'zh-CN',
     EnableTMDBActorSearch: false,
+    MDBListApiKey: '',
   });
 
   // Cron 配置状态
@@ -6384,6 +6387,7 @@ const SiteConfigComponent = ({
         TMDBApiKey: config.SiteConfig.TMDBApiKey || '',
         TMDBLanguage: config.SiteConfig.TMDBLanguage || 'zh-CN',
         EnableTMDBActorSearch: config.SiteConfig.EnableTMDBActorSearch || false,
+        MDBListApiKey: config.SiteConfig.MDBListApiKey || '',
       });
     }
   }, [config]);
@@ -7402,6 +7406,43 @@ const SiteConfigComponent = ({
               }`}
             />
           </button>
+        </div>
+      </div>
+
+      {/* MDBList 评分配置 */}
+      <div className='border-t border-gray-200 dark:border-gray-700 pt-6'>
+        <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-4'>
+          MDBList 评分配置
+        </h3>
+        <div className='mb-2'>
+          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            MDBList API Key
+          </label>
+          <input
+            type='password'
+            value={siteSettings.MDBListApiKey || ''}
+            onChange={(e) =>
+              setSiteSettings((prev) => ({
+                ...prev,
+                MDBListApiKey: e.target.value,
+              }))
+            }
+            placeholder='请输入 MDBList API Key（可选）'
+            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+          />
+          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            用于在播放页展示 Rotten Tomatoes 等西方评分。在{' '}
+            <a
+              href='https://mdblist.com/preferences/'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-blue-500 hover:text-blue-600'
+            >
+              MDBList Preferences
+            </a>{' '}
+            免费申请。服务端按 TMDb ID 查询并缓存数天；未配置时仅显示豆瓣 /
+            TMDB，不影响其它功能。免费额度约 1000 次/天。
+          </p>
         </div>
       </div>
 

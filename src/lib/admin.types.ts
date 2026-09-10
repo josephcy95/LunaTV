@@ -22,6 +22,8 @@ export interface AdminConfig {
     TMDBApiKey?: string;
     TMDBLanguage?: string;
     EnableTMDBActorSearch?: boolean;
+    // MDBList 评分（Rotten Tomatoes 等）
+    MDBListApiKey?: string;
     // Bangumi API 代理
     BangumiApiType?: string;
     BangumiApiProxy?: string;

@@ -555,8 +555,10 @@ function PlayPageClient() {
   const loadingMovieDetails = movieDetailsStatus === 'pending';
   const loadingComments = commentsStatus === 'pending';
 
-  // TMDB 数据（backdrop + poster + logo + title + overview + rating）
+  // TMDB 数据（backdrop + poster + logo + title + overview + rating + id）
   const [tmdbData, setTmdbData] = useState<{
+    id?: number | null;
+    mediaType?: 'movie' | 'tv' | null;
     backdrop: string | null;
     poster: string | null;
     logo: string | null;
@@ -565,6 +567,11 @@ function PlayPageClient() {
     rating: number | null;
     year: string | null;
     numberOfSeasons: number | null;
+  } | null>(null);
+  const [mdblistRatings, setMdblistRatings] = useState<{
+    rtTomatoes: number | null;
+    rtAudience: number | null;
+    tmdb: number | null;
   } | null>(null);
   const tmdbFetchedRef = useRef(false);
   useEffect(() => {
@@ -587,6 +594,33 @@ function PlayPageClient() {
       cancelled = true;
     };
   }, [videoTitle, videoYear, movieDetails?.original_title]);
+
+  // MDBList 评分：仅在播放页、有 TMDb id 且缓存未命中时服务端拉取（不在首页卡片请求）
+  useEffect(() => {
+    const tmdbId = tmdbData?.id;
+    if (!tmdbId) return;
+    let cancelled = false;
+    const mediaType = tmdbData?.mediaType === 'tv' ? 'show' : 'movie';
+    const params = new URLSearchParams({
+      tmdb_id: String(tmdbId),
+      type: mediaType,
+    });
+    fetch(`/api/mdblist/ratings?${params.toString()}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        if (!cancelled && json?.data) {
+          setMdblistRatings({
+            rtTomatoes: json.data.rtTomatoes ?? null,
+            rtAudience: json.data.rtAudience ?? null,
+            tmdb: json.data.tmdb ?? null,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [tmdbData?.id, tmdbData?.mediaType]);
 
   // 当前源和ID
   const [currentSource, setCurrentSource] = useState(
@@ -5546,6 +5580,7 @@ function PlayPageClient() {
             tmdbRating={tmdbData?.rating}
             tmdbLogo={tmdbData?.logo}
             tmdbNumberOfSeasons={tmdbData?.numberOfSeasons}
+            mdblistRatings={mdblistRatings}
             favorited={favorited}
             onToggleFavorite={handleToggleFavorite}
             detail={detail}

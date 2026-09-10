@@ -253,6 +253,7 @@ async function getInitConfig(
       TMDBApiKey: process.env.TMDB_API_KEY || '',
       TMDBLanguage: 'zh-CN',
       EnableTMDBActorSearch: false, // 默认关闭，需要配置API Key后手动开启
+      MDBListApiKey: process.env.MDBLIST_API_KEY || '',
     },
     UserConfig: {
       AllowRegister: true, // 默认允许注册

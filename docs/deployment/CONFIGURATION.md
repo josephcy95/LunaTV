@@ -173,6 +173,10 @@
   - TMDB API Key
   - 语言设置（中文/英语/日语/韩语）
   - 功能启用开关
+- **MDBList 评分**：
+  - MDBList API Key（管理后台 → 站点配置；也可设环境变量 `MDBLIST_API_KEY`）
+  - 服务端按 TMDb ID 拉取 Rotten Tomatoes 等评分，仅在播放/详情页缓存未命中时请求
+  - 免费额度约 1000 次/天；结果按 tmdbId 缓存数天，无 Key 时静默跳过
 
 #### 👥 用户配置
 
