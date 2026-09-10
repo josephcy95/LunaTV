@@ -1,0 +1,78 @@
+/* ============================================================
+   Play rating chips — true semantic colors
+   ------------------------------------------------------------
+   NOCTURNE remaps green-* / emerald-* → Moonglow gold, so rating
+   "go" tiers must use dedicated classes with real greens rather
+   than Tailwind green/emerald utilities (which look amber).
+   ============================================================ */
+
+.rating-tier-great {
+  border-color: rgb(34 197 94 / 0.3);
+  background-color: rgb(34 197 94 / 0.12);
+}
+.rating-tier-great-score {
+  color: #15803d; /* green-700-ish, true green */
+}
+.dark .rating-tier-great,
+:where(.dark, .dark *) .rating-tier-great {
+  border-color: rgb(74 222 128 / 0.35);
+  background-color: rgb(34 197 94 / 0.18);
+}
+.dark .rating-tier-great-score,
+:where(.dark, .dark *) .rating-tier-great-score {
+  color: #86efac; /* green-300 */
+}
+
+/* 70–84.99: soft lime / olive — acceptable, not harsh amber */
+.rating-tier-good {
+  border-color: rgb(138 148 48 / 0.35);
+  background-color: rgb(138 148 48 / 0.12);
+}
+.rating-tier-good-score {
+  color: #50571d; /* lime-700 from theme */
+}
+.dark .rating-tier-good,
+:where(.dark, .dark *) .rating-tier-good {
+  border-color: rgb(168 177 77 / 0.4);
+  background-color: rgb(138 148 48 / 0.2);
+}
+.dark .rating-tier-good-score,
+:where(.dark, .dark *) .rating-tier-good-score {
+  color: #c3ca77; /* lime-300 */
+}
+
+/* 50–69.99: muted slate / blue-gray */
+.rating-tier-meh {
+  border-color: rgb(138 146 178 / 0.35);
+  background-color: rgb(99 107 140 / 0.12);
+}
+.rating-tier-meh-score {
+  color: #464d6b; /* slate-600 / ink */
+}
+.dark .rating-tier-meh,
+:where(.dark, .dark *) .rating-tier-meh {
+  border-color: rgb(138 146 178 / 0.45);
+  background-color: rgb(99 107 140 / 0.2);
+}
+.dark .rating-tier-meh-score,
+:where(.dark, .dark *) .rating-tier-meh-score {
+  color: #b6bdd5; /* slate-300 */
+}
+
+/* <50: soft rose / skip */
+.rating-tier-bad {
+  border-color: rgb(192 78 91 / 0.3);
+  background-color: rgb(192 78 91 / 0.12);
+}
+.rating-tier-bad-score {
+  color: #782b35; /* rose-700 */
+}
+.dark .rating-tier-bad,
+:where(.dark, .dark *) .rating-tier-bad {
+  border-color: rgb(213 110 121 / 0.35);
+  background-color: rgb(192 78 91 / 0.18);
+}
+.dark .rating-tier-bad-score,
+:where(.dark, .dark *) .rating-tier-bad-score {
+  color: #e3969e; /* rose-300 */
+}
