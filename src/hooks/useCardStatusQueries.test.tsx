@@ -3,13 +3,7 @@ import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 
 import { useIsFavoritedQuery } from './useFavoritesQuery';
 
-const cases = [
-  { collection: 'favorites', useStatus: useIsFavoritedQuery },
-  {
-    collection: 'reminders',
-    useStatus: useIsFavoritedQuery /* removed remind */,
-  },
-];
+const cases = [{ collection: 'favorites', useStatus: useIsFavoritedQuery }];
 
 // Real QueryClient/observers; only the HTTP boundary is mocked.
 describe.each(cases)('$collection card status', ({ collection, useStatus }) => {

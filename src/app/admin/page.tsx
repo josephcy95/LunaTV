@@ -2586,10 +2586,9 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                             config?.SourceConfig?.filter(
                               (source) => !source.disabled,
                             ).map((s) => s.key) || [];
-                          const specialFeatures = ['ai-recommend'];
                           setNewUserGroup((prev) => ({
                             ...prev,
-                            enabledApis: [...allApis, ...specialFeatures],
+                            enabledApis: [...allApis],
                           }));
                         }}
                         className={buttonStyles.quickAction}
@@ -2793,12 +2792,11 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
                             config?.SourceConfig?.filter(
                               (source) => !source.disabled,
                             ).map((s) => s.key) || [];
-                          const specialFeatures = ['ai-recommend'];
                           setEditingUserGroup((prev) =>
                             prev
                               ? {
                                   ...prev,
-                                  enabledApis: [...allApis, ...specialFeatures],
+                                  enabledApis: [...allApis],
                                 }
                               : null,
                           );

@@ -41,7 +41,7 @@ const runtimeEnvKeys = [
   'NEXT_PUBLIC_BANGUMI_IMAGE_PROXY_TYPE', 'NEXT_PUBLIC_BANGUMI_IMAGE_PROXY',
   'NEXT_PUBLIC_CORSAPI_URL', 'NEXT_PUBLIC_SUB_URL',
   'DISABLE_HERO_TRAILER', 'DISABLE_SSRF_PROTECTION',
-  'TVBOX_SUBSCRIBE_TOKEN', 'TRUSTED_NETWORK_IPS',
+  'TVBOX_SUBSCRIBE_TOKEN',
 ];
 
 // 跳过认证的路径：静态资源、登录/注册页、公开 API
@@ -52,7 +52,7 @@ const skipPaths = [
   '/api/login', '/api/register', '/api/logout', '/api/cron',
   '/api/server-config', '/api/tvbox', '/api/tvbox-config',
   '/api/live/merged', '/api/parse', '/api/bing-wallpaper',
-  '/api/proxy/', '/api/telegram/', '/api/auth/oidc/',
+  '/api/proxy/', '/api/auth/oidc/',
   '/api/cache/', '/api/client-log',
 ];
 

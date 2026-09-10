@@ -106,12 +106,6 @@ export interface AdminConfig {
     disabled?: boolean;
   }[];
 
-  /** @deprecated removed */
-  AIRecommendConfig?: any;
-  /** @deprecated removed */
-  TelegramAuthConfig?: any;
-  /** @deprecated removed */
-  TrustedNetworkConfig?: any;
   NetDiskConfig?: {
     enabled: boolean; // 是否启用网盘搜索
     pansouUrl: string; // PanSou服务地址
@@ -220,7 +214,6 @@ export interface AdminConfig {
   HomePageConfig?: {
     showHeroBanner: boolean;
     showContinueWatching: boolean;
-    showUpcomingReleases?: boolean;
     showHotMovies: boolean;
     showHotTvShows: boolean;
     showNewAnime: boolean;

@@ -13,7 +13,7 @@
   <img src="public/logo.png" alt="LunaTV Logo" width="120">
 </div>
 
-> 🎬 **LunaTV Enhanced Edition** is a comprehensive video streaming platform based on MoonTV with extensive enhancements. Features include **Cloud Drive Search**, **AI Recommendations**, **Short Drama**, **IPTV Live TV**, **Bangumi Anime**, **Watch Statistics**, **Danmaku System**, and major feature additions for the ultimate viewing experience.
+> 🎬 **LunaTV Enhanced Edition** is a comprehensive video streaming platform based on MoonTV with extensive enhancements. Features include **Cloud Drive Search**, **Short Drama**, **IPTV Live TV**, **Bangumi Anime**, **Watch Statistics**, **Danmaku System**, and major feature additions for the ultimate viewing experience.
 
 <div align="center">
 
@@ -66,13 +66,10 @@ This project is for educational purposes only. Do not use for commercial purpose
 
 ### 🔔 Content Tracking System
 
-- **Upcoming Content Reminders**: Complete watchlist and reminder system for upcoming content
-- **Auto Release Notifications**: Automatic push notifications when favorited content is released
 - **Invite Code System**: Registration system with invite codes, history tracking, and management
 
-### 🤖 AI Recommendation System
+### 🎬 Smart Discovery
 
-- **Tavily Search Mode**: Search mode without AI API
 - **TMDB Actor Search**: Complete actor search, filtering, and caching
 
 ### 💬 Danmaku Ecosystem
