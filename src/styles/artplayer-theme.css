@@ -409,3 +409,16 @@
     0 2px 8px rgba(0, 0, 0, 0.72) !important;
   padding-bottom: 0.15em;
 }
+
+/* Danmu overlay: keep rendered comments inside the video viewport.
+ * ArtPlayer injects the same rules at runtime, but this explicit rule keeps
+ * the overlay stable with the redesigned player/container styles. */
+.art-video-player .art-danmuku {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 30 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}

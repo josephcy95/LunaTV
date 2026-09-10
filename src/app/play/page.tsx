@@ -4589,6 +4589,8 @@ function PlayPageClient() {
                     antiOverlap:
                       localStorage.getItem('danmaku_antiOverlap') === 'true',
                     synchronousPlayback: true,
+                    width: 300,
+                    maxLength: 50,
                     theme: 'dark',
                   }),
                 ]
