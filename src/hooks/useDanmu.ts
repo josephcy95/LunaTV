@@ -3,6 +3,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { ClientCache } from '@/lib/client-cache';
+import { loadDanmuIntoPlugin } from '@/lib/player/danmu';
 
 /**
  * useDanmu Hook - 弹幕管理
@@ -419,8 +420,7 @@ export function useDanmu(options: UseDanmuOptions): UseDanmuReturn {
           artPlayerRef.current?.plugins?.artplayerPluginDanmuku
         ) {
           const plugin = artPlayerRef.current.plugins.artplayerPluginDanmuku;
-          plugin.load(); // 清空已有弹幕
-          plugin.load(result.data); // 加载新弹幕
+          await loadDanmuIntoPlugin(plugin, result.data);
           artPlayerRef.current.notice.show = `已自动重试并加载 ${result.count} 条弹幕`;
         }
       } catch {
@@ -477,8 +477,7 @@ export function useDanmu(options: UseDanmuOptions): UseDanmuReturn {
                 externalDanmuEnabledRef.current &&
                 artPlayerRef.current?.plugins?.artplayerPluginDanmuku
               ) {
-                plugin.load(); // 清空已有弹幕
-                plugin.load(result.data); // 加载新弹幕
+                await loadDanmuIntoPlugin(plugin, result.data);
                 plugin.show();
                 console.log('✅ 外部弹幕已优化加载:', result.count, '条');
 

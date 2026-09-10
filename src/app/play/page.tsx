@@ -25,6 +25,7 @@ import VideoLoadingOverlay from '@/components/play/VideoLoadingOverlay';
 import PlayErrorDisplay from '@/components/play/PlayErrorDisplay';
 import { ClientCache } from '@/lib/client-cache';
 import { getPlayerDeviceInfo } from '@/lib/player/device';
+import { loadDanmuIntoPlugin } from '@/lib/player/danmu';
 import { attachFullscreenOrientation } from '@/lib/player/orientation';
 import { attachPlayerGestures } from '@/lib/player/gestures';
 import '@/styles/artplayer-theme.css';
@@ -733,10 +734,13 @@ function PlayPageClient() {
         localStorage.setItem('danmaku_visible', String(next.visible));
       }
       const plugin = artPlayerRef.current?.plugins?.artplayerPluginDanmuku;
-      plugin?.config(updates);
-      if (updates.enabled !== undefined) {
-        setDanmuEnabled(updates.enabled);
-        handleDanmuOperationOptimized(updates.enabled);
+      const { enabled, ...pluginOptions } = updates;
+      if (Object.keys(pluginOptions).length > 0) {
+        plugin?.config(pluginOptions);
+      }
+      if (enabled !== undefined) {
+        setDanmuEnabled(enabled);
+        handleDanmuOperationOptimized(enabled);
       }
       if (updates.visible !== undefined) {
         updates.visible ? plugin?.show() : plugin?.hide();
@@ -769,64 +773,61 @@ function PlayPageClient() {
     }));
   }, []);
 
-  // The redesigned player is created asynchronously. Keep danmu loading tied to
-  // the actual player instance rather than the old player initialization path.
+  // Player is created asynchronously. Load this episode's comments once the
+  // ArtPlayer instance (and danmuku plugin) actually exist.
   useEffect(() => {
-    if (!playerReady || !artPlayerRef.current) return;
+    if (!playerReady || !artPlayerRef.current) {
+      if (!playerReady) danmuRequestScopeRef.current = '';
+      return;
+    }
     const requestScope = `${videoTitle}_${videoYear}_${videoDoubanId}_${currentEpisodeIndex + 1}_${manualDanmuOverride?.episodeId || ''}`;
     if (danmuRequestScopeRef.current === requestScope) return;
     danmuRequestScopeRef.current = requestScope;
-    console.info('[Danmu] player ready; inspecting plugin', { requestScope });
     const plugin = artPlayerRef.current.plugins?.artplayerPluginDanmuku;
     if (!plugin) {
       console.error('[Danmu] ArtPlayer danmu plugin is missing');
       artPlayerRef.current.notice?.show?.('弹幕插件未加载，请刷新页面');
       return;
     }
-    // Always fetch the data so ArtPlayer's native toggle can show it later;
-    // visibility is separate from whether the configured API should be loaded.
-    console.info('[Danmu] requesting episode data');
+    let cancelled = false;
+    console.info('[Danmu] requesting episode data', { requestScope });
     void loadExternalDanmu({ force: true })
-      .then(({ data, count }) => {
+      .then(async ({ data, count }) => {
+        if (cancelled) return;
         console.info('[Danmu] API data received:', count);
         if (count === 0) {
           artPlayerRef.current?.notice?.show?.(
             '弹幕 API 返回 0 条，请检查片名与集数匹配',
           );
         }
-        if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku === plugin) {
-          return plugin.load(data).then(() => {
-            console.info('[Danmu] ArtPlayer loaded:', data.length);
-            danmuEnabled ? plugin.show() : plugin.hide();
-          });
-        }
-        return undefined;
+        const current = artPlayerRef.current?.plugins?.artplayerPluginDanmuku;
+        if (current !== plugin) return;
+        await loadDanmuIntoPlugin(plugin, data);
+        if (cancelled) return;
+        danmuEnabled ? plugin.show() : plugin.hide();
       })
       .catch((error) => {
+        if (cancelled) return;
         console.error('[Danmu] Player load failed:', error);
         artPlayerRef.current?.notice?.show?.(
           '弹幕加载失败，请打开弹幕设置查看详情',
         );
       });
+    return () => {
+      cancelled = true;
+    };
+    // loadExternalDanmu identity changes after setDanmuList; do not depend on
+    // it or the in-flight fetch is cancelled and the new run is skipped by
+    // requestScope.
   }, [
     playerReady,
-    danmuEnabled,
     currentEpisodeIndex,
     currentSource,
     videoTitle,
     videoYear,
     videoDoubanId,
     manualDanmuOverride,
-    loadExternalDanmu,
   ]);
-
-  useEffect(() => {
-    const plugin = artPlayerRef.current?.plugins?.artplayerPluginDanmuku;
-    if (!playerReady || !plugin) return;
-    void plugin.load(danmuList);
-    if (danmuEnabled) plugin.show();
-    else plugin.hide();
-  }, [playerReady, danmuList, danmuEnabled]);
   const spacePressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const spaceLongPressConsumedRef = useRef(false);
   const fastForwardActiveRef = useRef(false);
@@ -4577,6 +4578,8 @@ function PlayPageClient() {
                     fontSize: Number(
                       localStorage.getItem('danmaku_fontSize') || 25,
                     ),
+                    color: '#FFFFFF',
+                    mode: 0,
                     margin: JSON.parse(
                       localStorage.getItem('danmaku_margin') || '[10, "75%"]',
                     ),
@@ -4586,11 +4589,13 @@ function PlayPageClient() {
                     visible:
                       localStorage.getItem('danmaku_visible') !== 'false',
                     emitter: false,
+                    heatmap: false,
                     antiOverlap:
                       localStorage.getItem('danmaku_antiOverlap') === 'true',
                     synchronousPlayback: true,
                     width: 300,
                     maxLength: 50,
+                    lockTime: 1,
                     theme: 'dark',
                   }),
                 ]
@@ -5351,7 +5356,7 @@ function PlayPageClient() {
             {/* 播放器：移动端全宽出血并吸顶，桌面端保持 16:9 且不超出视口高度 */}
             <div className='min-w-0 -mx-4 sm:-mx-6 md:mx-0'>
               <div className='sticky top-[44px] z-30 md:static'>
-                <div className='relative aspect-video max-h-[calc(100svh-44px)] w-full overflow-hidden bg-black shadow-lg md:rounded-xl md:border md:border-gray-200/60 dark:md:border-gray-800 lg:max-h-[calc(100dvh-10rem)]'>
+                <div className='lunatv-player-frame relative aspect-video max-h-[calc(100svh-44px)] w-full overflow-hidden bg-black shadow-lg md:rounded-xl md:border md:border-gray-200/60 dark:md:border-gray-800 lg:max-h-[calc(100dvh-10rem)]'>
                   <div
                     ref={artRef}
                     className='absolute inset-0 h-full w-full overflow-hidden bg-black'
@@ -5873,7 +5878,15 @@ function PlayPageClient() {
         loading={danmuLoading}
         loadMeta={danmuLoadMeta}
         error={danmuError}
-        onReload={async () => (await loadExternalDanmu({ force: true })).count}
+        onReload={async () => {
+          const { data, count } = await loadExternalDanmu({ force: true });
+          const plugin = artPlayerRef.current?.plugins?.artplayerPluginDanmuku;
+          if (plugin) {
+            await loadDanmuIntoPlugin(plugin, data);
+            danmuEnabled ? plugin.show() : plugin.hide();
+          }
+          return count;
+        }}
         matchInfo={{
           animeTitle: videoTitle,
           episodeTitle: `第${currentEpisodeIndex + 1}集`,

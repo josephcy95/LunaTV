@@ -467,11 +467,15 @@ html.dark body::before {
   border-radius: 4px;
 }
 
-/* 减少动态效果偏好 */
+/* 减少动态效果偏好。
+ * 弹幕靠 CSS transform transition 从右向左滚，不能套这条全局
+ * transition-duration: 0.01ms，否则会瞬间堆在画面左侧。
+ * :not() 用选择器列表排除 overlay 及其子节点（不能事后 unset，
+ * !important 会盖掉元素 style 上的 transition 时长）。 */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *:not(.art-danmuku, .art-danmuku *),
+  *:not(.art-danmuku, .art-danmuku *)::before,
+  *:not(.art-danmuku, .art-danmuku *)::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
