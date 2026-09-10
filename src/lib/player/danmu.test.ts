@@ -1,4 +1,13 @@
-import { loadDanmuIntoPlugin, normalizeDanmuForPlugin } from './danmu';
+import {
+  applyDanmuVisibility,
+  DEFAULT_DANMU_SETTINGS,
+  loadDanmuIntoPlugin,
+  normalizeDanmuForPlugin,
+  pluginConfigFromSettings,
+  readStoredDanmuSettings,
+  settingsFromPluginOption,
+  writeStoredDanmuSettings,
+} from './danmu';
 
 describe('normalizeDanmuForPlugin', () => {
   test('keeps valid timed comments', () => {
@@ -68,5 +77,83 @@ describe('loadDanmuIntoPlugin', () => {
     await loadDanmuIntoPlugin(plugin, []);
     expect(plugin.reset).toHaveBeenCalled();
     expect(plugin.load).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('danmu settings persistence', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  test('reads defaults when storage is empty', () => {
+    expect(readStoredDanmuSettings()).toEqual(DEFAULT_DANMU_SETTINGS);
+  });
+
+  test('round-trips settings', () => {
+    const settings = {
+      ...DEFAULT_DANMU_SETTINGS,
+      enabled: false,
+      fontSize: 32,
+      speed: 8,
+      opacity: 0.4,
+      visible: false,
+      antiOverlap: true,
+    };
+    writeStoredDanmuSettings(settings);
+    expect(readStoredDanmuSettings()).toEqual(settings);
+  });
+
+  test('maps native plugin option changes', () => {
+    expect(
+      settingsFromPluginOption({
+        fontSize: 18,
+        speed: 3,
+        opacity: 0.5,
+        visible: false,
+        antiOverlap: true,
+        margin: [20, '50%'],
+        modes: [0, 2, 9],
+      }),
+    ).toEqual({
+      fontSize: 18,
+      speed: 3,
+      opacity: 0.5,
+      visible: false,
+      antiOverlap: true,
+      margin: [20, '50%'],
+      modes: [0, 2],
+    });
+  });
+
+  test('hides comments when either enabled or visible is off', () => {
+    expect(
+      pluginConfigFromSettings({
+        ...DEFAULT_DANMU_SETTINGS,
+        enabled: true,
+        visible: false,
+      }).visible,
+    ).toBe(false);
+    expect(
+      pluginConfigFromSettings({
+        ...DEFAULT_DANMU_SETTINGS,
+        enabled: false,
+        visible: true,
+      }).visible,
+    ).toBe(false);
+  });
+});
+
+describe('applyDanmuVisibility', () => {
+  test('updates plugin and native toggle attribute together', () => {
+    const plugin = { show: jest.fn(), hide: jest.fn() };
+    const player = document.createElement('div');
+
+    applyDanmuVisibility(plugin, false, player);
+    expect(plugin.hide).toHaveBeenCalled();
+    expect(player.dataset.danmukuVisible).toBe('false');
+
+    applyDanmuVisibility(plugin, true, player);
+    expect(plugin.show).toHaveBeenCalled();
+    expect(player.dataset.danmukuVisible).toBe('true');
   });
 });

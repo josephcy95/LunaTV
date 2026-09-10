@@ -25,7 +25,14 @@ import VideoLoadingOverlay from '@/components/play/VideoLoadingOverlay';
 import PlayErrorDisplay from '@/components/play/PlayErrorDisplay';
 import { ClientCache } from '@/lib/client-cache';
 import { getPlayerDeviceInfo } from '@/lib/player/device';
-import { loadDanmuIntoPlugin } from '@/lib/player/danmu';
+import {
+  applyDanmuVisibility,
+  loadDanmuIntoPlugin,
+  pluginConfigFromSettings,
+  readStoredDanmuSettings,
+  settingsFromPluginOption,
+  writeStoredDanmuSettings,
+} from '@/lib/player/danmu';
 import { attachFullscreenOrientation } from '@/lib/player/orientation';
 import { attachPlayerGestures } from '@/lib/player/gestures';
 import '@/styles/artplayer-theme.css';
@@ -685,21 +692,14 @@ function PlayPageClient() {
   const [isDanmuManualOpen, setIsDanmuManualOpen] = useState(false);
   const [manualDanmuOverride, setManualDanmuOverride] =
     useState<DanmuManualOverride | null>(null);
-  const [danmuSettings, setDanmuSettings] = useState({
-    enabled: false,
-    fontSize: 25,
-    speed: 5,
-    opacity: 0.8,
-    margin: [10, '75%'] as [number | string, number | string],
-    modes: [0, 1, 2] as Array<0 | 1 | 2>,
-    antiOverlap: false,
-    visible: true,
-  });
+  const [danmuSettings, setDanmuSettings] = useState(() =>
+    readStoredDanmuSettings(),
+  );
+  const danmuSettingsRef = useRef(danmuSettings);
+  const syncingDanmuRef = useRef(false);
 
   const [danmuEnabled, setDanmuEnabled] = useState(
-    () =>
-      typeof window === 'undefined' ||
-      localStorage.getItem('enable_external_danmu') !== 'false',
+    () => readStoredDanmuSettings().enabled,
   );
   const danmu = useDanmu({
     videoTitle,
@@ -717,24 +717,22 @@ function PlayPageClient() {
     error: danmuError,
     loadExternalDanmu,
     handleDanmuOperationOptimized,
+    setExternalDanmuEnabled,
   } = danmu;
 
   const updateDanmuSettings = useCallback(
     (updates: Partial<typeof danmuSettings>) => {
-      const next = { ...danmuSettings, ...updates };
+      const current = danmuSettingsRef.current;
+      const next = { ...current, ...updates };
+      danmuSettingsRef.current = next;
       setDanmuSettings(next);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('enable_external_danmu', String(next.enabled));
-        localStorage.setItem('danmaku_fontSize', String(next.fontSize));
-        localStorage.setItem('danmaku_speed', String(next.speed));
-        localStorage.setItem('danmaku_opacity', String(next.opacity));
-        localStorage.setItem('danmaku_margin', JSON.stringify(next.margin));
-        localStorage.setItem('danmaku_modes', JSON.stringify(next.modes));
-        localStorage.setItem('danmaku_antiOverlap', String(next.antiOverlap));
-        localStorage.setItem('danmaku_visible', String(next.visible));
-      }
+      writeStoredDanmuSettings(next);
       const plugin = artPlayerRef.current?.plugins?.artplayerPluginDanmuku;
+      const playerEl = artPlayerRef.current?.template?.$player as
+        | HTMLElement
+        | undefined;
       const { enabled, ...pluginOptions } = updates;
+      syncingDanmuRef.current = true;
       if (Object.keys(pluginOptions).length > 0) {
         plugin?.config(pluginOptions);
       }
@@ -742,36 +740,17 @@ function PlayPageClient() {
         setDanmuEnabled(enabled);
         handleDanmuOperationOptimized(enabled);
       }
-      if (updates.visible !== undefined) {
-        updates.visible ? plugin?.show() : plugin?.hide();
+      if (enabled !== undefined || updates.visible !== undefined) {
+        applyDanmuVisibility(plugin, next.enabled && next.visible, playerEl);
       }
+      syncingDanmuRef.current = false;
     },
-    [danmuSettings, handleDanmuOperationOptimized],
+    [handleDanmuOperationOptimized],
   );
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setDanmuSettings((current) => ({
-      ...current,
-      enabled: localStorage.getItem('enable_external_danmu') !== 'false',
-      fontSize: Number(
-        localStorage.getItem('danmaku_fontSize') || current.fontSize,
-      ),
-      speed: Number(localStorage.getItem('danmaku_speed') || current.speed),
-      opacity: Number(
-        localStorage.getItem('danmaku_opacity') || current.opacity,
-      ),
-      margin: JSON.parse(
-        localStorage.getItem('danmaku_margin') ||
-          JSON.stringify(current.margin),
-      ),
-      modes: JSON.parse(
-        localStorage.getItem('danmaku_modes') || JSON.stringify(current.modes),
-      ),
-      antiOverlap: localStorage.getItem('danmaku_antiOverlap') === 'true',
-      visible: localStorage.getItem('danmaku_visible') !== 'false',
-    }));
-  }, []);
+    danmuSettingsRef.current = danmuSettings;
+  }, [danmuSettings]);
 
   // Player is created asynchronously. Load this episode's comments once the
   // ArtPlayer instance (and danmuku plugin) actually exist.
@@ -804,7 +783,23 @@ function PlayPageClient() {
         if (current !== plugin) return;
         await loadDanmuIntoPlugin(plugin, data);
         if (cancelled) return;
-        danmuEnabled ? plugin.show() : plugin.hide();
+        const prefs = danmuSettingsRef.current;
+        syncingDanmuRef.current = true;
+        plugin.config?.(pluginConfigFromSettings(prefs));
+        applyDanmuVisibility(
+          plugin,
+          prefs.enabled && prefs.visible,
+          artPlayerRef.current?.template?.$player,
+        );
+        if (
+          prefs.enabled &&
+          prefs.visible &&
+          artPlayerRef.current?.playing &&
+          plugin.isStop
+        ) {
+          artPlayerRef.current.emit('video:playing');
+        }
+        syncingDanmuRef.current = false;
       })
       .catch((error) => {
         if (cancelled) return;
@@ -828,6 +823,38 @@ function PlayPageClient() {
     videoDoubanId,
     manualDanmuOverride,
   ]);
+
+  // Native toggle/sliders write plugin.option only. Persist them so episode
+  // switches and player rebuilds restore the same on/off + size/speed.
+  useEffect(() => {
+    if (!playerReady || !artPlayerRef.current) return;
+    const art = artPlayerRef.current;
+    const persist = (patch: Partial<typeof danmuSettings>) => {
+      if (syncingDanmuRef.current) return;
+      const next = { ...danmuSettingsRef.current, ...patch };
+      danmuSettingsRef.current = next;
+      setDanmuSettings(next);
+      writeStoredDanmuSettings(next);
+      if (patch.enabled !== undefined) {
+        setDanmuEnabled(patch.enabled);
+        setExternalDanmuEnabled(patch.enabled);
+      }
+    };
+    const onShow = () => persist({ visible: true, enabled: true });
+    const onHide = () => persist({ visible: false });
+    const onConfig = (option: Record<string, unknown>) => {
+      persist(settingsFromPluginOption(option));
+    };
+    art.on('artplayerPluginDanmuku:show', onShow);
+    art.on('artplayerPluginDanmuku:hide', onHide);
+    art.on('artplayerPluginDanmuku:config', onConfig);
+    return () => {
+      art.off('artplayerPluginDanmuku:show', onShow);
+      art.off('artplayerPluginDanmuku:hide', onHide);
+      art.off('artplayerPluginDanmuku:config', onConfig);
+    };
+  }, [playerReady, setExternalDanmuEnabled]);
+
   const spacePressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const spaceLongPressConsumedRef = useRef(false);
   const fastForwardActiveRef = useRef(false);
@@ -4571,27 +4598,11 @@ function PlayPageClient() {
               ? [
                   (window as any).DynamicArtplayerPluginDanmuku({
                     danmuku: [],
-                    speed: Number(localStorage.getItem('danmaku_speed') || 5),
-                    opacity: Number(
-                      localStorage.getItem('danmaku_opacity') || 0.8,
-                    ),
-                    fontSize: Number(
-                      localStorage.getItem('danmaku_fontSize') || 25,
-                    ),
+                    ...pluginConfigFromSettings(readStoredDanmuSettings()),
                     color: '#FFFFFF',
                     mode: 0,
-                    margin: JSON.parse(
-                      localStorage.getItem('danmaku_margin') || '[10, "75%"]',
-                    ),
-                    modes: JSON.parse(
-                      localStorage.getItem('danmaku_modes') || '[0, 1, 2]',
-                    ),
-                    visible:
-                      localStorage.getItem('danmaku_visible') !== 'false',
                     emitter: false,
                     heatmap: false,
-                    antiOverlap:
-                      localStorage.getItem('danmaku_antiOverlap') === 'true',
                     synchronousPlayback: true,
                     width: 300,
                     maxLength: 50,
@@ -5883,7 +5894,15 @@ function PlayPageClient() {
           const plugin = artPlayerRef.current?.plugins?.artplayerPluginDanmuku;
           if (plugin) {
             await loadDanmuIntoPlugin(plugin, data);
-            danmuEnabled ? plugin.show() : plugin.hide();
+            const prefs = danmuSettingsRef.current;
+            syncingDanmuRef.current = true;
+            plugin.config?.(pluginConfigFromSettings(prefs));
+            applyDanmuVisibility(
+              plugin,
+              prefs.enabled && prefs.visible,
+              artPlayerRef.current?.template?.$player,
+            );
+            syncingDanmuRef.current = false;
           }
           return count;
         }}
