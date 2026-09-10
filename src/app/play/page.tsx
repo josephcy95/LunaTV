@@ -779,10 +779,8 @@ function PlayPageClient() {
       artPlayerRef.current.notice?.show?.('弹幕插件未加载，请刷新页面');
       return;
     }
-    if (!danmuEnabled) {
-      plugin.hide();
-      return;
-    }
+    // Always fetch the data so ArtPlayer's native toggle can show it later;
+    // visibility is separate from whether the configured API should be loaded.
     console.info('[Danmu] requesting episode data');
     void loadExternalDanmu({ force: true })
       .then(({ data, count }) => {
@@ -795,7 +793,7 @@ function PlayPageClient() {
         if (artPlayerRef.current?.plugins?.artplayerPluginDanmuku === plugin) {
           return plugin.load(data).then(() => {
             console.info('[Danmu] ArtPlayer loaded:', data.length);
-            plugin.show();
+            danmuEnabled ? plugin.show() : plugin.hide();
           });
         }
         return undefined;
