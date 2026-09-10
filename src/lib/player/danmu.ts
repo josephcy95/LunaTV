@@ -420,3 +420,49 @@ export function mountNativeDensitySlider(
     row.remove();
   };
 }
+
+/** Put 手动匹配 into the native config panel so the player bar stays clean. */
+export function mountNativeManualMatchButton(
+  panelInner: HTMLElement | null | undefined,
+  options: {
+    isOverridden: boolean;
+    onMatch: () => void;
+    onClear?: () => void;
+  },
+): () => void {
+  if (!panelInner) return () => undefined;
+  panelInner.querySelector('.apd-config-manual')?.remove();
+
+  const row = document.createElement('div');
+  row.className = 'apd-config-other apd-config-manual';
+  row.style.marginTop = '12px';
+  row.innerHTML = options.isOverridden
+    ? `<button type="button" class="apd-manual-match" style="cursor:pointer;background:#00a1d6;border:none;color:#fff;border-radius:4px;padding:6px 10px;font-size:12px;">手动匹配弹幕</button>
+       <button type="button" class="apd-manual-clear" style="cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:4px;padding:6px 10px;font-size:12px;">恢复自动</button>`
+    : `<button type="button" class="apd-manual-match" style="cursor:pointer;background:#00a1d6;border:none;color:#fff;border-radius:4px;padding:6px 10px;font-size:12px;">手动匹配弹幕</button>`;
+
+  panelInner.appendChild(row);
+
+  const matchBtn = row.querySelector('.apd-manual-match') as HTMLButtonElement;
+  const clearBtn = row.querySelector(
+    '.apd-manual-clear',
+  ) as HTMLButtonElement | null;
+  const onMatch = (event: Event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    options.onMatch();
+  };
+  const onClear = (event: Event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    options.onClear?.();
+  };
+  matchBtn.addEventListener('click', onMatch);
+  clearBtn?.addEventListener('click', onClear);
+
+  return () => {
+    matchBtn.removeEventListener('click', onMatch);
+    clearBtn?.removeEventListener('click', onClear);
+    row.remove();
+  };
+}

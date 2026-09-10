@@ -32,6 +32,7 @@ import {
   loadDanmuIntoPlugin,
   maxVisibleForDensity,
   mountNativeDensitySlider,
+  mountNativeManualMatchButton,
   pluginConfigFromSettings,
   readStoredDanmuSettings,
   settingsFromPluginOption,
@@ -53,7 +54,6 @@ import { searchStream } from '@/lib/search-stream';
 import { getVideoResolutionFromM3u8, VideoSourceTestResult } from '@/lib/utils';
 import { useSite } from '@/components/SiteProvider';
 import { useDanmu, type DanmuManualOverride } from '@/hooks/useDanmu';
-import DanmuSettingsPanel from '@/components/play/DanmuSettingsPanel';
 import DanmuManualMatchModal, {
   type DanmuManualSelection,
 } from '@/components/DanmuManualMatchModal';
@@ -692,7 +692,6 @@ function PlayPageClient() {
   const [playerReady, setPlayerReady] = useState(false);
   const artRef = useRef<HTMLDivElement | null>(null);
   const danmuRequestScopeRef = useRef('');
-  const [isDanmuSettingsOpen, setIsDanmuSettingsOpen] = useState(false);
   const [isDanmuManualOpen, setIsDanmuManualOpen] = useState(false);
   const [manualDanmuOverride, setManualDanmuOverride] =
     useState<DanmuManualOverride | null>(null);
@@ -715,10 +714,6 @@ function PlayPageClient() {
     manualOverride: manualDanmuOverride,
   });
   const {
-    danmuList,
-    loading: danmuLoading,
-    loadMeta: danmuLoadMeta,
-    error: danmuError,
     loadExternalDanmu,
     handleDanmuOperationOptimized,
     setExternalDanmuEnabled,
@@ -865,9 +860,23 @@ function PlayPageClient() {
         },
       );
     let unmountDensity = mountDensity();
+    const mountManual = () =>
+      mountNativeManualMatchButton(
+        art.template?.$player?.querySelector(
+          '.apd-config-panel-inner',
+        ) as HTMLElement | null,
+        {
+          isOverridden: !!manualDanmuOverride,
+          onMatch: () => setIsDanmuManualOpen(true),
+          onClear: () => setManualDanmuOverride(null),
+        },
+      );
+    let unmountManual = mountManual();
     const densityRetry = window.setTimeout(() => {
       unmountDensity();
+      unmountManual();
       unmountDensity = mountDensity();
+      unmountManual = mountManual();
     }, 400);
 
     art.on('artplayerPluginDanmuku:show', onShow);
@@ -876,11 +885,17 @@ function PlayPageClient() {
     return () => {
       window.clearTimeout(densityRetry);
       unmountDensity();
+      unmountManual();
       art.off('artplayerPluginDanmuku:show', onShow);
       art.off('artplayerPluginDanmuku:hide', onHide);
       art.off('artplayerPluginDanmuku:config', onConfig);
     };
-  }, [playerReady, setExternalDanmuEnabled, updateDanmuSettings]);
+  }, [
+    playerReady,
+    setExternalDanmuEnabled,
+    updateDanmuSettings,
+    manualDanmuOverride,
+  ]);
 
   const spacePressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const spaceLongPressConsumedRef = useRef(false);
@@ -4540,16 +4555,6 @@ function PlayPageClient() {
           lang: navigator.language.toLowerCase(),
           controls: [
             {
-              name: 'danmu-settings',
-              position: 'right',
-              index: 20,
-              html: '<span style="font-size:13px;font-weight:700;">弹</span>',
-              tooltip: '弹幕设置（密度 / 手动匹配）',
-              click: function () {
-                setIsDanmuSettingsOpen(true);
-              },
-            },
-            {
               name: 'next-episode',
               position: 'right',
               index: 34,
@@ -5916,43 +5921,6 @@ function PlayPageClient() {
         }}
       />
 
-      <DanmuSettingsPanel
-        isOpen={isDanmuSettingsOpen}
-        onClose={() => setIsDanmuSettingsOpen(false)}
-        settings={danmuSettings}
-        onSettingsChange={updateDanmuSettings}
-        danmuCount={danmuList.length}
-        loading={danmuLoading}
-        loadMeta={danmuLoadMeta}
-        error={danmuError}
-        onReload={async () => {
-          const { data, count } = await loadExternalDanmu({ force: true });
-          const plugin = artPlayerRef.current?.plugins?.artplayerPluginDanmuku;
-          if (plugin) {
-            await loadDanmuIntoPlugin(plugin, data);
-            const prefs = danmuSettingsRef.current;
-            syncingDanmuRef.current = true;
-            plugin.config?.(pluginConfigFromSettings(prefs));
-            applyDanmuVisibility(
-              plugin,
-              prefs.enabled && prefs.visible,
-              artPlayerRef.current?.template?.$player,
-            );
-            syncingDanmuRef.current = false;
-          }
-          return count;
-        }}
-        matchInfo={{
-          animeTitle: videoTitle,
-          episodeTitle: `第${currentEpisodeIndex + 1}集`,
-        }}
-        isManualOverridden={!!manualDanmuOverride}
-        onManualMatch={() => {
-          setIsDanmuSettingsOpen(false);
-          setIsDanmuManualOpen(true);
-        }}
-        onClearManualMatch={() => setManualDanmuOverride(null)}
-      />
       <DanmuManualMatchModal
         isOpen={isDanmuManualOpen}
         defaultKeyword={videoTitle}

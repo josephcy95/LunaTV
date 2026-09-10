@@ -9,6 +9,7 @@ import {
   marginFromAreaIndex,
   maxVisibleForDensity,
   mountNativeDensitySlider,
+  mountNativeManualMatchButton,
   normalizeDanmuForPlugin,
   pluginConfigFromSettings,
   readStoredDanmuSettings,
@@ -193,6 +194,28 @@ describe('area and density', () => {
     expect(row?.querySelector('.apd-value')?.textContent).toBe('适中');
     cleanup();
     expect(panel.querySelector('.apd-config-density')).toBeNull();
+  });
+
+  test('injects a manual-match button into the native config panel', () => {
+    const panel = document.createElement('div');
+    const clicks: string[] = [];
+    const cleanup = mountNativeManualMatchButton(panel, {
+      isOverridden: true,
+      onMatch: () => clicks.push('match'),
+      onClear: () => clicks.push('clear'),
+    });
+    const matchBtn = panel.querySelector(
+      '.apd-manual-match',
+    ) as HTMLButtonElement;
+    const clearBtn = panel.querySelector(
+      '.apd-manual-clear',
+    ) as HTMLButtonElement;
+    expect(matchBtn.textContent).toContain('手动匹配');
+    matchBtn.click();
+    clearBtn.click();
+    expect(clicks).toEqual(['match', 'clear']);
+    cleanup();
+    expect(panel.querySelector('.apd-config-manual')).toBeNull();
   });
 });
 
