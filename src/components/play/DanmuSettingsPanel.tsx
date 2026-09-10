@@ -17,6 +17,7 @@ import {
   areaIndexFromMargin,
   clampDanmuDensity,
   DANMU_AREA_STEPS,
+  densityLabel,
   marginFromAreaIndex,
 } from '@/lib/player/danmu';
 
@@ -847,7 +848,7 @@ export const DanmuSettingsPanel = memo(function DanmuSettingsPanel({
                   />
                 </div>
                 <span className='text-xs text-green-400 w-12 text-right font-mono font-semibold tabular-nums'>
-                  {sliderDensity}/6
+                  {densityLabel(sliderDensity)}
                 </span>
               </div>
             </div>

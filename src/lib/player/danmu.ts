@@ -85,6 +85,23 @@ export const DANMU_MARGIN_OPTION = {
 
 const DENSITY_MAX_VISIBLE = [8, 14, 22, 32, 44, 60] as const;
 
+export const DANMU_DENSITY_STEPS: {
+  level: number;
+  label: string;
+  hide?: boolean;
+}[] = [
+  { level: 1, label: '最疏' },
+  { level: 2, label: '较疏', hide: true },
+  { level: 3, label: '适中' },
+  { level: 4, label: '较密', hide: true },
+  { level: 5, label: '密', hide: true },
+  { level: 6, label: '最密' },
+];
+
+export function densityLabel(level: number): string {
+  return DANMU_DENSITY_STEPS[clampDanmuDensity(level) - 1].label;
+}
+
 function clampInt(value: number, min: number, max: number): number {
   if (!Number.isFinite(value)) return min;
   return Math.min(max, Math.max(min, Math.round(value)));
@@ -306,4 +323,100 @@ export async function loadDanmuIntoPlugin(
     await plugin.load(data);
   }
   return data.length;
+}
+
+/**
+ * Inject a "弹幕密度" slider into ArtPlayer's native danmuku config panel
+ * (the one with 显示区域 / 字号 / 速度). That panel is what most people open.
+ */
+export function mountNativeDensitySlider(
+  panelInner: HTMLElement | null | undefined,
+  options: {
+    density: number;
+    onChange: (level: number) => void;
+  },
+): () => void {
+  if (!panelInner) return () => undefined;
+  panelInner.querySelector('.apd-config-density')?.remove();
+
+  const row = document.createElement('div');
+  row.className = 'apd-config-slider apd-config-density';
+  const visibleSteps = DANMU_DENSITY_STEPS.filter((step) => !step.hide);
+  row.innerHTML = `
+    弹幕密度
+    <div class="apd-slider">
+      <div class="apd-slider-line">
+        <div class="apd-slider-points">
+          ${DANMU_DENSITY_STEPS.map(() => `<div class="apd-slider-point"></div>`).join('')}
+        </div>
+        <div class="apd-slider-progress"></div>
+      </div>
+      <div class="apd-slider-dot"></div>
+      <div class="apd-slider-steps">
+        ${visibleSteps.map((step) => `<div class="apd-slider-step">${step.label}</div>`).join('')}
+      </div>
+    </div>
+    <div class="apd-value">${densityLabel(options.density)}</div>
+  `;
+
+  const marginRow = panelInner.querySelector('.apd-config-margin');
+  if (marginRow?.parentElement) {
+    marginRow.after(row);
+  } else {
+    panelInner.appendChild(row);
+  }
+
+  const slider = row.querySelector('.apd-slider') as HTMLElement;
+  const dot = row.querySelector('.apd-slider-dot') as HTMLElement;
+  const valueEl = row.querySelector('.apd-value') as HTMLElement;
+  const min = 1;
+  const max = 6;
+
+  const apply = (level: number, emit: boolean) => {
+    const next = clampDanmuDensity(level);
+    const percentage = (next - min) / (max - min);
+    dot.style.left = `${percentage * 100}%`;
+    valueEl.textContent = densityLabel(next);
+    if (emit) options.onChange(next);
+  };
+
+  apply(options.density, false);
+
+  const fromEvent = (event: PointerEvent | MouseEvent) => {
+    const rect = slider.getBoundingClientRect();
+    const ratio =
+      rect.width <= 0 ? 0 : (event.clientX - rect.left) / rect.width;
+    const index = Math.round(
+      Math.min(1, Math.max(0, ratio)) * (max - min) + min,
+    );
+    apply(index, true);
+  };
+
+  let dragging = false;
+  const onDown = (event: PointerEvent) => {
+    if (event.button !== 0) return;
+    dragging = true;
+    slider.setPointerCapture?.(event.pointerId);
+    fromEvent(event);
+  };
+  const onMove = (event: PointerEvent) => {
+    if (dragging) fromEvent(event);
+  };
+  const onUp = () => {
+    dragging = false;
+  };
+
+  slider.addEventListener('pointerdown', onDown);
+  slider.addEventListener('pointermove', onMove);
+  slider.addEventListener('pointerup', onUp);
+  slider.addEventListener('pointercancel', onUp);
+  slider.style.touchAction = 'none';
+
+  return () => {
+    slider.removeEventListener('pointerdown', onDown);
+    slider.removeEventListener('pointermove', onMove);
+    slider.removeEventListener('pointerup', onUp);
+    slider.removeEventListener('pointercancel', onUp);
+    row.remove();
+  };
 }

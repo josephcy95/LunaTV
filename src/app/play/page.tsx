@@ -31,6 +31,7 @@ import {
   DANMU_MARGIN_OPTION,
   loadDanmuIntoPlugin,
   maxVisibleForDensity,
+  mountNativeDensitySlider,
   pluginConfigFromSettings,
   readStoredDanmuSettings,
   settingsFromPluginOption,
@@ -851,15 +852,26 @@ function PlayPageClient() {
     const onConfig = (option: Record<string, unknown>) => {
       persist(settingsFromPluginOption(option));
     };
+    const panelInner = art.template?.$player?.querySelector(
+      '.apd-config-panel-inner',
+    ) as HTMLElement | null;
+    const unmountDensity = mountNativeDensitySlider(panelInner, {
+      density: danmuSettingsRef.current.density,
+      onChange: (level) => {
+        updateDanmuSettings({ density: level });
+      },
+    });
+
     art.on('artplayerPluginDanmuku:show', onShow);
     art.on('artplayerPluginDanmuku:hide', onHide);
     art.on('artplayerPluginDanmuku:config', onConfig);
     return () => {
+      unmountDensity();
       art.off('artplayerPluginDanmuku:show', onShow);
       art.off('artplayerPluginDanmuku:hide', onHide);
       art.off('artplayerPluginDanmuku:config', onConfig);
     };
-  }, [playerReady, setExternalDanmuEnabled]);
+  }, [playerReady, setExternalDanmuEnabled, updateDanmuSettings]);
 
   const spacePressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const spaceLongPressConsumedRef = useRef(false);

@@ -4,9 +4,11 @@ import {
   clampDanmuDensity,
   DANMU_AREA_STEPS,
   DEFAULT_DANMU_SETTINGS,
+  densityLabel,
   loadDanmuIntoPlugin,
   marginFromAreaIndex,
   maxVisibleForDensity,
+  mountNativeDensitySlider,
   normalizeDanmuForPlugin,
   pluginConfigFromSettings,
   readStoredDanmuSettings,
@@ -173,6 +175,24 @@ describe('area and density', () => {
     expect(maxVisibleForDensity(1)).toBe(8);
     expect(maxVisibleForDensity(3)).toBe(22);
     expect(maxVisibleForDensity(6)).toBe(60);
+    expect(densityLabel(3)).toBe('适中');
+  });
+
+  test('injects a density slider into the native config panel', () => {
+    const panel = document.createElement('div');
+    panel.innerHTML =
+      '<div class="apd-config-margin">显示区域</div><div class="apd-config-fontSize">弹幕字号</div>';
+    const levels: number[] = [];
+    const cleanup = mountNativeDensitySlider(panel, {
+      density: 3,
+      onChange: (level) => levels.push(level),
+    });
+    const row = panel.querySelector('.apd-config-density');
+    expect(row).toBeTruthy();
+    expect(row?.nextElementSibling?.className).toContain('apd-config-fontSize');
+    expect(row?.querySelector('.apd-value')?.textContent).toBe('适中');
+    cleanup();
+    expect(panel.querySelector('.apd-config-density')).toBeNull();
   });
 });
 
