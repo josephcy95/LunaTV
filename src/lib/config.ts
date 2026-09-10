@@ -254,6 +254,8 @@ async function getInitConfig(
       TMDBLanguage: 'zh-CN',
       EnableTMDBActorSearch: false, // 默认关闭，需要配置API Key后手动开启
       MDBListApiKey: process.env.MDBLIST_API_KEY || '',
+      TraktClientId: process.env.TRAKT_CLIENT_ID || '',
+      TraktClientSecret: process.env.TRAKT_CLIENT_SECRET || '',
     },
     UserConfig: {
       AllowRegister: true, // 默认允许注册

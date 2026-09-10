@@ -21,6 +21,7 @@ import DownloadButtons from '@/components/play/DownloadButtons';
 import NetDiskButton from '@/components/play/NetDiskButton';
 import BackToTopButton from '@/components/play/BackToTopButton';
 import PlayInfoPanel from '@/components/play/PlayInfoPanel';
+import { useCurrentWatchStatus } from '@/hooks/useWatchStatus';
 import VideoLoadingOverlay from '@/components/play/VideoLoadingOverlay';
 import PlayErrorDisplay from '@/components/play/PlayErrorDisplay';
 import { ClientCache } from '@/lib/client-cache';
@@ -1139,6 +1140,84 @@ function PlayPageClient() {
 
   // 总集数
   const totalEpisodes = detail?.episodes?.length || 0;
+
+  const watchMediaType =
+    tmdbData?.mediaType === 'tv'
+      ? ('tv' as const)
+      : tmdbData?.mediaType === 'movie'
+        ? ('movie' as const)
+        : totalEpisodes > 1
+          ? ('tv' as const)
+          : ('movie' as const);
+
+  const {
+    watched: currentWatched,
+    showStatus: watchShowStatus,
+    rating: userWatchRating,
+    toggle: toggleWatched,
+    setRating: setUserWatchRating,
+    reportProgress: reportWatchProgress,
+  } = useCurrentWatchStatus({
+    tmdbId: tmdbData?.id ?? null,
+    mediaType: watchMediaType,
+    doubanId: videoDoubanId || null,
+    source: currentSource,
+    id: currentId,
+    title: videoTitle,
+    year: videoYear,
+    cover: videoCover,
+    episodeIndex1Based: currentEpisodeIndex + 1,
+    knownEpisodeCount: totalEpisodes > 1 ? totalEpisodes : undefined,
+  });
+  const reportWatchProgressRef = useRef(reportWatchProgress);
+  reportWatchProgressRef.current = reportWatchProgress;
+
+  const traktScrobbleRef = useRef(
+    (action: 'start' | 'pause' | 'stop', playTime = 0, totalTime = 0) => {
+      const tmdbId = tmdbData?.id;
+      if (!tmdbId) return;
+      const progress =
+        totalTime > 0
+          ? Math.min(100, Math.round((playTime / totalTime) * 100))
+          : 0;
+      fetch('/api/trakt/scrobble', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          tmdbId,
+          mediaType: watchMediaType,
+          progress,
+          episode: currentEpisodeIndex + 1,
+        }),
+      }).catch(() => {});
+    },
+  );
+  traktScrobbleRef.current = (
+    action: 'start' | 'pause' | 'stop',
+    playTime = 0,
+    totalTime = 0,
+  ) => {
+    const tmdbId = tmdbData?.id;
+    if (!tmdbId) return;
+    const progress =
+      totalTime > 0
+        ? Math.min(100, Math.round((playTime / totalTime) * 100))
+        : 0;
+    fetch('/api/trakt/scrobble', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action,
+        tmdbId,
+        mediaType: watchMediaType,
+        progress,
+        episode: currentEpisodeIndex + 1,
+      }),
+    }).catch(() => {});
+  };
 
   useEffect(() => {
     const title = videoTitle.trim();
@@ -4045,6 +4124,13 @@ function PlayPageClient() {
         year: detailRef.current?.year,
         progress: `${Math.floor(currentTime)}/${Math.floor(duration)}`,
       });
+
+      // Auto-mark watched locally (~80%); Trakt sync is best-effort inside API/client
+      try {
+        await reportWatchProgressRef.current?.(currentTime, duration);
+      } catch (watchErr) {
+        console.warn('自动标记已看失败（不影响播放进度）:', watchErr);
+      }
     } catch (err) {
       console.error('保存播放进度失败:', err);
     }
@@ -5003,6 +5089,13 @@ function PlayPageClient() {
         // 播放状态变化：Wake Lock（保存进度统一放在 pause 处理器中，只注册一次）
         artPlayerRef.current.on('play', () => {
           requestWakeLock();
+          try {
+            const currentTime = artPlayerRef.current?.currentTime || 0;
+            const duration = artPlayerRef.current?.duration || 0;
+            traktScrobbleRef.current('start', currentTime, duration);
+          } catch {
+            /* ignore */
+          }
         });
 
         artPlayerRef.current.on('pause', () => {
@@ -5012,6 +5105,12 @@ function PlayPageClient() {
           const duration = artPlayerRef.current?.duration || 0;
           const remainingTime = duration - currentTime;
           const isNearEnd = duration > 0 && remainingTime < 180; // 最后3分钟
+
+          try {
+            traktScrobbleRef.current('pause', currentTime, duration);
+          } catch {
+            /* ignore */
+          }
 
           if (!isNearEnd) {
             saveCurrentPlayProgress();
@@ -5593,6 +5692,11 @@ function PlayPageClient() {
             mdblistRatings={mdblistRatings}
             favorited={favorited}
             onToggleFavorite={handleToggleFavorite}
+            watched={currentWatched}
+            watchShowStatus={watchShowStatus}
+            onToggleWatched={toggleWatched}
+            userRating={userWatchRating}
+            onUserRatingChange={setUserWatchRating}
             detail={detail}
             movieDetails={movieDetails}
             bangumiDetails={bangumiDetails}

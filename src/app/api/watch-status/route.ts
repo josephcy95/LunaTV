@@ -6,16 +6,22 @@ import { dbManager } from '@/lib/db';
 import {
   applyEpisodeWatched,
   applyMovieWatched,
+  applyStatusChange,
+  applyUserRating,
   buildWatchKey,
+  clampUserRating,
   unmarkEpisode,
   type UserWatchData,
   type WatchMediaType,
+  type WatchShowStatus,
   type WatchStatus,
 } from '@/lib/watchStatus';
 import {
   getTraktAppCredentials,
   traktAddHistory,
+  traktAddRating,
   traktRemoveHistory,
+  traktRemoveRating,
   traktScrobble,
 } from '@/lib/trakt';
 
@@ -110,6 +116,33 @@ async function maybeSyncTraktUnmark(
   }
 }
 
+async function maybeSyncTraktRating(
+  username: string,
+  item: WatchStatus,
+  rating: number | undefined,
+) {
+  try {
+    if (!item.tmdb_id) return;
+    const creds = await getTraktAppCredentials();
+    const tokens = await dbManager.getUserTraktTokens(username);
+    if (!creds || !tokens?.access_token) return;
+    if (rating == null) {
+      await traktRemoveRating(tokens, creds.clientId, {
+        mediaType: item.media_type,
+        tmdbId: item.tmdb_id,
+      });
+    } else {
+      await traktAddRating(tokens, creds.clientId, {
+        mediaType: item.media_type,
+        tmdbId: item.tmdb_id,
+        rating,
+      });
+    }
+  } catch (e) {
+    console.warn('Trakt rating sync failed — local still saved', e);
+  }
+}
+
 export async function GET(request: NextRequest) {
   const username = await requireUser(request);
   if (!username) {
@@ -123,6 +156,17 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ items: data.items });
 }
 
+/**
+ * POST body:
+ * {
+ *   action: 'mark' | 'unmark' | 'progress',
+ *   tmdbId?, mediaType?, doubanId?, source?, id?,
+ *   title, year?, cover?,
+ *   episodeIndex?, knownEpisodeCount?,
+ *   playTime?, totalTime?,  // for progress auto-mark
+ *   syncTrakt?: boolean
+ * }
+ */
 export async function POST(request: NextRequest) {
   const username = await requireUser(request);
   if (!username) {
@@ -157,6 +201,69 @@ export async function POST(request: NextRequest) {
   const existing = data.items[key];
   const syncTrakt = body.syncTrakt !== false;
 
+  if (action === 'rate') {
+    const title = (body.title as string) || existing?.title || '';
+    if (!title && !existing) {
+      return NextResponse.json({ error: 'title required' }, { status: 400 });
+    }
+    const rating = clampUserRating(body.rating);
+    const item = applyUserRating(existing, {
+      key,
+      tmdb_id: body.tmdbId ? Number(body.tmdbId) : existing?.tmdb_id,
+      media_type: mediaType,
+      douban_id: body.doubanId ? Number(body.doubanId) : existing?.douban_id,
+      title: title || existing!.title,
+      year: body.year || existing?.year,
+      cover: body.cover || existing?.cover,
+      source: body.source || existing?.source,
+      id: body.id || existing?.id,
+      rating,
+      status: existing?.status,
+    });
+    if (rating == null) {
+      delete item.rating;
+      delete item.rating_updated_at;
+    }
+    data.items[key] = item;
+    await dbManager.saveUserWatchData(username, data);
+    if (syncTrakt) await maybeSyncTraktRating(username, item, rating);
+    return NextResponse.json({ items: data.items, item });
+  }
+
+  if (action === 'setStatus') {
+    const status = body.status as WatchShowStatus;
+    if (
+      !status ||
+      !['watching', 'completed', 'watched', 'dropped'].includes(status)
+    ) {
+      return NextResponse.json({ error: 'invalid status' }, { status: 400 });
+    }
+    const title = (body.title as string) || existing?.title || '';
+    if (!title && !existing) {
+      return NextResponse.json({ error: 'title required' }, { status: 400 });
+    }
+    const item = applyStatusChange(existing, {
+      key,
+      tmdb_id: body.tmdbId ? Number(body.tmdbId) : existing?.tmdb_id,
+      media_type: mediaType,
+      douban_id: body.doubanId ? Number(body.doubanId) : existing?.douban_id,
+      title: title || existing!.title,
+      year: body.year || existing?.year,
+      cover: body.cover || existing?.cover,
+      source: body.source || existing?.source,
+      id: body.id || existing?.id,
+      rating: existing?.rating,
+      rating_updated_at: existing?.rating_updated_at,
+      watched_episodes: existing?.watched_episodes,
+      known_episode_count: existing?.known_episode_count,
+      watched_at: existing?.watched_at || Date.now(),
+      status,
+    });
+    data.items[key] = item;
+    await dbManager.saveUserWatchData(username, data);
+    return NextResponse.json({ items: data.items, item });
+  }
+
   if (action === 'progress') {
     const playTime = Number(body.playTime) || 0;
     const totalTime = Number(body.totalTime) || 0;
@@ -164,6 +271,7 @@ export async function POST(request: NextRequest) {
     if (!shouldAutoMarkWatched(playTime, totalTime)) {
       return NextResponse.json({ skipped: true, items: data.items });
     }
+    // fall through as mark
   }
 
   if (action === 'unmark') {
@@ -190,6 +298,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  // mark (manual or from progress)
   const title = (body.title as string) || existing?.title || '';
   if (!title) {
     return NextResponse.json({ error: 'title required' }, { status: 400 });

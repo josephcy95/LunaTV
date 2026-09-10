@@ -11,14 +11,13 @@ import {
 } from 'react';
 import { Heart } from 'lucide-react';
 import { processImageUrl } from '@/lib/utils';
-import {
-  buildRatingChips,
-  RatingChips,
-} from '@/components/play/RatingChips';
+import { buildRatingChips, RatingChips } from '@/components/play/RatingChips';
 import {
   DetailsTab,
   RecommendationsTab,
 } from '@/components/play/PlayInfoDetails';
+import WatchToggleButton from '@/components/play/WatchToggleButton';
+import UserRatingControl from '@/components/play/UserRatingControl';
 
 type Tab = 'details' | 'recommendations';
 
@@ -46,6 +45,11 @@ interface PlayInfoPanelProps {
   mdblistRatings?: MdbListRatingsClient | null;
   favorited: boolean;
   onToggleFavorite: () => void;
+  watched?: boolean;
+  watchShowStatus?: string;
+  onToggleWatched?: () => void;
+  userRating?: number | null;
+  onUserRatingChange?: (rating: number | null) => void | Promise<void>;
   detail?: any;
   movieDetails?: any;
   bangumiDetails?: any;
@@ -85,6 +89,11 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
     mdblistRatings,
     favorited,
     onToggleFavorite,
+    watched,
+    watchShowStatus,
+    onToggleWatched,
+    userRating,
+    onUserRatingChange,
     detail,
     movieDetails,
     bangumiDetails,
@@ -239,6 +248,19 @@ export default function PlayInfoPanel(props: PlayInfoPanelProps) {
           </div>
 
           <div className='flex shrink-0 flex-wrap items-center gap-1.5 sm:gap-2'>
+            {onToggleWatched && (
+              <WatchToggleButton
+                watched={Boolean(watched)}
+                showStatus={watchShowStatus}
+                onToggle={onToggleWatched}
+              />
+            )}
+            {onUserRatingChange && (
+              <UserRatingControl
+                rating={userRating}
+                onChange={onUserRatingChange}
+              />
+            )}
             <button
               onClick={onToggleFavorite}
               className={`inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors sm:h-10 sm:gap-2 sm:px-4 sm:text-sm ${

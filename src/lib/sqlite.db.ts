@@ -150,6 +150,16 @@ export class SqliteStorage implements IStorage {
         value TEXT NOT NULL
       );
 
+      CREATE TABLE IF NOT EXISTS watch_statuses (
+        username TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS trakt_tokens (
+        username TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+
       CREATE TABLE IF NOT EXISTS crash_logs (
         timestamp TEXT PRIMARY KEY,
         value TEXT NOT NULL,
@@ -363,6 +373,12 @@ export class SqliteStorage implements IStorage {
         .run(userName);
       this.db
         .prepare('DELETE FROM emby_configs WHERE username = ?')
+        .run(userName);
+      this.db
+        .prepare('DELETE FROM watch_statuses WHERE username = ?')
+        .run(userName);
+      this.db
+        .prepare('DELETE FROM trakt_tokens WHERE username = ?')
         .run(userName);
       this.db.exec('COMMIT');
     } catch (e) {
@@ -585,6 +601,8 @@ export class SqliteStorage implements IStorage {
       'cache',
       'login_stats',
       'emby_configs',
+      'watch_statuses',
+      'trakt_tokens',
       'crash_logs',
     ];
     this.db.exec('BEGIN');
@@ -1081,6 +1099,44 @@ export class SqliteStorage implements IStorage {
   async deleteUserEmbyConfig(userName: string): Promise<void> {
     this.db
       .prepare('DELETE FROM emby_configs WHERE username = ?')
+      .run(userName);
+  }
+
+  // ==================== Watch status / Trakt ====================
+
+  async getUserWatchData(userName: string): Promise<any | null> {
+    const row = this.db
+      .prepare('SELECT value FROM watch_statuses WHERE username = ?')
+      .get(userName) as { value: string } | undefined;
+    return row ? JSON.parse(row.value) : null;
+  }
+
+  async saveUserWatchData(userName: string, data: any): Promise<void> {
+    this.db
+      .prepare(
+        'INSERT OR REPLACE INTO watch_statuses (username, value) VALUES (?, ?)',
+      )
+      .run(userName, JSON.stringify(data));
+  }
+
+  async getUserTraktTokens(userName: string): Promise<any | null> {
+    const row = this.db
+      .prepare('SELECT value FROM trakt_tokens WHERE username = ?')
+      .get(userName) as { value: string } | undefined;
+    return row ? JSON.parse(row.value) : null;
+  }
+
+  async saveUserTraktTokens(userName: string, tokens: any): Promise<void> {
+    this.db
+      .prepare(
+        'INSERT OR REPLACE INTO trakt_tokens (username, value) VALUES (?, ?)',
+      )
+      .run(userName, JSON.stringify(tokens));
+  }
+
+  async deleteUserTraktTokens(userName: string): Promise<void> {
+    this.db
+      .prepare('DELETE FROM trakt_tokens WHERE username = ?')
       .run(userName);
   }
 

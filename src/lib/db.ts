@@ -534,6 +534,44 @@ export class DbManager {
     }
   }
 
+  // 观看状态 / Trakt
+  async getUserWatchData(userName: string): Promise<any | null> {
+    incrementDbQuery();
+    if (typeof (this.storage as any)?.getUserWatchData === 'function') {
+      return (this.storage as any).getUserWatchData(userName);
+    }
+    return null;
+  }
+
+  async saveUserWatchData(userName: string, data: any): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any)?.saveUserWatchData === 'function') {
+      await (this.storage as any).saveUserWatchData(userName, data);
+    }
+  }
+
+  async getUserTraktTokens(userName: string): Promise<any | null> {
+    incrementDbQuery();
+    if (typeof (this.storage as any)?.getUserTraktTokens === 'function') {
+      return (this.storage as any).getUserTraktTokens(userName);
+    }
+    return null;
+  }
+
+  async saveUserTraktTokens(userName: string, tokens: any): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any)?.saveUserTraktTokens === 'function') {
+      await (this.storage as any).saveUserTraktTokens(userName, tokens);
+    }
+  }
+
+  async deleteUserTraktTokens(userName: string): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any)?.deleteUserTraktTokens === 'function') {
+      await (this.storage as any).deleteUserTraktTokens(userName);
+    }
+  }
+
   // 崩溃日志相关方法
   async saveCrashLog(crashLog: any): Promise<void> {
     incrementDbQuery();

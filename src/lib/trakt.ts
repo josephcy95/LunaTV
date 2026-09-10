@@ -221,3 +221,138 @@ export async function traktRemoveHistory(
     return { ok: false, status: 0, error: e?.message || 'network' };
   }
 }
+
+export async function traktAddRating(
+  tokens: UserTraktTokens,
+  clientId: string,
+  opts: {
+    mediaType: WatchMediaType;
+    tmdbId: number;
+    rating: number;
+    season?: number;
+    episode?: number;
+  },
+): Promise<{ ok: boolean; status: number; error?: string }> {
+  try {
+    const rating = Math.max(1, Math.min(10, Math.round(opts.rating)));
+    const rated_at = new Date().toISOString();
+    const payload =
+      opts.mediaType === 'movie'
+        ? { movies: [{ ids: { tmdb: opts.tmdbId }, rating, rated_at }] }
+        : {
+            shows: [
+              {
+                ids: { tmdb: opts.tmdbId },
+                rating,
+                rated_at,
+              },
+            ],
+          };
+    const res = await fetch(`${TRAKT_API}/sync/ratings`, {
+      method: 'POST',
+      headers: traktHeaders(clientId, tokens.access_token),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      return { ok: false, status: res.status, error: text.slice(0, 200) };
+    }
+    return { ok: true, status: res.status };
+  } catch (e: any) {
+    return { ok: false, status: 0, error: e?.message || 'network' };
+  }
+}
+
+export async function traktRemoveRating(
+  tokens: UserTraktTokens,
+  clientId: string,
+  opts: {
+    mediaType: WatchMediaType;
+    tmdbId: number;
+  },
+): Promise<{ ok: boolean; status: number; error?: string }> {
+  try {
+    const payload =
+      opts.mediaType === 'movie'
+        ? { movies: [{ ids: { tmdb: opts.tmdbId } }] }
+        : { shows: [{ ids: { tmdb: opts.tmdbId } }] };
+    const res = await fetch(`${TRAKT_API}/sync/ratings`, {
+      method: 'DELETE',
+      headers: traktHeaders(clientId, tokens.access_token),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      return { ok: false, status: res.status, error: text.slice(0, 200) };
+    }
+    return { ok: true, status: res.status };
+  } catch (e: any) {
+    return { ok: false, status: 0, error: e?.message || 'network' };
+  }
+}
+
+export type TraktWatchedImport = {
+  mediaType: WatchMediaType;
+  tmdbId: number;
+  title: string;
+  year?: string;
+  watchedAt?: number;
+  episodeCount?: number;
+  knownEpisodeCount?: number;
+};
+
+/** Pull watched movies + shows (counts) for import into local DB. */
+export async function traktFetchWatched(
+  tokens: UserTraktTokens,
+  clientId: string,
+): Promise<TraktWatchedImport[]> {
+  const out: TraktWatchedImport[] = [];
+  const headers = traktHeaders(clientId, tokens.access_token);
+
+  const [moviesRes, showsRes] = await Promise.all([
+    fetch(`${TRAKT_API}/sync/watched/movies`, { headers }),
+    fetch(`${TRAKT_API}/sync/watched/shows`, { headers }),
+  ]);
+
+  if (moviesRes.ok) {
+    const movies = await moviesRes.json();
+    for (const row of movies || []) {
+      const tmdb = row?.movie?.ids?.tmdb;
+      if (!tmdb) continue;
+      out.push({
+        mediaType: 'movie',
+        tmdbId: Number(tmdb),
+        title: row.movie.title || `Movie ${tmdb}`,
+        year: row.movie.year ? String(row.movie.year) : undefined,
+        watchedAt: row.last_watched_at
+          ? Date.parse(row.last_watched_at)
+          : Date.now(),
+      });
+    }
+  }
+
+  if (showsRes.ok) {
+    const shows = await showsRes.json();
+    for (const row of shows || []) {
+      const tmdb = row?.show?.ids?.tmdb;
+      if (!tmdb) continue;
+      let epCount = 0;
+      for (const season of row.seasons || []) {
+        epCount += (season.episodes || []).length;
+      }
+      out.push({
+        mediaType: 'tv',
+        tmdbId: Number(tmdb),
+        title: row.show.title || `Show ${tmdb}`,
+        year: row.show.year ? String(row.show.year) : undefined,
+        watchedAt: row.last_watched_at
+          ? Date.parse(row.last_watched_at)
+          : Date.now(),
+        episodeCount: epCount,
+        knownEpisodeCount: epCount || undefined,
+      });
+    }
+  }
+
+  return out;
+}

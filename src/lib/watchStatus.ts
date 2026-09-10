@@ -6,7 +6,7 @@
 
 export type WatchMediaType = 'movie' | 'tv';
 
-export type WatchShowStatus = 'watching' | 'completed' | 'watched';
+export type WatchShowStatus = 'watching' | 'completed' | 'watched' | 'dropped';
 
 export interface WatchStatus {
   /** Stable key: movie:{tmdb} | tv:{tmdb} | douban:{id} | src:{source}+{id} */
@@ -18,6 +18,9 @@ export interface WatchStatus {
   year?: string;
   cover?: string;
   status: WatchShowStatus;
+  /** User rating 1–10 (Trakt scale). Undefined = no rating. */
+  rating?: number;
+  rating_updated_at?: number;
   /** TV: episode keys "ep:{n}" (1-based flat index) → watched_at ms */
   watched_episodes?: Record<string, number>;
   known_episode_count?: number;
@@ -167,4 +170,73 @@ export function isEpisodeWatched(
 ): boolean {
   if (!item) return false;
   return Boolean(item.watched_episodes?.[episodeKey(episodeIndex1Based)]);
+}
+
+export function clampUserRating(rating: unknown): number | undefined {
+  if (rating === null || rating === undefined || rating === '')
+    return undefined;
+  const n = Number(rating);
+  if (!Number.isFinite(n)) return undefined;
+  const rounded = Math.round(n);
+  if (rounded < 1 || rounded > 10) return undefined;
+  return rounded;
+}
+
+export function applyStatusChange(
+  existing: WatchStatus | undefined,
+  base: Omit<WatchStatus, 'status' | 'updated_at'> & {
+    status: WatchShowStatus;
+  },
+): WatchStatus {
+  const now = Date.now();
+  return {
+    ...(existing || {}),
+    ...base,
+    status: base.status,
+    updated_at: now,
+    watched_at: base.watched_at ?? existing?.watched_at ?? now,
+  };
+}
+
+export function applyUserRating(
+  existing: WatchStatus | undefined,
+  base: Omit<
+    WatchStatus,
+    'status' | 'updated_at' | 'rating' | 'rating_updated_at'
+  > & {
+    rating?: number;
+    status?: WatchShowStatus;
+  },
+): WatchStatus {
+  const now = Date.now();
+  const rating = clampUserRating(base.rating);
+  return {
+    ...(existing || {
+      key: base.key,
+      media_type: base.media_type,
+      title: base.title,
+      status:
+        base.status || (base.media_type === 'tv' ? 'watching' : 'watched'),
+      updated_at: now,
+    }),
+    ...base,
+    rating,
+    rating_updated_at: now,
+    updated_at: now,
+    status:
+      base.status ||
+      existing?.status ||
+      (base.media_type === 'tv' ? 'watching' : 'watched'),
+  };
+}
+
+export function progressLabel(item: WatchStatus): string {
+  if (item.media_type === 'tv' && item.watched_episodes) {
+    const n = Object.keys(item.watched_episodes).length;
+    if (item.known_episode_count) return `${n}/${item.known_episode_count}`;
+    return `${n} 集`;
+  }
+  return item.status === 'watched' || item.status === 'completed'
+    ? '已看完'
+    : '';
 }

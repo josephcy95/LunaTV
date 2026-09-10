@@ -128,6 +128,46 @@ export function useCurrentWatchStatus(opts: {
     else await mark();
   }, [watched, mark, unmark]);
 
+  const setRating = useCallback(
+    async (rating: number | null) => {
+      if (!key || !opts.title) return;
+      await postWatchStatus({
+        action: 'rate',
+        tmdbId: opts.tmdbId,
+        mediaType,
+        doubanId: opts.doubanId,
+        source: opts.source,
+        id: opts.id,
+        title: opts.title,
+        year: opts.year,
+        cover: opts.cover,
+        rating,
+      });
+      await reload();
+    },
+    [key, mediaType, opts, reload],
+  );
+
+  const setStatus = useCallback(
+    async (status: import('@/lib/watchStatus').WatchShowStatus) => {
+      if (!key || !opts.title) return;
+      await postWatchStatus({
+        action: 'setStatus',
+        tmdbId: opts.tmdbId,
+        mediaType,
+        doubanId: opts.doubanId,
+        source: opts.source,
+        id: opts.id,
+        title: opts.title,
+        year: opts.year,
+        cover: opts.cover,
+        status,
+      });
+      await reload();
+    },
+    [key, mediaType, opts, reload],
+  );
+
   /** Call from play-progress saver; auto-marks once per episode/key. */
   const reportProgress = useCallback(
     async (playTime: number, totalTime: number) => {
@@ -187,9 +227,12 @@ export function useCurrentWatchStatus(opts: {
     item,
     watched,
     showStatus,
+    rating: item?.rating,
     mark,
     unmark,
     toggle,
+    setRating,
+    setStatus,
     reportProgress,
   };
 }

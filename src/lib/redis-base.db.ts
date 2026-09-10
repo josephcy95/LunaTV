@@ -393,6 +393,10 @@ export abstract class BaseRedisStorage implements IStorage {
     // 删除用户登入统计数据
     const loginStatsKey = `user_login_stats:${userName}`;
     await this.withRetry(() => this.client.del(loginStatsKey));
+
+    await this.withRetry(() => this.client.del(`u:${userName}:watch-status`));
+    await this.withRetry(() => this.client.del(`u:${userName}:trakt-tokens`));
+    await this.withRetry(() => this.client.del(`u:${userName}:emby-config`));
   }
 
   // ---------- 用户相关（新版本 V2，支持 OIDC） ----------
@@ -1490,6 +1494,39 @@ export abstract class BaseRedisStorage implements IStorage {
       console.error(`删除用户 ${userName} Emby 配置失败:`, error);
       throw error;
     }
+  }
+
+  // ---------- Watch status / Trakt ----------
+  async getUserWatchData(userName: string): Promise<any | null> {
+    try {
+      const data = await this.client.get(`u:${userName}:watch-status`);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error(`获取用户 ${userName} 观看状态失败:`, error);
+      return null;
+    }
+  }
+
+  async saveUserWatchData(userName: string, data: any): Promise<void> {
+    await this.client.set(`u:${userName}:watch-status`, JSON.stringify(data));
+  }
+
+  async getUserTraktTokens(userName: string): Promise<any | null> {
+    try {
+      const data = await this.client.get(`u:${userName}:trakt-tokens`);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error(`获取用户 ${userName} Trakt tokens 失败:`, error);
+      return null;
+    }
+  }
+
+  async saveUserTraktTokens(userName: string, tokens: any): Promise<void> {
+    await this.client.set(`u:${userName}:trakt-tokens`, JSON.stringify(tokens));
+  }
+
+  async deleteUserTraktTokens(userName: string): Promise<void> {
+    await this.client.del(`u:${userName}:trakt-tokens`);
   }
 
   // 崩溃日志相关

@@ -1,7 +1,9 @@
 import {
   applyEpisodeWatched,
   applyMovieWatched,
+  applyUserRating,
   buildWatchKey,
+  clampUserRating,
   shouldAutoMarkWatched,
   unmarkEpisode,
   WATCHED_PROGRESS_THRESHOLD,
@@ -62,5 +64,21 @@ describe('applyMovieWatched', () => {
       watched_at: 0,
     });
     expect(s.status).toBe('watched');
+  });
+});
+
+describe('clampUserRating / applyUserRating', () => {
+  it('clamps 1-10 and stores rating', () => {
+    expect(clampUserRating(7.6)).toBe(8);
+    expect(clampUserRating(0)).toBeUndefined();
+    expect(clampUserRating(11)).toBeUndefined();
+    const item = applyUserRating(undefined, {
+      key: 'movie:1',
+      media_type: 'movie',
+      title: 'Film',
+      rating: 9,
+    });
+    expect(item.rating).toBe(9);
+    expect(item.status).toBe('watched');
   });
 });

@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
 
   const url = buildTraktAuthorizeUrl(creds.clientId, redirectUri, state);
   const res = NextResponse.redirect(url);
+  // short-lived cookie to validate callback
   res.cookies.set(
     'trakt_oauth_state',
     createHash('sha256').update(state).digest('hex'),

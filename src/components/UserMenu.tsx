@@ -7,6 +7,7 @@ import {
   Bell,
   Calendar,
   Check,
+  CheckCircle2,
   Download,
   Heart,
   KeyRound,
@@ -38,6 +39,7 @@ import {
   useChangePasswordMutation,
   useInvalidateUserMenuData,
 } from '@/hooks/useUserMenuQueries';
+import { useWatchStatusList } from '@/hooks/useWatchStatus';
 import {
   useWatchingUpdatesQuery,
   useRefreshWatchingUpdates,
@@ -192,6 +194,8 @@ export const UserMenu: React.FC = () => {
   const { data: favorites = [] } = useFavoritesQuery({
     enabled: dataQueryEnabled,
   });
+
+  const { list: watchList } = useWatchStatusList(dataQueryEnabled);
 
   // 🚀 TanStack Query - 修改密码
   const changePasswordMutation = useChangePasswordMutation();
@@ -526,6 +530,23 @@ export const UserMenu: React.FC = () => {
               )}
             </button>
           )}
+
+          {/* 已看 / 在看 */}
+          <button
+            onClick={() => {
+              setIsOpen(false);
+              window.location.href = '/watched';
+            }}
+            className='w-full px-3 py-2 text-left flex items-center gap-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-[background-color] duration-150 ease-in-out text-sm relative'
+          >
+            <CheckCircle2 className='w-4 h-4 text-gray-500 dark:text-gray-400' />
+            <span className='font-medium'>我的观看</span>
+            {watchList.length > 0 && (
+              <span className='ml-auto text-xs text-gray-400'>
+                {watchList.length}
+              </span>
+            )}
+          </button>
 
           {/* 管理面板按钮 */}
           {showAdminPanel && (

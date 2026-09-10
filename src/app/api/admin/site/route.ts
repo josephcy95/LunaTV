@@ -52,6 +52,8 @@ export async function POST(request: NextRequest) {
       TMDBLanguage,
       EnableTMDBActorSearch,
       MDBListApiKey,
+      TraktClientId,
+      TraktClientSecret,
       cronConfig,
     } = body as {
       SiteName: string;
@@ -76,6 +78,8 @@ export async function POST(request: NextRequest) {
       TMDBLanguage?: string;
       EnableTMDBActorSearch?: boolean;
       MDBListApiKey?: string;
+      TraktClientId?: string;
+      TraktClientSecret?: string;
       cronConfig?: {
         enableAutoRefresh: boolean;
         maxRecordsPerRun: number;
@@ -138,6 +142,8 @@ export async function POST(request: NextRequest) {
       TMDBLanguage: TMDBLanguage || 'zh-CN',
       EnableTMDBActorSearch: EnableTMDBActorSearch || false,
       MDBListApiKey: MDBListApiKey || '',
+      TraktClientId: TraktClientId || '',
+      TraktClientSecret: TraktClientSecret || '',
     };
 
     // 更新豆瓣配置

@@ -4,7 +4,10 @@ import type { UserWatchData, WatchMediaType, WatchStatus } from './watchStatus';
 import {
   applyEpisodeWatched,
   applyMovieWatched,
+  applyStatusChange,
+  applyUserRating,
   buildWatchKey,
+  clampUserRating,
   shouldAutoMarkWatched,
   unmarkEpisode,
 } from './watchStatus';
@@ -39,7 +42,7 @@ function writeLocal(data: UserWatchData) {
 }
 
 export type WatchMarkPayload = {
-  action: 'mark' | 'unmark' | 'progress';
+  action: 'mark' | 'unmark' | 'progress' | 'rate' | 'setStatus';
   tmdbId?: number | null;
   mediaType?: WatchMediaType;
   doubanId?: number | null;
@@ -53,6 +56,8 @@ export type WatchMarkPayload = {
   playTime?: number;
   totalTime?: number;
   syncTrakt?: boolean;
+  rating?: number | null;
+  status?: import('./watchStatus').WatchShowStatus;
 };
 
 export async function fetchWatchStatuses(): Promise<
@@ -81,6 +86,54 @@ export async function postWatchStatus(
       id: payload.id,
     });
     if (!key) return { items: data.items };
+
+    if (payload.action === 'rate') {
+      const rating = clampUserRating(payload.rating);
+      const item = applyUserRating(data.items[key], {
+        key,
+        tmdb_id: payload.tmdbId || undefined,
+        media_type: mediaType,
+        douban_id: payload.doubanId || undefined,
+        title: payload.title,
+        year: payload.year,
+        cover: payload.cover,
+        source: payload.source,
+        id: payload.id,
+        rating,
+      });
+      if (rating == null) {
+        delete item.rating;
+        delete item.rating_updated_at;
+      }
+      data.items[key] = item;
+      writeLocal(data);
+      return { items: data.items, item };
+    }
+
+    if (payload.action === 'setStatus') {
+      const status = payload.status || 'watching';
+      const existing = data.items[key];
+      const item = applyStatusChange(existing, {
+        key,
+        tmdb_id: payload.tmdbId || existing?.tmdb_id,
+        media_type: mediaType,
+        douban_id: payload.doubanId || existing?.douban_id,
+        title: payload.title || existing?.title || '',
+        year: payload.year || existing?.year,
+        cover: payload.cover || existing?.cover,
+        source: payload.source || existing?.source,
+        id: payload.id || existing?.id,
+        rating: existing?.rating,
+        rating_updated_at: existing?.rating_updated_at,
+        watched_episodes: existing?.watched_episodes,
+        known_episode_count: existing?.known_episode_count,
+        watched_at: existing?.watched_at || Date.now(),
+        status,
+      });
+      data.items[key] = item;
+      writeLocal(data);
+      return { items: data.items, item };
+    }
 
     if (payload.action === 'progress') {
       if (

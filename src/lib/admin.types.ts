@@ -24,6 +24,9 @@ export interface AdminConfig {
     EnableTMDBActorSearch?: boolean;
     // MDBList 评分（Rotten Tomatoes 等）
     MDBListApiKey?: string;
+    // Trakt.tv (optional scrobble)
+    TraktClientId?: string;
+    TraktClientSecret?: string;
     // Bangumi API 代理
     BangumiApiType?: string;
     BangumiApiProxy?: string;
