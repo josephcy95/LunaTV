@@ -48,7 +48,16 @@ import {
 } from 'lucide-react';
 import { GripVertical, KeyRound, MessageSquare } from 'lucide-react';
 import { pinyin } from 'pinyin-pro';
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 
 import {
@@ -500,6 +509,7 @@ const CollapsibleTab = ({
       className='rounded-xl shadow-sm mb-4 overflow-hidden bg-white/80 backdrop-blur-md dark:bg-gray-800/50 dark:ring-1 dark:ring-gray-700 scroll-mt-4'
     >
       <button
+        type='button'
         onClick={onToggle}
         className='w-full px-6 py-4 flex items-center justify-between bg-gray-50/70 dark:bg-gray-800/60 hover:bg-gray-100/80 dark:hover:bg-gray-700/60 transition-colors'
       >
@@ -3598,6 +3608,196 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
   );
 };
 
+type SourceValidationStatus = {
+  text: string;
+  className: string;
+  icon: string;
+  message: string;
+} | null;
+
+const SourceDraggableRow = memo(function SourceDraggableRow({
+  source,
+  selected,
+  validationStatus,
+  isToggling,
+  isTogglingAdult,
+  isDeleting,
+  onSelect,
+  onToggleAdult,
+  onToggleEnable,
+  onEdit,
+  onDelete,
+  onUpdateWeight,
+}: {
+  source: DataSource;
+  selected: boolean;
+  validationStatus: SourceValidationStatus;
+  isToggling: boolean;
+  isTogglingAdult: boolean;
+  isDeleting: boolean;
+  onSelect: (key: string, checked: boolean) => void;
+  onToggleAdult: (key: string, isAdult: boolean) => void;
+  onToggleEnable: (key: string) => void;
+  onEdit: (source: DataSource) => void;
+  onDelete: (key: string) => void;
+  onUpdateWeight: (key: string, weight: number) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: source.key });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  } as React.CSSProperties;
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className='hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors select-none'
+    >
+      <td
+        className='px-2 py-4 cursor-grab text-gray-400'
+        style={{ touchAction: 'none' }}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical size={16} />
+      </td>
+      <td className='px-2 py-4 text-center'>
+        <input
+          type='checkbox'
+          checked={selected}
+          onChange={(e) => onSelect(source.key, e.target.checked)}
+          className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+        />
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
+        {source.name}
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
+        {source.key}
+      </td>
+      <td
+        className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[12rem] truncate'
+        title={source.api}
+      >
+        {source.api}
+      </td>
+      <td
+        className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[8rem] truncate'
+        title={source.detail || '-'}
+      >
+        {source.detail || '-'}
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap max-w-[1rem]'>
+        <span
+          className={`px-2 py-1 text-xs rounded-full ${
+            !source.disabled
+              ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
+              : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
+          }`}
+        >
+          {!source.disabled ? '启用中' : '已禁用'}
+        </span>
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-center'>
+        <button
+          type='button'
+          onClick={() => onToggleAdult(source.key, !source.is_adult)}
+          disabled={isTogglingAdult}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+            source.is_adult
+              ? 'bg-linear-to-r from-red-600 to-pink-600 focus:ring-red-500'
+              : 'bg-gray-200 dark:bg-gray-700 focus:ring-gray-500'
+          } ${isTogglingAdult ? 'opacity-50 cursor-not-allowed' : ''}`}
+          title={
+            source.is_adult ? '点击取消成人资源标记' : '点击标记为成人资源'
+          }
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${source.is_adult ? 'translate-x-6' : 'translate-x-1'}`}
+          />
+        </button>
+        {source.is_adult && (
+          <span className='ml-2 text-xs text-red-600 dark:text-red-400'>
+            🔞
+          </span>
+        )}
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-center'>
+        {source.type === 'shortdrama' ? (
+          <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200'>
+            📺 短剧源
+          </span>
+        ) : (
+          <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'>
+            普通源
+          </span>
+        )}
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-center'>
+        <input
+          type='number'
+          min='0'
+          max='100'
+          value={source.weight ?? 50}
+          onChange={(e) =>
+            onUpdateWeight(source.key, parseInt(e.target.value) || 0)
+          }
+          className='w-16 px-2 py-1 text-center text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          title='权重越高，播放时越优先选择该源（0-100）'
+        />
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap max-w-[1rem]'>
+        {validationStatus ? (
+          <span
+            className={`px-2 py-1 text-xs rounded-full ${validationStatus.className}`}
+            title={validationStatus.message}
+          >
+            {validationStatus.icon} {validationStatus.text}
+          </span>
+        ) : (
+          <span className='px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-900/20 text-gray-600 dark:text-gray-400'>
+            未检测
+          </span>
+        )}
+      </td>
+      <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
+        <button
+          type='button'
+          onClick={() => onToggleEnable(source.key)}
+          disabled={isToggling}
+          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
+            !source.disabled
+              ? buttonStyles.roundedDanger
+              : buttonStyles.roundedSuccess
+          } transition-colors ${isToggling ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          {!source.disabled ? '禁用' : '启用'}
+        </button>
+        <button
+          type='button'
+          onClick={() => onEdit(source)}
+          className={buttonStyles.roundedPrimary}
+        >
+          编辑
+        </button>
+        {source.from !== 'config' && (
+          <button
+            type='button'
+            onClick={() => onDelete(source.key)}
+            disabled={isDeleting}
+            className={`${buttonStyles.roundedSecondary} ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            删除
+          </button>
+        )}
+      </td>
+    </tr>
+  );
+});
+
 // 视频源配置组件
 const VideoSourceConfig = ({
   config,
@@ -3711,14 +3911,33 @@ const VideoSourceConfig = ({
     }),
   );
 
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const tableScrollTopRef = useRef(0);
+
+  const rememberTableScroll = useCallback(() => {
+    if (tableScrollRef.current) {
+      tableScrollTopRef.current = tableScrollRef.current.scrollTop;
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    const el = tableScrollRef.current;
+    if (el) el.scrollTop = tableScrollTopRef.current;
+  });
+
   // 初始化
   useEffect(() => {
     if (config?.SourceConfig) {
       setSources(config.SourceConfig);
       // 进入时重置 orderChanged
       setOrderChanged(false);
-      // 重置选择状态
-      setSelectedSources(new Set());
+      // Keep current multi-select across config refreshes (enable/disable).
+      setSelectedSources((prev) => {
+        if (prev.size === 0) return prev;
+        const valid = new Set(config.SourceConfig.map((s) => s.key));
+        const next = new Set([...prev].filter((key) => valid.has(key)));
+        return next.size === prev.size ? prev : next;
+      });
     }
 
     // 加载普通视频源代理配置
@@ -3758,9 +3977,18 @@ const VideoSourceConfig = ({
     const target = sources.find((s) => s.key === key);
     if (!target) return;
     const action = target.disabled ? 'enable' : 'disable';
+    rememberTableScroll();
+    setSources((prev) =>
+      prev.map((s) => (s.key === key ? { ...s, disabled: !s.disabled } : s)),
+    );
     withLoading(`toggleSource_${key}`, () =>
       callSourceApi({ action, key }),
     ).catch(() => {
+      setSources((prev) =>
+        prev.map((s) =>
+          s.key === key ? { ...s, disabled: target.disabled } : s,
+        ),
+      );
       console.error('操作失败', action, key);
     });
   };
@@ -4248,173 +4476,28 @@ const VideoSourceConfig = ({
     }
   };
 
-  // 可拖拽行封装 (dnd-kit)
-  const DraggableRow = ({ source }: { source: DataSource }) => {
-    const { attributes, listeners, setNodeRef, transform, transition } =
-      useSortable({ id: source.key });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-    } as React.CSSProperties;
-
-    return (
-      <tr
-        ref={setNodeRef}
-        style={style}
-        className='hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors select-none'
-      >
-        <td
-          className='px-2 py-4 cursor-grab text-gray-400'
-          style={{ touchAction: 'none' }}
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical size={16} />
-        </td>
-        <td className='px-2 py-4 text-center'>
-          <input
-            type='checkbox'
-            checked={selectedSources.has(source.key)}
-            onChange={(e) => handleSelectSource(source.key, e.target.checked)}
-            className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
-          />
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
-          {source.name}
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
-          {source.key}
-        </td>
-        <td
-          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[12rem] truncate'
-          title={source.api}
-        >
-          {source.api}
-        </td>
-        <td
-          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[8rem] truncate'
-          title={source.detail || '-'}
-        >
-          {source.detail || '-'}
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap max-w-[1rem]'>
-          <span
-            className={`px-2 py-1 text-xs rounded-full ${
-              !source.disabled
-                ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
-                : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
-            }`}
-          >
-            {!source.disabled ? '启用中' : '已禁用'}
-          </span>
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap text-center'>
-          <button
-            type='button'
-            onClick={() => handleToggleAdult(source.key, !source.is_adult)}
-            disabled={isLoading(`toggleAdult_${source.key}`)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-              source.is_adult
-                ? 'bg-linear-to-r from-red-600 to-pink-600 focus:ring-red-500'
-                : 'bg-gray-200 dark:bg-gray-700 focus:ring-gray-500'
-            } ${isLoading(`toggleAdult_${source.key}`) ? 'opacity-50 cursor-not-allowed' : ''}`}
-            title={
-              source.is_adult ? '点击取消成人资源标记' : '点击标记为成人资源'
-            }
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${source.is_adult ? 'translate-x-6' : 'translate-x-1'}`}
-            />
-          </button>
-          {source.is_adult && (
-            <span className='ml-2 text-xs text-red-600 dark:text-red-400'>
-              🔞
-            </span>
-          )}
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap text-center'>
-          {source.type === 'shortdrama' ? (
-            <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200'>
-              📺 短剧源
-            </span>
-          ) : (
-            <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'>
-              普通源
-            </span>
-          )}
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap text-center'>
-          <input
-            type='number'
-            min='0'
-            max='100'
-            value={source.weight ?? 50}
-            onChange={(e) =>
-              handleUpdateWeight(source.key, parseInt(e.target.value) || 0)
-            }
-            className='w-16 px-2 py-1 text-center text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            title='权重越高，播放时越优先选择该源（0-100）'
-          />
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap max-w-[1rem]'>
-          {(() => {
-            const status = getValidationStatus(source.key);
-            if (!status) {
-              return (
-                <span className='px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-900/20 text-gray-600 dark:text-gray-400'>
-                  未检测
-                </span>
-              );
-            }
-            return (
-              <span
-                className={`px-2 py-1 text-xs rounded-full ${status.className}`}
-                title={status.message}
-              >
-                {status.icon} {status.text}
-              </span>
-            );
-          })()}
-        </td>
-        <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
-          <button
-            type='button'
-            onClick={() => handleToggleEnable(source.key)}
-            disabled={isLoading(`toggleSource_${source.key}`)}
-            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
-              !source.disabled
-                ? buttonStyles.roundedDanger
-                : buttonStyles.roundedSuccess
-            } transition-colors ${isLoading(`toggleSource_${source.key}`) ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {!source.disabled ? '禁用' : '启用'}
-          </button>
-          <button
-            type='button'
-            onClick={() => handleEditSource(source)}
-            className={buttonStyles.roundedPrimary}
-          >
-            编辑
-          </button>
-          {source.from !== 'config' && (
-            <button
-              type='button'
-              onClick={() => handleDelete(source.key)}
-              disabled={isLoading(`deleteSource_${source.key}`)}
-              className={`${buttonStyles.roundedSecondary} ${isLoading(`deleteSource_${source.key}`) ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              删除
-            </button>
-          )}
-        </td>
-      </tr>
-    );
-  };
+  const renderSourceRow = (source: DataSource) => (
+    <SourceDraggableRow
+      key={source.key}
+      source={source}
+      selected={selectedSources.has(source.key)}
+      validationStatus={getValidationStatus(source.key)}
+      isToggling={isLoading(`toggleSource_${source.key}`)}
+      isTogglingAdult={isLoading(`toggleAdult_${source.key}`)}
+      isDeleting={isLoading(`deleteSource_${source.key}`)}
+      onSelect={handleSelectSource}
+      onToggleAdult={handleToggleAdult}
+      onToggleEnable={handleToggleEnable}
+      onEdit={handleEditSource}
+      onDelete={handleDelete}
+      onUpdateWeight={handleUpdateWeight}
+    />
+  );
 
   // 全选/取消全选
   const handleSelectAll = useCallback(
     (checked: boolean) => {
+      rememberTableScroll();
       if (checked) {
         const allKeys = sources.map((s) => s.key);
         setSelectedSources(new Set(allKeys));
@@ -4422,21 +4505,25 @@ const VideoSourceConfig = ({
         setSelectedSources(new Set());
       }
     },
-    [sources],
+    [sources, rememberTableScroll],
   );
 
   // 单个选择
-  const handleSelectSource = useCallback((key: string, checked: boolean) => {
-    setSelectedSources((prev) => {
-      const newSelected = new Set(prev);
-      if (checked) {
-        newSelected.add(key);
-      } else {
-        newSelected.delete(key);
-      }
-      return newSelected;
-    });
-  }, []);
+  const handleSelectSource = useCallback(
+    (key: string, checked: boolean) => {
+      rememberTableScroll();
+      setSelectedSources((prev) => {
+        const newSelected = new Set(prev);
+        if (checked) {
+          newSelected.add(key);
+        } else {
+          newSelected.delete(key);
+        }
+        return newSelected;
+      });
+    },
+    [rememberTableScroll],
+  );
 
   // 批量操作
   const handleBatchOperation = async (
@@ -5484,6 +5571,10 @@ const VideoSourceConfig = ({
 
       {/* 视频源表格 */}
       <div
+        ref={tableScrollRef}
+        onScroll={(e) => {
+          tableScrollTopRef.current = e.currentTarget.scrollTop;
+        }}
         className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
         data-table='source-list'
       >
@@ -5543,9 +5634,7 @@ const VideoSourceConfig = ({
               strategy={verticalListSortingStrategy}
             >
               <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
-                {sources.map((source) => (
-                  <DraggableRow key={source.key} source={source} />
-                ))}
+                {sources.map((source) => renderSourceRow(source))}
               </tbody>
             </SortableContext>
           </DndContext>

@@ -852,20 +852,29 @@ function PlayPageClient() {
     const onConfig = (option: Record<string, unknown>) => {
       persist(settingsFromPluginOption(option));
     };
-    const panelInner = art.template?.$player?.querySelector(
-      '.apd-config-panel-inner',
-    ) as HTMLElement | null;
-    const unmountDensity = mountNativeDensitySlider(panelInner, {
-      density: danmuSettingsRef.current.density,
-      onChange: (level) => {
-        updateDanmuSettings({ density: level });
-      },
-    });
+    const mountDensity = () =>
+      mountNativeDensitySlider(
+        art.template?.$player?.querySelector(
+          '.apd-config-panel-inner',
+        ) as HTMLElement | null,
+        {
+          density: danmuSettingsRef.current.density,
+          onChange: (level) => {
+            updateDanmuSettings({ density: level });
+          },
+        },
+      );
+    let unmountDensity = mountDensity();
+    const densityRetry = window.setTimeout(() => {
+      unmountDensity();
+      unmountDensity = mountDensity();
+    }, 400);
 
     art.on('artplayerPluginDanmuku:show', onShow);
     art.on('artplayerPluginDanmuku:hide', onHide);
     art.on('artplayerPluginDanmuku:config', onConfig);
     return () => {
+      window.clearTimeout(densityRetry);
       unmountDensity();
       art.off('artplayerPluginDanmuku:show', onShow);
       art.off('artplayerPluginDanmuku:hide', onHide);
@@ -4533,9 +4542,9 @@ function PlayPageClient() {
             {
               name: 'danmu-settings',
               position: 'right',
-              index: 34,
-              html: '<span style="font-size:16px">⚙</span>',
-              tooltip: '弹幕设置',
+              index: 20,
+              html: '<span style="font-size:13px;font-weight:700;">弹</span>',
+              tooltip: '弹幕设置（密度 / 手动匹配）',
               click: function () {
                 setIsDanmuSettingsOpen(true);
               },
