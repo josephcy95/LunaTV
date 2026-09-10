@@ -1,7 +1,12 @@
 import {
   applyDanmuVisibility,
+  areaIndexFromMargin,
+  clampDanmuDensity,
+  DANMU_AREA_STEPS,
   DEFAULT_DANMU_SETTINGS,
   loadDanmuIntoPlugin,
+  marginFromAreaIndex,
+  maxVisibleForDensity,
   normalizeDanmuForPlugin,
   pluginConfigFromSettings,
   readStoredDanmuSettings,
@@ -98,6 +103,7 @@ describe('danmu settings persistence', () => {
       opacity: 0.4,
       visible: false,
       antiOverlap: true,
+      density: 2,
     };
     writeStoredDanmuSettings(settings);
     expect(readStoredDanmuSettings()).toEqual(settings);
@@ -140,6 +146,33 @@ describe('danmu settings persistence', () => {
         visible: true,
       }).visible,
     ).toBe(false);
+  });
+});
+
+describe('area and density', () => {
+  test('exposes six screen-area steps', () => {
+    expect(DANMU_AREA_STEPS.map((step) => step.label)).toEqual([
+      '1/6',
+      '2/6',
+      '3/6',
+      '4/6',
+      '5/6',
+      '6/6',
+    ]);
+  });
+
+  test('snaps old 1/4 margin to the nearest sixth', () => {
+    expect(areaIndexFromMargin([10, '75%'])).toBe(1);
+    expect(marginFromAreaIndex(0)).toEqual([10, '83%']);
+    expect(marginFromAreaIndex(5)).toEqual([10, 10]);
+  });
+
+  test('clamps density and maps to a concurrent cap', () => {
+    expect(clampDanmuDensity(0)).toBe(1);
+    expect(clampDanmuDensity(9)).toBe(6);
+    expect(maxVisibleForDensity(1)).toBe(8);
+    expect(maxVisibleForDensity(3)).toBe(22);
+    expect(maxVisibleForDensity(6)).toBe(60);
   });
 });
 

@@ -27,7 +27,10 @@ import { ClientCache } from '@/lib/client-cache';
 import { getPlayerDeviceInfo } from '@/lib/player/device';
 import {
   applyDanmuVisibility,
+  countEmittingDanmu,
+  DANMU_MARGIN_OPTION,
   loadDanmuIntoPlugin,
+  maxVisibleForDensity,
   pluginConfigFromSettings,
   readStoredDanmuSettings,
   settingsFromPluginOption,
@@ -731,7 +734,10 @@ function PlayPageClient() {
       const playerEl = artPlayerRef.current?.template?.$player as
         | HTMLElement
         | undefined;
-      const { enabled, ...pluginOptions } = updates;
+      const pluginOptions = { ...updates };
+      delete pluginOptions.enabled;
+      delete pluginOptions.density;
+      const enabled = updates.enabled;
       syncingDanmuRef.current = true;
       if (Object.keys(pluginOptions).length > 0) {
         plugin?.config(pluginOptions);
@@ -4608,6 +4614,15 @@ function PlayPageClient() {
                     maxLength: 50,
                     lockTime: 1,
                     theme: 'dark',
+                    MARGIN: DANMU_MARGIN_OPTION,
+                    beforeVisible: () => {
+                      const max = maxVisibleForDensity(
+                        danmuSettingsRef.current.density,
+                      );
+                      const overlay = artPlayerRef.current?.template
+                        ?.$danmuku as HTMLElement | undefined;
+                      return countEmittingDanmu(overlay) < max;
+                    },
                   }),
                 ]
               : []),
