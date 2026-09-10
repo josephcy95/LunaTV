@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom';
 
 import { UserEmbyConfig } from './UserEmbyConfig';
 import { UserTraktConnect } from './UserTraktConnect';
+import { UserSimklConnect } from './UserSimklConnect';
 import { useEmbyConfigQuery } from '@/hooks/useUserMenuQueries';
 
 interface SettingsPanelProps {
@@ -399,7 +400,7 @@ export const SettingsPanel = memo(({ isOpen, onClose }: SettingsPanelProps) => {
 
             <div className='border-t border-gray-200 dark:border-gray-700'></div>
 
-            {/* Trakt 同步 */}
+            {/* Trakt 同步 — always visible */}
             <div className='space-y-3'>
               <div>
                 <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
@@ -410,6 +411,21 @@ export const SettingsPanel = memo(({ isOpen, onClose }: SettingsPanelProps) => {
                 </p>
               </div>
               <UserTraktConnect />
+            </div>
+
+            <div className='border-t border-gray-200 dark:border-gray-700'></div>
+
+            {/* Simkl 同步 */}
+            <div className='space-y-3'>
+              <div>
+                <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  Simkl 同步（免费可选）
+                </h4>
+                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                  本地为权威来源；连接后 best-effort 推送 / 拉取
+                </p>
+              </div>
+              <UserSimklConnect />
             </div>
 
             <div className='border-t border-gray-200 dark:border-gray-700'></div>

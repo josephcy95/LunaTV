@@ -29,6 +29,12 @@ export interface WatchStatus {
   /** Last play deep-link */
   source?: string;
   id?: string;
+  /** Prefer English/TMDB title when syncing to Simkl */
+  english_title?: string;
+  imdb_id?: string;
+  /** Simkl catalog id when known (for View on Simkl links) */
+  simkl_id?: number;
+  simkl_slug?: string;
 }
 
 export interface UserWatchData {
@@ -43,6 +49,18 @@ export interface UserTraktTokens {
   token_type?: string;
   scope?: string;
   trakt_username?: string;
+}
+
+/** Simkl OAuth tokens (long-lived; no refresh_token). */
+export interface UserSimklTokens {
+  access_token: string;
+  created_at: number;
+  expires_in: number;
+  token_type?: string;
+  scope?: string;
+  simkl_username?: string;
+  /** Watermark from GET /sync/activities → activities.all */
+  last_sync?: string;
 }
 
 /** Progress at or above this ratio auto-marks watched. */

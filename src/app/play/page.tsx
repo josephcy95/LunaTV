@@ -564,6 +564,9 @@ function PlayPageClient() {
     poster: string | null;
     logo: string | null;
     title: string | null;
+    englishTitle?: string | null;
+    originalTitle?: string | null;
+    imdbId?: string | null;
     overview: string | null;
     rating: number | null;
     year: string | null;
@@ -1164,10 +1167,16 @@ function PlayPageClient() {
     source: currentSource,
     id: currentId,
     title: videoTitle,
-    year: videoYear,
+    year: tmdbData?.year || videoYear,
     cover: videoCover,
     episodeIndex1Based: currentEpisodeIndex + 1,
     knownEpisodeCount: totalEpisodes > 1 ? totalEpisodes : undefined,
+    englishTitle:
+      tmdbData?.englishTitle ||
+      tmdbData?.originalTitle ||
+      tmdbData?.title ||
+      undefined,
+    imdbId: tmdbData?.imdbId || undefined,
   });
   const reportWatchProgressRef = useRef(reportWatchProgress);
   reportWatchProgressRef.current = reportWatchProgress;
@@ -1205,17 +1214,31 @@ function PlayPageClient() {
       totalTime > 0
         ? Math.min(100, Math.round((playTime / totalTime) * 100))
         : 0;
+    const payload = {
+      action,
+      tmdbId,
+      mediaType: watchMediaType,
+      progress,
+      episode: currentEpisodeIndex + 1,
+      title:
+        tmdbData?.englishTitle ||
+        tmdbData?.originalTitle ||
+        tmdbData?.title ||
+        undefined,
+      year: tmdbData?.year || videoYear || undefined,
+      imdbId: tmdbData?.imdbId || undefined,
+    };
     fetch('/api/trakt/scrobble', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action,
-        tmdbId,
-        mediaType: watchMediaType,
-        progress,
-        episode: currentEpisodeIndex + 1,
-      }),
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+    fetch('/api/simkl/scrobble', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     }).catch(() => {});
   };
 

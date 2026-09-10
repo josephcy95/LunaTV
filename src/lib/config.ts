@@ -256,6 +256,8 @@ async function getInitConfig(
       MDBListApiKey: process.env.MDBLIST_API_KEY || '',
       TraktClientId: process.env.TRAKT_CLIENT_ID || '',
       TraktClientSecret: process.env.TRAKT_CLIENT_SECRET || '',
+      SimklClientId: process.env.SIMKL_CLIENT_ID || '',
+      SimklClientSecret: process.env.SIMKL_CLIENT_SECRET || '',
     },
     UserConfig: {
       AllowRegister: true, // 默认允许注册

@@ -105,6 +105,35 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // English title for external sync (Simkl prefers English/TMDB title)
+      let englishTitle: string | null = null;
+      let imdbId: string | null = null;
+      try {
+        const enRes = await fetch(
+          applyCorsProxy(
+            `${base}/${type}/${hit.id}?api_key=${apiKey}&language=en&append_to_response=external_ids`,
+            config,
+          ),
+          { signal: AbortSignal.timeout(6000) },
+        );
+        if (enRes.ok) {
+          const en = await enRes.json();
+          englishTitle =
+            (type === 'movie' ? en.title : en.name) ||
+            (type === 'movie' ? en.original_title : en.original_name) ||
+            null;
+          imdbId = en.external_ids?.imdb_id || en.imdb_id || null;
+        }
+      } catch {
+        /* ignore */
+      }
+      if (!englishTitle) {
+        englishTitle =
+          (type === 'movie' ? hit.original_title : hit.original_name) ||
+          (type === 'movie' ? hit.title : hit.name) ||
+          null;
+      }
+
       return {
         id: hit.id as number,
         mediaType: type as 'movie' | 'tv',
@@ -122,6 +151,10 @@ export async function GET(request: NextRequest) {
           : null,
         logo: logoUrl,
         title: (type === 'movie' ? hit.title : hit.name) || null,
+        englishTitle,
+        originalTitle:
+          (type === 'movie' ? hit.original_title : hit.original_name) || null,
+        imdbId,
         overview: hit.overview || null,
         rating: hit.vote_average
           ? parseFloat(hit.vote_average.toFixed(1))

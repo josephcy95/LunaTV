@@ -160,6 +160,11 @@ export class SqliteStorage implements IStorage {
         value TEXT NOT NULL
       );
 
+      CREATE TABLE IF NOT EXISTS simkl_tokens (
+        username TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+
       CREATE TABLE IF NOT EXISTS crash_logs (
         timestamp TEXT PRIMARY KEY,
         value TEXT NOT NULL,
@@ -379,6 +384,9 @@ export class SqliteStorage implements IStorage {
         .run(userName);
       this.db
         .prepare('DELETE FROM trakt_tokens WHERE username = ?')
+        .run(userName);
+      this.db
+        .prepare('DELETE FROM simkl_tokens WHERE username = ?')
         .run(userName);
       this.db.exec('COMMIT');
     } catch (e) {
@@ -603,6 +611,7 @@ export class SqliteStorage implements IStorage {
       'emby_configs',
       'watch_statuses',
       'trakt_tokens',
+      'simkl_tokens',
       'crash_logs',
     ];
     this.db.exec('BEGIN');
@@ -1137,6 +1146,27 @@ export class SqliteStorage implements IStorage {
   async deleteUserTraktTokens(userName: string): Promise<void> {
     this.db
       .prepare('DELETE FROM trakt_tokens WHERE username = ?')
+      .run(userName);
+  }
+
+  async getUserSimklTokens(userName: string): Promise<any | null> {
+    const row = this.db
+      .prepare('SELECT value FROM simkl_tokens WHERE username = ?')
+      .get(userName) as { value: string } | undefined;
+    return row ? JSON.parse(row.value) : null;
+  }
+
+  async saveUserSimklTokens(userName: string, tokens: any): Promise<void> {
+    this.db
+      .prepare(
+        'INSERT OR REPLACE INTO simkl_tokens (username, value) VALUES (?, ?)',
+      )
+      .run(userName, JSON.stringify(tokens));
+  }
+
+  async deleteUserSimklTokens(userName: string): Promise<void> {
+    this.db
+      .prepare('DELETE FROM simkl_tokens WHERE username = ?')
       .run(userName);
   }
 

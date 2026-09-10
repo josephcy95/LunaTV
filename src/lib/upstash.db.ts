@@ -1374,6 +1374,24 @@ export class UpstashRedisStorage implements IStorage {
     await this.client.del(`u:${userName}:trakt-tokens`);
   }
 
+  async getUserSimklTokens(userName: string): Promise<any | null> {
+    try {
+      const data = await this.client.get(`u:${userName}:simkl-tokens`);
+      return data ? JSON.parse(data as string) : null;
+    } catch (error) {
+      console.error(`获取用户 ${userName} Simkl tokens 失败:`, error);
+      return null;
+    }
+  }
+
+  async saveUserSimklTokens(userName: string, tokens: any): Promise<void> {
+    await this.client.set(`u:${userName}:simkl-tokens`, JSON.stringify(tokens));
+  }
+
+  async deleteUserSimklTokens(userName: string): Promise<void> {
+    await this.client.del(`u:${userName}:simkl-tokens`);
+  }
+
   async saveCrashLog(crashLog: any): Promise<void> {
     try {
       const key = `crash-log:${crashLog.timestamp}`;

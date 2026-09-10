@@ -572,6 +572,28 @@ export class DbManager {
     }
   }
 
+  async getUserSimklTokens(userName: string): Promise<any | null> {
+    incrementDbQuery();
+    if (typeof (this.storage as any)?.getUserSimklTokens === 'function') {
+      return (this.storage as any).getUserSimklTokens(userName);
+    }
+    return null;
+  }
+
+  async saveUserSimklTokens(userName: string, tokens: any): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any)?.saveUserSimklTokens === 'function') {
+      await (this.storage as any).saveUserSimklTokens(userName, tokens);
+    }
+  }
+
+  async deleteUserSimklTokens(userName: string): Promise<void> {
+    incrementDbQuery();
+    if (typeof (this.storage as any)?.deleteUserSimklTokens === 'function') {
+      await (this.storage as any).deleteUserSimklTokens(userName);
+    }
+  }
+
   // 崩溃日志相关方法
   async saveCrashLog(crashLog: any): Promise<void> {
     incrementDbQuery();

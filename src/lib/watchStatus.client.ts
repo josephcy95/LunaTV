@@ -56,6 +56,9 @@ export type WatchMarkPayload = {
   playTime?: number;
   totalTime?: number;
   syncTrakt?: boolean;
+  syncSimkl?: boolean;
+  englishTitle?: string;
+  imdbId?: string;
   rating?: number | null;
   status?: import('./watchStatus').WatchShowStatus;
 };

@@ -54,6 +54,8 @@ export async function POST(request: NextRequest) {
       MDBListApiKey,
       TraktClientId,
       TraktClientSecret,
+      SimklClientId,
+      SimklClientSecret,
       cronConfig,
     } = body as {
       SiteName: string;
@@ -80,6 +82,8 @@ export async function POST(request: NextRequest) {
       MDBListApiKey?: string;
       TraktClientId?: string;
       TraktClientSecret?: string;
+      SimklClientId?: string;
+      SimklClientSecret?: string;
       cronConfig?: {
         enableAutoRefresh: boolean;
         maxRecordsPerRun: number;
@@ -144,6 +148,8 @@ export async function POST(request: NextRequest) {
       MDBListApiKey: MDBListApiKey || '',
       TraktClientId: TraktClientId || '',
       TraktClientSecret: TraktClientSecret || '',
+      SimklClientId: SimklClientId || '',
+      SimklClientSecret: SimklClientSecret || '',
     };
 
     // 更新豆瓣配置

@@ -27,6 +27,9 @@ export interface AdminConfig {
     // Trakt.tv (optional scrobble)
     TraktClientId?: string;
     TraktClientSecret?: string;
+    // Simkl (optional free sync)
+    SimklClientId?: string;
+    SimklClientSecret?: string;
     // Bangumi API 代理
     BangumiApiType?: string;
     BangumiApiProxy?: string;

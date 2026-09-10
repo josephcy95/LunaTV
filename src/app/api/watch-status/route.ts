@@ -24,6 +24,13 @@ import {
   traktRemoveRating,
   traktScrobble,
 } from '@/lib/trakt';
+import {
+  getSimklAppCredentials,
+  simklAddHistory,
+  simklAddRating,
+  simklRemoveHistory,
+  simklRemoveRating,
+} from '@/lib/simkl';
 
 export const runtime = 'nodejs';
 
@@ -45,6 +52,107 @@ async function loadWatchData(username: string): Promise<UserWatchData> {
   if (data && typeof data === 'object' && data.items)
     return data as UserWatchData;
   return { items: {} };
+}
+
+function syncTitleForExternal(
+  item: WatchStatus,
+  body?: any,
+): string | undefined {
+  return (
+    (body?.englishTitle as string) ||
+    item.english_title ||
+    (body?.title as string) ||
+    item.title ||
+    undefined
+  );
+}
+
+async function maybeSyncSimklMark(
+  username: string,
+  item: WatchStatus,
+  episodeIndex1Based?: number,
+  body?: any,
+) {
+  try {
+    if (!item.tmdb_id) return;
+    const creds = await getSimklAppCredentials();
+    const tokens = await dbManager.getUserSimklTokens(username);
+    if (!creds || !tokens?.access_token) return;
+    // History only (not scrobble) — avoid double-mark with live scrobble stop
+    const result = await simklAddHistory(tokens, creds.clientId, {
+      mediaType: item.media_type,
+      tmdbId: item.tmdb_id,
+      imdbId: (body?.imdbId as string) || item.imdb_id,
+      title: syncTitleForExternal(item, body),
+      year: (body?.year as string) || item.year,
+      season: item.media_type === 'tv' ? 1 : undefined,
+      episode: item.media_type === 'tv' ? episodeIndex1Based || 1 : undefined,
+    });
+    if (result.simklId && !item.simkl_id) {
+      item.simkl_id = result.simklId;
+    }
+  } catch (e) {
+    console.warn('Simkl sync (mark) failed — local still saved', e);
+  }
+}
+
+async function maybeSyncSimklUnmark(
+  username: string,
+  item: WatchStatus,
+  episodeIndex1Based?: number,
+  body?: any,
+) {
+  try {
+    if (!item.tmdb_id) return;
+    const creds = await getSimklAppCredentials();
+    const tokens = await dbManager.getUserSimklTokens(username);
+    if (!creds || !tokens?.access_token) return;
+    await simklRemoveHistory(tokens, creds.clientId, {
+      mediaType: item.media_type,
+      tmdbId: item.tmdb_id,
+      imdbId: (body?.imdbId as string) || item.imdb_id,
+      title: syncTitleForExternal(item, body),
+      year: (body?.year as string) || item.year,
+      season: item.media_type === 'tv' ? 1 : undefined,
+      episode: item.media_type === 'tv' ? episodeIndex1Based || 1 : undefined,
+    });
+  } catch (e) {
+    console.warn('Simkl sync (unmark) failed — local still saved', e);
+  }
+}
+
+async function maybeSyncSimklRating(
+  username: string,
+  item: WatchStatus,
+  rating: number | undefined,
+  body?: any,
+) {
+  try {
+    if (!item.tmdb_id) return;
+    const creds = await getSimklAppCredentials();
+    const tokens = await dbManager.getUserSimklTokens(username);
+    if (!creds || !tokens?.access_token) return;
+    if (rating == null) {
+      await simklRemoveRating(tokens, creds.clientId, {
+        mediaType: item.media_type,
+        tmdbId: item.tmdb_id,
+        imdbId: (body?.imdbId as string) || item.imdb_id,
+        title: syncTitleForExternal(item, body),
+        year: (body?.year as string) || item.year,
+      });
+    } else {
+      await simklAddRating(tokens, creds.clientId, {
+        mediaType: item.media_type,
+        tmdbId: item.tmdb_id,
+        imdbId: (body?.imdbId as string) || item.imdb_id,
+        title: syncTitleForExternal(item, body),
+        year: (body?.year as string) || item.year,
+        rating,
+      });
+    }
+  } catch (e) {
+    console.warn('Simkl rating sync failed — local still saved', e);
+  }
 }
 
 async function maybeSyncTraktMark(
@@ -200,6 +308,7 @@ export async function POST(request: NextRequest) {
   const data = await loadWatchData(username);
   const existing = data.items[key];
   const syncTrakt = body.syncTrakt !== false;
+  const syncSimkl = body.syncSimkl !== false;
 
   if (action === 'rate') {
     const title = (body.title as string) || existing?.title || '';
@@ -227,6 +336,7 @@ export async function POST(request: NextRequest) {
     data.items[key] = item;
     await dbManager.saveUserWatchData(username, data);
     if (syncTrakt) await maybeSyncTraktRating(username, item, rating);
+    if (syncSimkl) await maybeSyncSimklRating(username, item, rating, body);
     return NextResponse.json({ items: data.items, item });
   }
 
@@ -287,9 +397,13 @@ export async function POST(request: NextRequest) {
       if (next) data.items[key] = next;
       else delete data.items[key];
       if (syncTrakt) await maybeSyncTraktUnmark(username, prev, episodeIndex);
+      if (syncSimkl)
+        await maybeSyncSimklUnmark(username, prev, episodeIndex, body);
     } else {
       delete data.items[key];
       if (syncTrakt) await maybeSyncTraktUnmark(username, prev);
+      if (syncSimkl)
+        await maybeSyncSimklUnmark(username, prev, undefined, body);
     }
     await dbManager.saveUserWatchData(username, data);
     return NextResponse.json({
@@ -328,14 +442,24 @@ export async function POST(request: NextRequest) {
         ? Number(body.knownEpisodeCount)
         : existing?.known_episode_count,
     });
+    // Prefer English title for external sync when provided
+    if (body.englishTitle) item.english_title = String(body.englishTitle);
+    if (body.imdbId) item.imdb_id = String(body.imdbId);
     data.items[key] = item;
     await dbManager.saveUserWatchData(username, data);
     if (syncTrakt) await maybeSyncTraktMark(username, item, episodeIndex);
+    // progress auto-mark: client also fires /scrobble/stop (≥80% marks watched) — don't double history
+    if (syncSimkl && action !== 'progress')
+      await maybeSyncSimklMark(username, item, episodeIndex, body);
   } else {
     item = applyMovieWatched(existing, base);
+    if (body.englishTitle) item.english_title = String(body.englishTitle);
+    if (body.imdbId) item.imdb_id = String(body.imdbId);
     data.items[key] = item;
     await dbManager.saveUserWatchData(username, data);
     if (syncTrakt) await maybeSyncTraktMark(username, item);
+    if (syncSimkl && action !== 'progress')
+      await maybeSyncSimklMark(username, item, undefined, body);
   }
 
   return NextResponse.json({ items: data.items, item });
@@ -354,6 +478,9 @@ export async function DELETE(request: NextRequest) {
   const prev = data.items[key];
   delete data.items[key];
   await dbManager.saveUserWatchData(username, data);
-  if (prev) await maybeSyncTraktUnmark(username, prev);
+  if (prev) {
+    await maybeSyncTraktUnmark(username, prev);
+    await maybeSyncSimklUnmark(username, prev);
+  }
   return NextResponse.json({ success: true, items: data.items });
 }

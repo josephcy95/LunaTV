@@ -84,6 +84,7 @@ function WatchedPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const traktFlash = searchParams.get('trakt');
+  const simklFlash = searchParams.get('simkl');
   const { list, loading, reload } = useWatchStatusList(true);
   const [filter, setFilter] = useState<FilterTab>('all');
   const [q, setQ] = useState('');
@@ -132,7 +133,7 @@ function WatchedPageInner() {
               我的观看
             </h1>
             <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
-              本地记录为权威来源 · 播放约 80% 自动标记 · 可选同步 Trakt
+              本地记录为权威来源 · 播放约 80% 自动标记 · 可选同步 Trakt / Simkl
             </p>
             {traktFlash === 'connected' && (
               <p className='mt-2 text-xs text-emerald-600 dark:text-emerald-400'>
@@ -142,6 +143,16 @@ function WatchedPageInner() {
             {traktFlash && traktFlash !== 'connected' && (
               <p className='mt-2 text-xs text-rose-600 dark:text-rose-400'>
                 Trakt 连接失败（{traktFlash}）。可在设置中重试。
+              </p>
+            )}
+            {simklFlash === 'connected' && (
+              <p className='mt-2 text-xs text-emerald-600 dark:text-emerald-400'>
+                Simkl 已连接，并已尝试拉取观看历史（本地已有记录优先保留）。
+              </p>
+            )}
+            {simklFlash && simklFlash !== 'connected' && (
+              <p className='mt-2 text-xs text-rose-600 dark:text-rose-400'>
+                Simkl 连接失败（{simklFlash}）。可在设置中重试。
               </p>
             )}
           </div>
@@ -280,6 +291,28 @@ function WatchedPageInner() {
                     </div>
 
                     <div className='mt-auto flex flex-wrap gap-1.5 pt-2'>
+                      {item.tmdb_id ? (
+                        <a
+                          href={`/api/simkl/view?tmdb=${item.tmdb_id}&type=${item.media_type}${
+                            item.simkl_id ? `&simkl=${item.simkl_id}` : ''
+                          }${
+                            item.simkl_slug
+                              ? `&slug=${encodeURIComponent(item.simkl_slug)}`
+                              : ''
+                          }${
+                            item.english_title || item.title
+                              ? `&title=${encodeURIComponent(
+                                  item.english_title || item.title,
+                                )}`
+                              : ''
+                          }${item.year ? `&year=${item.year}` : ''}`}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='inline-flex items-center gap-0.5 rounded-full border border-violet-200 px-2 py-0.5 text-[10px] text-violet-700 hover:bg-violet-50 dark:border-violet-500/40 dark:text-violet-300 dark:hover:bg-violet-500/10'
+                        >
+                          View on Simkl
+                        </a>
+                      ) : null}
                       {item.status !== 'watching' &&
                         item.media_type === 'tv' && (
                           <button
@@ -385,7 +418,7 @@ function WatchedPageInner() {
 
         <p className='mt-8 flex items-center justify-center gap-1.5 text-xs text-gray-400 dark:text-gray-500'>
           <Filter className='size-3.5' />
-          在「设置」中可连接 / 断开 Trakt；评分会在连接后推送到 Trakt。
+          在「设置」中可连接 / 断开 Trakt 与 Simkl；评分会在连接后推送。
           <Star className='size-3.5 text-amber-400' />
         </p>
       </div>

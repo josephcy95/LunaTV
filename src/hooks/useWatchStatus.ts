@@ -61,6 +61,8 @@ export function useCurrentWatchStatus(opts: {
   cover?: string;
   episodeIndex1Based?: number;
   knownEpisodeCount?: number;
+  englishTitle?: string;
+  imdbId?: string;
   enabled?: boolean;
 }) {
   const { items, reload } = useWatchStatusList(opts.enabled !== false);
@@ -104,6 +106,8 @@ export function useCurrentWatchStatus(opts: {
       cover: opts.cover,
       episodeIndex: opts.episodeIndex1Based,
       knownEpisodeCount: opts.knownEpisodeCount,
+      englishTitle: opts.englishTitle,
+      imdbId: opts.imdbId,
     });
     await reload();
   }, [key, mediaType, opts, reload]);
@@ -118,7 +122,10 @@ export function useCurrentWatchStatus(opts: {
       source: opts.source,
       id: opts.id,
       title: opts.title,
+      year: opts.year,
       episodeIndex: opts.episodeIndex1Based,
+      englishTitle: opts.englishTitle,
+      imdbId: opts.imdbId,
     });
     await reload();
   }, [key, mediaType, opts, reload]);
@@ -142,6 +149,8 @@ export function useCurrentWatchStatus(opts: {
         year: opts.year,
         cover: opts.cover,
         rating,
+        englishTitle: opts.englishTitle,
+        imdbId: opts.imdbId,
       });
       await reload();
     },
@@ -195,23 +204,38 @@ export function useCurrentWatchStatus(opts: {
           knownEpisodeCount: opts.knownEpisodeCount,
           playTime,
           totalTime,
+          englishTitle: opts.englishTitle,
+          imdbId: opts.imdbId,
         });
-        // Fire-and-forget Trakt live scrobble stop
+        // Fire-and-forget live scrobble stop (Trakt + Simkl).
+        // Simkl stop ≥80% marks watched; watch-status also POSTs /sync/history —
+        // Simkl 409 already_watched is treated as success server-side.
         if (opts.tmdbId) {
+          const progress = Math.min(
+            100,
+            Math.round((playTime / Math.max(totalTime, 1)) * 100),
+          );
+          const payload = {
+            action: 'stop' as const,
+            tmdbId: opts.tmdbId,
+            mediaType,
+            progress,
+            episode: opts.episodeIndex1Based,
+            title: opts.englishTitle || opts.title,
+            year: opts.year,
+            imdbId: opts.imdbId,
+          };
           fetch('/api/trakt/scrobble', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'stop',
-              tmdbId: opts.tmdbId,
-              mediaType,
-              progress: Math.min(
-                100,
-                Math.round((playTime / Math.max(totalTime, 1)) * 100),
-              ),
-              episode: opts.episodeIndex1Based,
-            }),
+            body: JSON.stringify(payload),
+          }).catch(() => {});
+          fetch('/api/simkl/scrobble', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
           }).catch(() => {});
         }
         await reload();

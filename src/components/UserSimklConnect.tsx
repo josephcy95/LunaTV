@@ -3,22 +3,22 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link2, Unlink } from 'lucide-react';
 
-export function UserTraktConnect() {
+export function UserSimklConnect() {
   const [loading, setLoading] = useState(true);
   const [appConfigured, setAppConfigured] = useState(false);
   const [connected, setConnected] = useState(false);
-  const [traktUsername, setTraktUsername] = useState<string | null>(null);
+  const [simklUsername, setSimklUsername] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/trakt/status', { credentials: 'include' });
+      const res = await fetch('/api/simkl/status', { credentials: 'include' });
       if (!res.ok) return;
       const json = await res.json();
       setAppConfigured(Boolean(json.appConfigured));
       setConnected(Boolean(json.connected));
-      setTraktUsername(json.traktUsername || null);
+      setSimklUsername(json.simklUsername || null);
     } finally {
       setLoading(false);
     }
@@ -31,7 +31,7 @@ export function UserTraktConnect() {
   const disconnect = async () => {
     setBusy(true);
     try {
-      await fetch('/api/trakt/status', {
+      await fetch('/api/simkl/status', {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -45,14 +45,13 @@ export function UserTraktConnect() {
     return <p className='text-xs text-gray-500 dark:text-gray-400'>加载中…</p>;
   }
 
-  // Trakt UI stays visible; Connect disabled when admin has not configured
   return (
     <div className='space-y-2'>
       <div className='flex flex-wrap items-center gap-2'>
         {connected ? (
           <>
             <span className='text-xs text-emerald-600 dark:text-emerald-400'>
-              已连接{traktUsername ? `：${traktUsername}` : ''}
+              已连接{simklUsername ? `：${simklUsername}` : ''}
             </span>
             <button
               type='button'
@@ -66,7 +65,7 @@ export function UserTraktConnect() {
           </>
         ) : (
           <a
-            href={appConfigured ? '/api/trakt/auth' : undefined}
+            href={appConfigured ? '/api/simkl/auth' : undefined}
             aria-disabled={!appConfigured}
             onClick={(e) => {
               if (!appConfigured) e.preventDefault();
@@ -78,13 +77,13 @@ export function UserTraktConnect() {
             }`}
           >
             <Link2 className='h-3.5 w-3.5' />
-            连接 Trakt
+            连接 Simkl
           </a>
         )}
       </div>
       {!appConfigured && (
         <p className='text-xs text-gray-500 dark:text-gray-400'>
-          管理员尚未配置 Trakt（not configured by
+          管理员尚未配置 Simkl（not configured by
           admin）。本地已看记录仍可正常使用。
         </p>
       )}
