@@ -573,17 +573,26 @@ function PlayPageClient() {
     rtAudience: number | null;
     tmdb: number | null;
   } | null>(null);
-  const tmdbFetchedRef = useRef(false);
+  const tmdbFetchedKeyRef = useRef<string>('');
   useEffect(() => {
     if (!videoTitle) return;
-    if (tmdbFetchedRef.current) return;
-    tmdbFetchedRef.current = true;
+    // stype from URL — avoid referencing later-declared searchType (TDZ)
+    const stype = searchParams.get('stype') || '';
+    // Re-fetch when title/year/original_title/stype change (e.g. douban original_title arrives late)
+    const fetchKey = [
+      videoTitle,
+      videoYear || '',
+      movieDetails?.original_title || '',
+      stype,
+    ].join('|');
+    if (tmdbFetchedKeyRef.current === fetchKey) return;
+    tmdbFetchedKeyRef.current = fetchKey;
     let cancelled = false;
     const params = new URLSearchParams({ title: videoTitle });
     if (videoYear) params.set('year', videoYear);
     if (movieDetails?.original_title)
       params.set('original_title', movieDetails.original_title);
-    if (searchType) params.set('stype', searchType);
+    if (stype) params.set('stype', stype);
     fetch(`/api/tmdb/backdrop?${params.toString()}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((json) => {
@@ -593,13 +602,14 @@ function PlayPageClient() {
     return () => {
       cancelled = true;
     };
-  }, [videoTitle, videoYear, movieDetails?.original_title]);
+  }, [videoTitle, videoYear, movieDetails?.original_title, searchParams]);
 
-  // MDBList 评分：仅在播放页、有 TMDb id 且缓存未命中时服务端拉取（不在首页卡片请求）
+  // MDBList 评分：仅在播放页、有 TMDb id 时服务端拉取（不在首页卡片请求）
   useEffect(() => {
     const tmdbId = tmdbData?.id;
     if (!tmdbId) return;
     let cancelled = false;
+    setMdblistRatings(null);
     const mediaType = tmdbData?.mediaType === 'tv' ? 'show' : 'movie';
     const params = new URLSearchParams({
       tmdb_id: String(tmdbId),

@@ -23,9 +23,9 @@ export async function GET(request: NextRequest) {
 
   const cacheKey = `tmdb-backdrop-${originalTitle || title}-${year || ''}`;
 
-  // 服务端缓存
+  // 服务端缓存 — ignore legacy entries missing tmdb id (needed for MDBList)
   const cached = await db.getCache(cacheKey);
-  if (cached) {
+  if (cached && cached.id) {
     return NextResponse.json(
       { data: cached },
       {

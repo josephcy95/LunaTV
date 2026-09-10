@@ -18,7 +18,7 @@ export interface MdbListRatings {
 }
 
 const CACHE_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days — ratings change slowly
-const NEGATIVE_CACHE_TTL_SECONDS = 6 * 60 * 60; // 6h when no key / not found
+const NEGATIVE_CACHE_TTL_SECONDS = 6 * 60 * 60; // 6h when not found / transient error
 
 function cacheKey(tmdbId: number, mediaType: MdbMediaType): string {
   return `mdblist-ratings-${mediaType}-${tmdbId}`;
@@ -68,7 +68,9 @@ export async function getMDBListApiKey(): Promise<string> {
 
 /**
  * Server-only MDBList lookup by TMDb id. Returns null when no key / miss / error.
- * Results (including empty) are cached aggressively to respect free-tier limits.
+ * Results (including empty API misses) are cached aggressively to respect free-tier limits.
+ * IMPORTANT: never negative-cache the "no API key" case on the per-tmdb key — otherwise
+ * after the user saves a key, getCache still returns __empty and we never call MDBList.
  */
 export async function fetchMDBListRatings(
   tmdbId: number,
@@ -76,25 +78,32 @@ export async function fetchMDBListRatings(
 ): Promise<MdbListRatings | null> {
   if (!tmdbId || tmdbId <= 0) return null;
 
+  const apiKey = await getMDBListApiKey();
   const key = cacheKey(tmdbId, mediaType);
+
   try {
     const cached = await db.getCache(key);
     if (cached) {
-      // Cached sentinel for "no data"
-      if (cached.__empty) return null;
-      return cached as MdbListRatings;
+      if (cached.__empty) {
+        const reason = cached.reason as string | undefined;
+        // Bust no-key / legacy (unreasoned) sentinels once a key exists.
+        // Keep typed misses (not-found / error) so we do not re-hammer the API.
+        if (apiKey && (reason === 'no-key' || reason == null)) {
+          // fall through to live fetch
+        } else {
+          return null;
+        }
+      } else {
+        return cached as MdbListRatings;
+      }
     }
   } catch {
     /* ignore cache read errors */
   }
 
-  const apiKey = await getMDBListApiKey();
   if (!apiKey) {
-    try {
-      await db.setCache(key, { __empty: true }, NEGATIVE_CACHE_TTL_SECONDS);
-    } catch {
-      /* ignore */
-    }
+    // Do NOT write __empty onto the per-tmdb ratings key when there is no key.
+    // That poisoned cache after users later saved a key (dashboard stayed at 0 requests).
     return null;
   }
 
@@ -107,7 +116,11 @@ export async function fetchMDBListRatings(
     });
 
     if (res.status === 404) {
-      await db.setCache(key, { __empty: true }, CACHE_TTL_SECONDS);
+      await db.setCache(
+        key,
+        { __empty: true, reason: 'not-found' },
+        CACHE_TTL_SECONDS,
+      );
       return null;
     }
 
@@ -116,7 +129,11 @@ export async function fetchMDBListRatings(
         `[MDBList] HTTP ${res.status} for tmdb/${mediaType}/${tmdbId}`,
       );
       // Short negative cache on rate-limit / errors to avoid hammering
-      await db.setCache(key, { __empty: true }, NEGATIVE_CACHE_TTL_SECONDS);
+      await db.setCache(
+        key,
+        { __empty: true, reason: 'error' },
+        NEGATIVE_CACHE_TTL_SECONDS,
+      );
       return null;
     }
 
@@ -130,7 +147,8 @@ export async function fetchMDBListRatings(
         pickRating(ratings, ['tomatoes', 'rottentomatoes', 'rtomatoes']),
       ),
       rtAudience: asPercent(
-        pickRating(ratings, ['audience', 'popcorn', 'rtaudience']),
+        // MDBList uses source "popcorn" for RT audience
+        pickRating(ratings, ['popcorn', 'audience', 'rtaudience']),
       ),
       tmdb: (() => {
         const v = pickRating(ratings, ['tmdb', 'tmdbscore']);
@@ -151,7 +169,7 @@ export async function fetchMDBListRatings(
 
     await db.setCache(
       key,
-      hasAny ? result : { __empty: true },
+      hasAny ? result : { __empty: true, reason: 'not-found' },
       CACHE_TTL_SECONDS,
     );
 
@@ -159,7 +177,11 @@ export async function fetchMDBListRatings(
   } catch (err) {
     console.warn('[MDBList] fetch failed:', err);
     try {
-      await db.setCache(key, { __empty: true }, NEGATIVE_CACHE_TTL_SECONDS);
+      await db.setCache(
+        key,
+        { __empty: true, reason: 'error' },
+        NEGATIVE_CACHE_TTL_SECONDS,
+      );
     } catch {
       /* ignore */
     }
